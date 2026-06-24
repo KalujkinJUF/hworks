@@ -21,9 +21,9 @@
 </nav>
         </header>
 
-        <main class="profile-main" style="display: flex; justify-content: flex-start; align-items: flex-start; overflow-y: auto;">
-            <section class="profile-section" style="width: 100%;">
-                <h2 id="profileTitle">Профиль</h2>
+        <main class="profile-main" style="display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 20px 0;">
+            <section class="profile-section" style="width: 100%; max-width: 1000px; margin: 0 auto; text-align: center;">
+                <h2 id="profileTitle" style="text-align: center; border-bottom: 2px dashed white; padding-bottom: 10px; margin-bottom: 20px;">Профиль</h2>
                 
                 <!-- Переключатель вкладок -->
                 <div class="profile-tabs" style="display: flex; gap: 10px; margin-bottom: 25px; justify-content: center; width: 100%;">
@@ -34,20 +34,21 @@
                 <!-- Вкладка 1: Информация и отзывы -->
                 <div id="tabInfo" class="tab-content active">
                     <!-- Двухколоночный макет -->
-                    <div class="profile-columns-layout" style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap; width: 100%;">
+                    <div class="profile-columns-layout" style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap; width: 100%; justify-content: center;">
                         
                         <!-- Левая колонка: Аватарка + Инфо блок + Общие друзья -->
-                        <div class="profile-left-col" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
-                            <div class="profile-layout" style="border: 2px solid white; padding: 20px; background: black; display: flex; gap: 20px; align-items: center; justify-content: flex-start;">
-                                <div class="profile-avatar-section" style="flex-shrink: 0; width: 180px; text-align: center;">
-                                    <img id="avatarImg" src="" alt="Аватар" class="profile-avatar" style="display:none;">
-                                    <div class="avatar-upload">
-                                        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
-                                        <button id="avatarUploadBtn" class="user-btn">Загрузить аватар</button>
-                                    </div>
+                        <div class="profile-left-col" style="flex: 1; min-width: 320px; max-width: 450px; display: flex; flex-direction: column; gap: 20px;">
+                            <!-- Бокс 1: Основная информация -->
+                            <div class="profile-layout" style="border: 2px solid white; padding: 20px; background: black; display: flex; gap: 20px; align-items: center; justify-content: flex-start; width: 100%; box-sizing: border-box;">
+                                <!-- Аватарка (показывается только если она загружена) -->
+                                <div id="avatarCol" style="display: none; flex-shrink: 0; width: 150px; text-align: center; margin-right: 10px;">
+                                    <img id="avatarImg" src="" alt="Аватар" class="profile-avatar" style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid white; object-fit: cover; margin-bottom: 10px; display: block;">
+                                    <button id="changeAvatarBtn" class="user-btn" style="padding: 4px 8px; font-size: 9px; cursor: pointer; width: 100%;">Сменить аватар</button>
                                 </div>
-                                <div class="profile-info-block" style="flex-grow: 1; text-align: left;">
-                                    <p>Логин: <span id="username">Загрузка...</span> <span id="roleBadge" class="role-badge"></span></p>
+                                
+                                <!-- Текстовый блок инфо -->
+                                <div class="profile-info-block" style="flex-grow: 1; text-align: left; min-width: 0;">
+                                    <p style="margin-top: 0;">Логин: <span id="username" style="font-weight: bold;">Загрузка...</span> <span id="roleBadge" class="role-badge"></span></p>
                                     <p id="statusContainer">Статус: <span id="userStatusText">Загрузка...</span>
                                         <select id="userStatusSelect" style="display: none; background: black; color: yellow; border: 2px solid white; font-family: inherit; font-size: 10px; padding: 2px; margin-left: 5px; cursor: pointer;">
                                             <option value="online">Online</option>
@@ -56,47 +57,40 @@
                                             <option value="offline">Offline</option>
                                         </select>
                                     </p>
-                                    <p>Email: <span id="email">Загрузка...</span></p>
+                                    <p id="emailContainer">Email: <span id="email">Загрузка...</span></p>
                                     <p>Регистрация: <span id="registrationDate">Загрузка...</span></p>
                                     <p id="subscriptionStats" style="margin-top: 10px; font-size: 11px;">
                                         Подписчики: <span id="followersCount">0</span> | Подписки: <span id="followingCount">0</span>
                                     </p>
+                                    
+                                    <!-- Кнопка Добавить аватар (показывается только если аватара нет и это свой профиль) -->
+                                    <button id="addAvatarBtn" class="user-btn" style="display: none; padding: 6px 12px; font-size: 10px; margin-top: 8px; cursor: pointer; border-color: yellow; color: yellow;">Добавить аватар</button>
+                                    
                                     <button id="subscribeBtn" class="auth-btn" style="display: none; padding: 6px 12px; font-size: 10px; margin-top: 8px; width: auto; cursor: pointer;"></button>
                                 </div>
                             </div>
 
-                            <!-- Блок подтверждения email -->
-                            <div id="verifySection" class="verify-section" style="display:none; border: 2px solid white; padding: 20px; background: black;">
-                                <h3>Подтверждение почты</h3>
-                                <p class="verify-hint">На вашу почту отправлен код. Введите его ниже:</p>
-                                <div class="verify-group">
-                                    <input type="text" id="verifyCode" maxlength="6" placeholder="6-значный код">
-                                    <button id="verifyBtn" class="auth-btn" style="padding: 10px; font-size: 12px;">Подтвердить</button>
-                                </div>
-                                <div id="verifyMessage" class="verify-message"></div>
-                            </div>
-
-                            <!-- Биография -->
-                            <div class="bio-group" style="border: 2px solid white; padding: 20px; background: black; display: flex; flex-direction: column; text-align: left;">
+                            <!-- Бокс 2: Биография -->
+                            <div class="bio-group" style="border: 2px solid white; padding: 20px; background: black; display: flex; flex-direction: column; text-align: left; box-sizing: border-box; width: 100%;">
                                 <label for="aboutMe" style="color: yellow; margin-bottom: 8px; font-size: 11px; text-transform: uppercase;">Обо мне:</label>
                                 <textarea id="aboutMe"></textarea>
                             </div>
 
-                            <!-- Блок Общих Друзей -->
-                            <div id="mutualFriendsSection" style="display: none; border: 2px solid white; padding: 15px; background: black;">
+                            <!-- Бокс 3: Общие друзья -->
+                            <div id="mutualFriendsSection" style="display: none; border: 2px solid white; padding: 15px; background: black; box-sizing: border-box; width: 100%;">
                                 <h3 style="color: #00ccff; text-align: center; margin-top: 0; font-size: 14px; text-transform: uppercase; border-bottom: 2px dashed white; padding-bottom: 8px;">Общие друзья</h3>
                                 <div id="mutualFriendsList" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px;"></div>
                             </div>
                         </div>
 
                         <!-- Правая колонка: Стена отзывов -->
-                        <div class="profile-right-col" style="flex: 1.2; min-width: 320px;">
-                            <div id="profileCommentsSection" style="border: 2px solid white; padding: 20px; background-color: black; margin-top: 0; height: 100%;">
-                                <h3 style="color: #00ff00; border-bottom: 2px dashed white; padding-bottom: 10px; font-size: 16px; text-align: center; margin-top: 0; text-transform: uppercase;">Стена отзывов</h3>
+                        <div class="profile-right-col" style="flex: 1.2; min-width: 320px; max-width: 550px;">
+                            <div id="profileCommentsSection" style="border: 2px solid white; padding: 20px; background-color: black; margin-top: 0; min-height: 400px; text-align: left; box-sizing: border-box; width: 100%;">
+                                <h3 style="color: #00ff00; border-bottom: 2px dashed white; padding-bottom: 10px; font-size: 16px; text-align: center; margin-top: 0; text-transform: uppercase;">Стена</h3>
                                 
-                                <form id="commentForm" style="margin-bottom: 20px;">
-                                    <textarea id="commentContent" placeholder="Оставьте отзыв о пользователе..." rows="3" style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; resize: none; outline: none;"></textarea>
-                                    <button type="submit" class="auth-btn" style="margin-top: 10px; width: 100%;">Оставить отзыв</button>
+                                <form id="commentForm" style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; width: 100%;">
+                                    <textarea id="commentContent" placeholder="Оставьте отзыв о пользователе..." rows="3" style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; resize: none; outline: none; margin-bottom: 10px;"></textarea>
+                                    <button type="submit" class="auth-btn" style="width: auto; padding: 8px 25px; font-size: 11px; cursor: pointer; text-transform: uppercase;">Написать</button>
                                 </form>
                                 
                                 <div id="commentList">
@@ -108,25 +102,45 @@
                 </div>
 
                 <!-- Вкладка 2: Настройки профиля -->
-                <div id="tabSettings" class="tab-content" style="border: 2px solid white; padding: 25px; background: black; max-width: 600px; margin: 0 auto;">
-                    <div id="updateSection">
-                        <h3 style="margin-top: 0; color: #ff8c00; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase; text-align: center;">Сменить логин и пароль</h3>
-                        <div class="update-box" style="margin-top: 20px;">
-                            <form id="updateForm" class="auth-form" style="max-width: 100%;">
-                                <div class="input-group">
-                                    <input type="text" id="newUsername" maxlength="20" placeholder="Введите новый логин">
-                                </div>
-                                <div class="input-group">
-                                    <input type="password" id="newPassword" placeholder="Введите новый пароль">
-                                </div>
-                                <button type="submit" class="auth-btn">Сохранить изменения</button>
-                                <div id="message"></div>
-                            </form>
+                <div id="tabSettings" class="tab-content" style="width: 100%;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 25px; width: 100%;">
+                        
+                        <!-- Блок подтверждения email (перенесен сюда) -->
+                        <div id="verifySection" class="verify-section" style="display:none; border: 2px solid white; padding: 25px; background: black; width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
+                            <h3 style="margin-top: 0; color: #00ccff; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;">Подтверждение почты</h3>
+                            <p class="verify-hint" style="font-size: 11px; margin-bottom: 15px;">На вашу почту отправлен код. Введите его ниже:</p>
+                            <div class="verify-group" style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
+                                <input type="text" id="verifyCode" maxlength="6" placeholder="6-значный код" style="background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
+                                <button id="verifyBtn" class="auth-btn" style="padding: 10px; font-size: 12px; width: auto; cursor: pointer;">Подтвердить</button>
+                            </div>
+                            <div id="verifyMessage" class="verify-message" style="margin-top: 10px;"></div>
+                        </div>
+
+                        <!-- Блок смены логина/пароля -->
+                        <div id="updateSection" style="border: 2px solid white; padding: 25px; background: black; width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
+                            <h3 style="margin-top: 0; color: #ff8c00; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;">Сменить логин и пароль</h3>
+                            <div class="update-box" style="margin-top: 20px; border: 2px solid rgba(255, 255, 255, 0.2); padding: 20px; background: rgba(255,255,255,0.01);">
+                                <form id="updateForm" class="auth-form" style="max-width: 100%; display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                                    <div class="input-group" style="margin-bottom: 0; width: 100%;">
+                                        <input type="text" id="newUsername" maxlength="20" placeholder="Введите новый логин" style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
+                                    </div>
+                                    <div class="input-group" style="margin-bottom: 0; width: 100%;">
+                                        <input type="password" id="newPassword" placeholder="Введите новый пароль" style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
+                                    </div>
+                                    <div style="text-align: center; width: 100%;">
+                                        <button type="submit" class="auth-btn" style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; text-transform: uppercase;">Сохранить изменения</button>
+                                    </div>
+                                    <div id="message" style="margin-top: 10px;"></div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
         </main>
+        
+        <!-- Единый скрытый инпут для выбора файла -->
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
     </div>
 
     <script src="profile.js"></script>

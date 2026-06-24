@@ -84,10 +84,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Аватар
+        const avatarCol = document.getElementById("avatarCol");
+        const addAvatarBtn = document.getElementById("addAvatarBtn");
         const avatarImg = document.getElementById("avatarImg");
-        if (avatarImg && data.avatar) {
-            avatarImg.src = data.avatar;
-            avatarImg.style.display = 'block';
+        
+        if (data.avatar) {
+            if (avatarCol) avatarCol.style.display = 'block';
+            if (avatarImg) {
+                avatarImg.src = data.avatar;
+                avatarImg.style.display = 'block';
+            }
+            if (addAvatarBtn) addAvatarBtn.style.display = 'none';
+        } else {
+            if (avatarCol) avatarCol.style.display = 'none';
+            if (addAvatarBtn) {
+                addAvatarBtn.style.display = (isOwn && data.role !== 'banned') ? 'inline-block' : 'none';
+            }
         }
 
         // Бейдж роли
@@ -170,8 +182,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Скрыть элементы редактирования для чужого профиля
         if (!isOwn) {
-            const avatarUpload = document.querySelector('.avatar-upload');
-            if (avatarUpload) avatarUpload.style.display = 'none';
+            const addAvatarBtn = document.getElementById("addAvatarBtn");
+            if (addAvatarBtn) addAvatarBtn.style.display = 'none';
+            const changeAvatarBtn = document.getElementById("changeAvatarBtn");
+            if (changeAvatarBtn) changeAvatarBtn.style.display = 'none';
 
             const updateSection = document.getElementById("updateSection");
             if (updateSection) updateSection.style.display = 'none';
@@ -183,8 +197,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (updateSection) updateSection.style.display = 'none';
             const bioGroup = document.querySelector('.bio-group');
             if (bioGroup) bioGroup.style.display = 'none';
-            const avatarUpload = document.querySelector('.avatar-upload');
-            if (avatarUpload) avatarUpload.style.display = 'none';
+            const addAvatarBtn = document.getElementById("addAvatarBtn");
+            if (addAvatarBtn) addAvatarBtn.style.display = 'none';
+            const changeAvatarBtn = document.getElementById("changeAvatarBtn");
+            if (changeAvatarBtn) changeAvatarBtn.style.display = 'none';
         }
 
         // Обновляем статистику подписок
@@ -234,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 e.preventDefault();
                 const content = document.getElementById("commentContent").value.trim();
                 if (!content) return;
-                fetch(`/api/comments/profile/${data.id}`, {
+                fetch(`/api/users/comments/profile/${data.id}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                     body: JSON.stringify({ content })
@@ -254,9 +270,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 2. ЗАГРУЗКА АВАТАРКИ (только для своего профиля)
-    const avatarUploadBtn = document.getElementById("avatarUploadBtn");
-    if (avatarUploadBtn) {
-        avatarUploadBtn.addEventListener("click", () => {
+    const changeAvatarBtn = document.getElementById("changeAvatarBtn");
+    if (changeAvatarBtn) {
+        changeAvatarBtn.addEventListener("click", () => {
+            if (!isOwnProfile) return;
+            document.getElementById("avatarInput").click();
+        });
+    }
+
+    const addAvatarBtn = document.getElementById("addAvatarBtn");
+    if (addAvatarBtn) {
+        addAvatarBtn.addEventListener("click", () => {
             if (!isOwnProfile) return;
             document.getElementById("avatarInput").click();
         });
@@ -281,8 +305,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(data => {
                 if (data.avatar) {
                     const img = document.getElementById("avatarImg");
-                    img.src = data.avatar;
-                    img.style.display = 'block';
+                    if (img) img.src = data.avatar;
+                    const avatarCol = document.getElementById("avatarCol");
+                    if (avatarCol) avatarCol.style.display = 'block';
+                    const addAvatarBtn = document.getElementById("addAvatarBtn");
+                    if (addAvatarBtn) addAvatarBtn.style.display = 'none';
                 }
             })
             .catch(() => alert("Ошибка загрузки аватарки"));
@@ -453,7 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function loadProfileComments(targetId) {
-        fetch(`/api/comments/profile/${targetId}`)
+        fetch(`/api/users/comments/profile/${targetId}`)
         .then(res => res.json())
         .then(comments => {
             const list = document.getElementById("commentList");

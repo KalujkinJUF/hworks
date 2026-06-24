@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная страница</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav id="main-nav">
+                <a href="index.html" id="nav-home">Главная</a>
+                <a href="search.html" id="nav-search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
+                <a href="register.html" id="nav-register">Регистрация</a>
+                <a href="login.html" id="nav-login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+            </nav>
+        </header>
+
+        <main class="main-layout">
+            <!-- Левая колонка: лента -->
+            <div class="feed-column">
+                <div class="feed-wrapper">
+                <section class="main-content-wrapper">
+                    <h2>Посты</h2>
+
+                    <!-- Форма создания поста (только админ/модератор) -->
+                    <div id="postFormSection" class="post-form-section" style="display:none;">
+                        <textarea id="postContent" rows="3" placeholder="Напишите пост..."></textarea>
+                        <div class="post-form-controls">
+                            <button id="postNewsBtn" class="auth-btn" style="padding: 8px 20px; font-size: 12px;">Опубликовать пост</button>
+                            <button id="postPatchBtn" class="user-btn" style="border-color: #ff8c00; color: #ff8c00;">Обновление сайта</button>
+                        </div>
+                        <div id="postMessage" class="verify-message"></div>
+                    </div>
+
+                    <!-- Список постов -->
+                    <div id="newsFeed" class="news-feed">
+                        <p class="loading-text">Загрузка...</p>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Патч-ноты (обновления сайта) -->
+                    <h2 style="color: #ff8c00;">Обновления сайта</h2>
+                    <div id="patchFeed" class="news-feed">
+                        <p class="loading-text">Загрузка...</p>
+                    </div>
+                </section>
+                </div>
+            </div>
+
+            <!-- Правая колонка: онлайн -->
+            <aside class="sidebar-column">
+                <div class="online-box">
+                    <h3>Сейчас онлайн</h3>
+                    <div id="onlineList">
+                        <p class="loading-text">Загрузка...</p>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <footer>
+            <p>hworks</p>
+        </footer>
+    </div>
+    <script src="index.js"></script>
+    <script src="navbar.js"></script>
+</body>
+</html>

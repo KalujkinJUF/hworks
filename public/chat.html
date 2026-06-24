@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="chat-page">
+    <div class="container">
+        <header>
+            <nav id="main-nav">
+                <a href="index.html" id="nav-home">Главная</a>
+                <a href="search.html" id="nav-search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
+                <a href="register.html" id="nav-register">Регистрация</a>
+                <a href="login.html" id="nav-login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+            </nav>
+        </header>
+
+        <main class="main-layout chat-layout">
+            <!-- Левая колонка: список друзей -->
+            <div class="chat-friends-column">
+                <div class="feed-wrapper">
+                    <section class="friends-sidebar">
+                        <h2>Чаты</h2>
+                        <div id="chatFriendsList" class="friends-list">
+                            <p class="loading-text">Загрузка друзей...</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Правая колонка: чат -->
+            <div class="chat-main-column">
+                <section class="chat-section">
+                    <div class="chat-header">
+                        <div id="chatInfo" class="chat-info" style="display: none;">
+                            <img id="friendAvatar" src="" alt="Аватар" class="friend-chat-avatar" style="display: none;">
+                            <div class="friend-chat-info">
+                                <h2 id="chatTitle">Выберите друга</h2>
+                                <span id="friendStatus" class="friend-chat-status"></span>
+                            </div>
+                        </div>
+                        <div id="noChat" class="loading-text">Выберите друга для начала чата</div>
+                    </div>
+
+                    <div id="messagesContainer" class="messages-container" style="display: none;">
+                        <p class="loading-text">Загрузка сообщений...</p>
+                    </div>
+
+                    <div id="chatInputSection" class="chat-input-section" style="display: none;">
+                        <div class="input-group">
+                            <textarea id="messageInput" placeholder="Напишите сообщение..." rows="3"></textarea>
+                        </div>
+                        <button id="sendBtn" class="auth-btn" style="width: 100%;">Отправить</button>
+                        <div id="sendMessage" class="verify-message"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            <p>hworks</p>
+        </footer>
+    </div>
+
+    <script src="chat.js"></script>
+    <script src="navbar.js"></script>
+</body>
+</html>

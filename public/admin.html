@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админ-панель</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container admin-container">
+        <header>
+<nav id="main-nav">
+    <a href="index.html" id="nav-home">Главная</a>
+    <a href="search.html" id="nav-search" style="display: none;">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
+                <a href="register.html" id="nav-register">Регистрация</a>
+    <a href="login.html" id="nav-login">Логин</a>
+    <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
+    <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
+    <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+</nav>
+        </header>
+
+        <main class="admin-main">
+            <!-- Внешняя анимированная радужная рамка -->
+            <div class="rainbow-border">
+                <!-- Внутренняя панель -->
+                <div class="admin-panel">
+                    <h1 class="admin-title">Админ-панель</h1>
+                    
+                    <!-- Кнопка показать/скрыть пользователей -->
+                    <button id="toggleUsersBtn" class="admin-toggle-btn">Показать всех пользователей</button>
+                    
+                    <!-- Блок со списком пользователей (изначально скрыт) -->
+                    <div id="usersContainer" class="users-container" style="display: none;">
+                        <div id="usersList"></div>
+                    </div>
+
+                    <div id="adminMessage" class="admin-message"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p></p>
+        </footer>
+    </div>
+
+    <script src="admin.js"></script>
+    <script src="navbar.js"></script>
+</body>
+</html>

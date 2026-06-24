@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль пользователя</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+<nav id="main-nav">
+    <a href="index.html" id="nav-home">Главная</a>
+    <a href="search.html" id="nav-search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
+                <a href="register.html" id="nav-register">Регистрация</a>
+    <a href="login.html" id="nav-login">Логин</a>
+    <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
+    <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
+    <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+</nav>
+        </header>
+
+        <main class="profile-main" style="display: flex; justify-content: flex-start; align-items: flex-start; overflow-y: auto;">
+            <section class="profile-section">
+                <h2 id="profileTitle">Профиль</h2>
+                
+                <div class="profile-layout">
+                    <div class="profile-avatar-section">
+                        <img id="avatarImg" src="" alt="Аватар" class="profile-avatar" style="display:none;">
+                        <div class="avatar-upload">
+                            <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+                            <button id="avatarUploadBtn" class="user-btn">Загрузить аватар</button>
+                        </div>
+                    </div>
+                    <div class="profile-data-section">
+                        <div class="profile-info-block">
+                            <p>Логин: <span id="username">Загрузка...</span> <span id="roleBadge" class="role-badge"></span></p>
+                            <p>Email: <span id="email">Загрузка...</span></p>
+                            <p>Дата регистрации: <span id="registrationDate">Загрузка...</span></p>
+                        </div>
+
+                        <!-- Блок подтверждения email -->
+                        <div id="verifySection" class="verify-section" style="display:none;">
+                            <h3>Подтверждение почты</h3>
+                            <p class="verify-hint">На вашу почту отправлен код. Введите его ниже:</p>
+                            <div class="verify-group">
+                                <input type="text" id="verifyCode" maxlength="6" placeholder="6-значный код">
+                                <button id="verifyBtn" class="auth-btn" style="padding: 10px; font-size: 12px;">Подтвердить</button>
+                            </div>
+                            <div id="verifyMessage" class="verify-message"></div>
+                        </div>
+
+                        <div class="bio-group">
+                            <label for="aboutMe">Обо мне:</label>
+                            <textarea id="aboutMe" ></textarea>
+                        </div>
+
+                        <!-- Блок смены логина/пароля (скрывается для banned) -->
+                        <div id="updateSection">
+                            <h3>Сменить логин и пароль</h3>
+                            <div class="update-box">
+                                <form id="updateForm" class="auth-form" style="max-width: 100%;">
+                                    <div class="input-group">
+                                        <input type="text" id="newUsername" placeholder="Введите новый логин">
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="password" id="newPassword" placeholder="Введите новый пароль">
+                                    </div>
+                                    <button type="submit" class="auth-btn">Сохранить изменения</button>
+                                    <div id="message"></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p></p>
+        </footer>
+    </div>
+
+    <script src="profile.js"></script>
+    <script src="navbar.js"></script>
+</body>
+</html>

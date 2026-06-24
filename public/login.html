@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Логин</title>
+    <link rel="stylesheet" href="styles.css"> 
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav id="main-nav">
+                <a href="index.html" id="nav-home">Главная</a>
+                <a href="search.html" id="nav-search" style="display: none;">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
+                <a href="register.html" id="nav-register">Регистрация</a>
+                <a href="login.html" id="nav-login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="auth-form">
+                <h2>Вход в систему</h2>
+                <form id="login-form">
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder="Имя пользователя" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder="Пароль" required>
+                    </div>
+                    <button type="submit" class="auth-btn">Войти</button>
+                    
+                    <div id="message" class="error-message"></div>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <p></p>
+        </footer>
+    </div>
+    <script src="login.js"></script>
+    <script src="navbar.js"></script>
+</body>
+</html>

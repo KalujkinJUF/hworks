@@ -1217,6 +1217,11 @@ textarea#aboutMe:focus {
     border-color: yellow;
 }
 
+.chat-friend-item.has-unread {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 6px rgba(255, 68, 68, 0.4);
+}
+
 .friend-item-info {
     display: flex;
     flex-direction: column;

@@ -31,11 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Загрузка списка друзей слева
     function loadFriendsList() {
-        fetch("/api/friends", {
-            headers: { "Authorization": `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(friends => {
+        Promise.all([
+            fetch("/api/friends", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json()),
+            fetch("/api/messages/unread/friends", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json())
+        ])
+        .then(([friends, unreadFriends]) => {
+            const unreadIds = new Set((unreadFriends || []).map(uf => uf.sender_id));
             const list = document.getElementById("chatFriendsList");
             if (friends.length === 0) {
                 const emptyHTML = '<p class="loading-text">У вас нет друзей</p>';
@@ -51,8 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         away: 'Away',
                         dnd: 'DND'
                     }[friend.user_status || 'offline'];
+                    const hasUnread = unreadIds.has(friend.id);
                     return `
-                        <div class="chat-friend-item" data-id="${friend.id}" data-username="${escapeHtml(friend.username)}" data-avatar="${escapeHtml(friend.avatar || '')}" data-status="${escapeHtml(friend.user_status || 'offline')}">
+                        <div class="chat-friend-item ${hasUnread ? 'has-unread' : ''}" data-id="${friend.id}" data-username="${escapeHtml(friend.username)}" data-avatar="${escapeHtml(friend.avatar || '')}" data-status="${escapeHtml(friend.user_status || 'offline')}">
                             ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
                             <div class="friend-item-info">
                                 <span class="friend-item-name" style="color: ${roleColors[friend.role] || '#fff'};">${escapeHtml(friend.username)}</span>
@@ -66,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         })
-        .catch(err => console.error('Ошибка загрузки друзей:', err));
+        .catch(err => console.error('Ошибка загрузки друзей и уведомлений:', err));
     }
 
     // Выбор друга для чата

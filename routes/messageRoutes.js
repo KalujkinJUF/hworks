@@ -23,6 +23,25 @@ router.get('/unread/count', (req, res) => {
     );
 });
 
+// Получить список отправителей непрочитанных сообщений с их количеством
+router.get('/unread/friends', (req, res) => {
+    const userId = req.user.id;
+    db.query(
+        `SELECT sender_id, COUNT(*) AS count
+         FROM messages
+         WHERE receiver_id = ? AND is_read = 0
+         GROUP BY sender_id`,
+        [userId],
+        (err, results) => {
+            if (err) {
+                console.error('Ошибка БД при получении непрочитанных от друзей:', err);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
+            res.json(results);
+        }
+    );
+});
+
 // Получить сообщения с конкретным пользователем
 router.get('/:friendId', (req, res) => {
     const userId = req.user.id;

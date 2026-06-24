@@ -8,6 +8,15 @@
     font-style: normal;
 }
 
+/* Отключение видимости полос прокрутки для всех элементов */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE / Edge */
+}
+*::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera, Electron */
+}
+
 body {
     background-color: black;
     color: yellow;
@@ -63,12 +72,36 @@ nav a {
     text-align: center;
     font-size: 18px;
     width: 200px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-nav a:hover {
-    background-color: rgba(255, 255, 0, 0.274);
-    color: yellow;
-}
+/* Цветовое кодирование кнопок навбара с мягким, последовательным неоновым свечением */
+nav a#nav-home { color: #ff9eb5; border-color: #ff9eb5; }
+nav a#nav-home:hover { background-color: rgba(255, 158, 181, 0.1); box-shadow: 0 0 15px rgba(255, 158, 181, 0.4); transform: translateY(-3px); }
+
+nav a#nav-search { color: #ffb894; border-color: #ffb894; }
+nav a#nav-search:hover { background-color: rgba(255, 184, 148, 0.1); box-shadow: 0 0 15px rgba(255, 184, 148, 0.4); transform: translateY(-3px); }
+
+nav a#nav-friends { color: #a7ffb5; border-color: #a7ffb5; }
+nav a#nav-friends:hover { background-color: rgba(167, 255, 181, 0.1); box-shadow: 0 0 15px rgba(167, 255, 181, 0.4); transform: translateY(-3px); }
+
+nav a#nav-chat { color: #9df3e6; border-color: #9df3e6; }
+nav a#nav-chat:hover { background-color: rgba(157, 243, 230, 0.1); box-shadow: 0 0 15px rgba(157, 243, 230, 0.4); transform: translateY(-3px); }
+
+nav a#nav-register { color: #a5d6ff; border-color: #a5d6ff; }
+nav a#nav-register:hover { background-color: rgba(165, 214, 255, 0.1); box-shadow: 0 0 15px rgba(165, 214, 255, 0.4); transform: translateY(-3px); }
+
+nav a#nav-login { color: #cca5ff; border-color: #cca5ff; }
+nav a#nav-login:hover { background-color: rgba(204, 165, 255, 0.1); box-shadow: 0 0 15px rgba(204, 165, 255, 0.4); transform: translateY(-3px); }
+
+nav a#nav-profile { color: #cca5ff; border-color: #cca5ff; }
+nav a#nav-profile:hover { background-color: rgba(204, 165, 255, 0.1); box-shadow: 0 0 15px rgba(204, 165, 255, 0.4); transform: translateY(-3px); }
+
+nav a#nav-admin { color: #a5b8ff; border-color: #a5b8ff; }
+nav a#nav-admin:hover { background-color: rgba(165, 184, 255, 0.1); box-shadow: 0 0 15px rgba(165, 184, 255, 0.4); transform: translateY(-3px); }
+
+nav a#nav-logout { color: #ff9e9e; border-color: #ff9e9e; }
+nav a#nav-logout:hover { background-color: rgba(255, 158, 158, 0.1); box-shadow: 0 0 15px rgba(255, 158, 158, 0.4); transform: translateY(-3px); }
 
 main {
     flex-grow: 1;
@@ -1472,4 +1505,204 @@ textarea#aboutMe:focus {
         height: auto; /* Убираем жесткую высоту 500px, контейнер подстроится под свободное место */
         min-height: 0;
     }
+}
+
+/* ==========================================================================
+   11. АНИМАЦИИ И ЭФФЕКТЫ (ПЛАВНЫЕ ПЕРЕХОДЫ И МИКРО-АНИМАЦИИ)
+   ========================================================================== */
+
+/* Анимация плавного появления снизу */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация проявления с масштабированием */
+@keyframes fadeInScaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.98) translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Анимации выезда сообщений в чате */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Пульсация индикатора онлайна */
+@keyframes pulseGreen {
+    0% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #00ff00;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+}
+
+/* Пульсация рамки непрочитанного чата */
+@keyframes pulseUnreadBorder {
+    0% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+    50% {
+        border-color: #ff6666;
+        box-shadow: 0 0 12px rgba(255, 102, 102, 0.6);
+    }
+    100% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+}
+
+/* Эффект металлического блеска для админских бейджей */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Применение анимации появления ко всем основным боксам и карточкам */
+.post-card, 
+.post-form-section, 
+.profile-layout, 
+.bio-group, 
+#mutualFriendsSection, 
+#profileCommentsSection, 
+.update-box, 
+.verify-section, 
+.friend-card, 
+.chat-friend-item, 
+.search-result-card,
+.admin-panel,
+.chat-section,
+.animate-fade-in {
+    animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Отдельные анимации выезда для новых сообщений в переписке */
+.message.friend-message.new-message-anim {
+    animation: slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+.message.my-message.new-message-anim {
+    animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+/* Применение пульсации индикатора онлайна */
+.online-dot, .friend-status-icon.status-online {
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+/* Применение пульсации непрочитанных чатов */
+.chat-friend-item.has-unread {
+    animation: pulseUnreadBorder 2s infinite ease-in-out !important;
+}
+
+/* Эффект сияния для бейджа администратора */
+.role-badge.role-admin, .user-card-role.role-admin {
+    background: linear-gradient(120deg, transparent 30%, rgba(255, 68, 68, 0.15) 40%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 68, 68, 0.15) 60%);
+    background-size: 200% 100%;
+    animation: shimmer 4s infinite linear;
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+.post-card, 
+.friend-card, 
+.search-result-card, 
+.chat-friend-item,
+.auth-btn, 
+.tab-btn, 
+.user-btn,
+.chat-btn,
+.delete-btn,
+input, 
+textarea, 
+select,
+nav a {
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Эффект приподнимания и свечения рамок при наведении */
+.post-card:hover, 
+.friend-card:hover, 
+.search-result-card:hover,
+.chat-friend-item:hover:not(.has-unread) {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.12);
+}
+
+/* Подсветка кнопок свечением при наведении */
+.auth-btn:hover, 
+.user-btn:hover,
+.chat-btn:hover,
+.delete-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 12px currentColor;
+}
+
+.tab-btn:hover:not(.active) {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Тактильный клик (сжатие кнопок) */
+button:active, 
+.auth-btn:active, 
+.user-btn:active, 
+.tab-btn:active, 
+.chat-btn:active,
+.delete-btn:active,
+nav a:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.05s ease !important;
+}
+
+/* Мягкое неоновое свечение фокуса для полей ввода */
+input:focus, 
+textarea:focus, 
+select:focus {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    border-color: yellow !important;
 }

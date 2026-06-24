@@ -35,6 +35,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (subsBtn) subsBtn.style.display = 'inline-block';
     }
 
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     const feedGlobalBtn = document.getElementById("feedGlobalBtn");
     const feedSubsBtn = document.getElementById("feedSubsBtn");
     
@@ -55,6 +65,111 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Загрузка постов в режиме "in-place"
+    function updateFeedInPlace(container, postsList, emptyMsg) {
+        const isFirstLoad = container.innerHTML.includes("loading-text") || 
+                            container.innerHTML.includes(emptyMsg);
+        
+        if (postsList.length === 0) {
+            container.innerHTML = `<p class="loading-text">${emptyMsg}</p>`;
+            return;
+        }
+
+        if (isFirstLoad) {
+            container.innerHTML = '';
+        }
+
+        const existingCards = Array.from(container.querySelectorAll(".post-card"));
+        const existingIds = new Set(existingCards.map(el => el.dataset.postId));
+        const newIds = new Set(postsList.map(p => String(p.id)));
+
+        // 1. Удаляем посты, которых больше нет
+        existingCards.forEach(el => {
+            if (!newIds.has(el.dataset.postId)) {
+                el.remove();
+            }
+        });
+
+        // 2. Вставляем новые и обновляем старые посты в соответствии с порядком
+        postsList.forEach((post, index) => {
+            const postId = String(post.id);
+            let card = container.querySelector(`.post-card[data-post-id="${postId}"]`);
+
+            const color = roleColors[post.role] || '#ffffff';
+            const avatar = post.avatar ? post.avatar : '';
+            const likeText = post.is_liked ? '♥ В любимом' : '♡ Мне нравится';
+            const likeColor = post.is_liked ? '#ff3333' : '#fff';
+            const dateStr = new Date(post.created_at).toLocaleString();
+            const contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
+
+            if (!card) {
+                card = document.createElement("div");
+                card.className = "post-card";
+                card.dataset.postId = postId;
+                card.innerHTML = `
+                    <div class="post-header">
+                        ${avatar ? `<img src="${avatar}" class="post-avatar">` : '<div class="post-avatar-placeholder"></div>'}
+                        <a href="profile.html?username=${encodeURIComponent(post.username)}" style="color: ${color}; text-decoration: none; font-weight: bold;" class="post-author">${escapeHtml(post.username)}</a>
+                        <span class="post-date">${dateStr}</span>
+                    </div>
+                    <div class="post-content">${contentHtml}</div>
+                    
+                    <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
+                        <span class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</span>
+                        <span class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold;" onclick="toggleCommentsSection(${post.id})">💬 Комментарии</span>
+                    </div>
+                    
+                    <div id="commentsWrapper-${post.id}" class="comments-wrapper" style="display: none; margin-top: 12px; border: 2px solid white; padding: 10px; background: rgba(255,255,255,0.02);">
+                        <div id="commentsList-${post.id}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                            <p class="loading-text" style="font-size: 10px;">Загрузка комментариев...</p>
+                        </div>
+                        <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; gap: 8px;">
+                            <input type="text" id="commentInput-${post.id}" placeholder="Напишите комментарий..." style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                            <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">Отправить</button>
+                        </form>
+                    </div>
+                `;
+
+                if (index === 0) {
+                    container.prepend(card);
+                } else {
+                    const referenceNode = container.children[index];
+                    if (referenceNode) {
+                        container.insertBefore(card, referenceNode);
+                    } else {
+                        container.appendChild(card);
+                    }
+                }
+            } else {
+                // Обновляем лайки
+                const likeBtn = card.querySelector(".like-btn");
+                if (likeBtn) {
+                    const newLikeStr = `${likeText} (${post.likes_count || 0})`;
+                    if (likeBtn.textContent !== newLikeStr || likeBtn.style.color !== likeColor) {
+                        likeBtn.style.color = likeColor;
+                        likeBtn.textContent = newLikeStr;
+                    }
+                }
+
+                // Обновляем контент
+                const contentEl = card.querySelector(".post-content");
+                if (contentEl && contentEl.innerHTML !== contentHtml) {
+                    contentEl.innerHTML = contentHtml;
+                }
+
+                // Корректируем позицию
+                if (container.children[index] !== card) {
+                    const referenceNode = container.children[index];
+                    if (referenceNode) {
+                        container.insertBefore(card, referenceNode);
+                    } else {
+                        container.appendChild(card);
+                    }
+                }
+            }
+        });
+    }
+
     // Загрузка постов
     function loadPosts() {
         const headers = {};
@@ -70,65 +185,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const news = posts.filter(p => p.type === 'news');
                 const patches = posts.filter(p => p.type === 'patch_note');
 
-                const newsHTML = news.length
-                    ? news.map(post => renderPost(post)).join('')
-                    : '<p class="loading-text">Новостей пока нет</p>';
-
-                const patchesHTML = patches.length
-                    ? patches.map(post => renderPost(post)).join('')
-                    : '<p class="loading-text">Обновлений пока нет</p>';
-
-                if (newsFeed.innerHTML !== newsHTML) {
-                    newsFeed.innerHTML = newsHTML;
-                }
-                if (patchFeed.innerHTML !== patchesHTML) {
-                    patchFeed.innerHTML = patchesHTML;
-                }
+                updateFeedInPlace(newsFeed, news, "Новостей пока нет");
+                updateFeedInPlace(patchFeed, patches, "Обновлений пока нет");
             })
             .catch(() => {});
-    }
-
-    function escapeHtml(text) {
-        if (text === null || text === undefined) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    function renderPost(post) {
-        const color = roleColors[post.role] || '#ffffff';
-        const avatar = post.avatar ? post.avatar : '';
-        const likeText = post.is_liked ? '♥ В любимом' : '♡ Мне нравится';
-        const likeColor = post.is_liked ? '#ff3333' : '#fff';
-        
-        return `
-            <div class="post-card" data-post-id="${post.id}">
-                <div class="post-header">
-                    ${avatar ? `<img src="${avatar}" class="post-avatar">` : '<div class="post-avatar-placeholder"></div>'}
-                    <a href="profile.html?username=${encodeURIComponent(post.username)}" style="color: ${color}; text-decoration: none; font-weight: bold;" class="post-author">${escapeHtml(post.username)}</a>
-                    <span class="post-date">${new Date(post.created_at).toLocaleString()}</span>
-                </div>
-                <div class="post-content">${escapeHtml(post.content).replace(/\n/g, '<br>')}</div>
-                
-                <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
-                    <span class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</span>
-                    <span class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold;" onclick="toggleCommentsSection(${post.id})">💬 Комментарии</span>
-                </div>
-                
-                <div id="commentsWrapper-${post.id}" class="comments-wrapper" style="display: none; margin-top: 12px; border: 2px solid white; padding: 10px; background: rgba(255,255,255,0.02);">
-                    <div id="commentsList-${post.id}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-                        <p class="loading-text" style="font-size: 10px;">Загрузка комментариев...</p>
-                    </div>
-                    <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; gap: 8px;">
-                        <input type="text" id="commentInput-${post.id}" placeholder="Напишите комментарий..." style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
-                        <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">Отправить</button>
-                    </form>
-                </div>
-            </div>
-        `;
     }
 
     // Загрузка онлайн пользователей
@@ -137,29 +197,71 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.json())
             .then(users => {
                 const list = document.getElementById("onlineList");
-                let listHTML = '';
                 if (users.length === 0) {
-                    listHTML = '<p class="loading-text">Никого нет в сети</p>';
-                } else {
-                    listHTML = users.map(u =>
-                        `<a href="profile.html?username=${encodeURIComponent(u.username)}" style="text-decoration: none; color: inherit;">
+                    list.innerHTML = '<p class="loading-text">Никого нет в сети</p>';
+                    return;
+                }
+
+                if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("Никого нет в сети")) {
+                    list.innerHTML = '';
+                }
+
+                const existingUsers = Array.from(list.querySelectorAll(".online-user-link"));
+                const newUsernames = new Set(users.map(u => u.username));
+
+                // Удаляем ушедших из сети
+                existingUsers.forEach(el => {
+                    if (!newUsernames.has(el.dataset.username)) {
+                        el.remove();
+                    }
+                });
+
+                // Добавляем / обновляем активных
+                users.forEach((u, index) => {
+                    let userEl = list.querySelector(`.online-user-link[data-username="${u.username}"]`);
+                    if (!userEl) {
+                        userEl = document.createElement("a");
+                        userEl.className = "online-user-link";
+                        userEl.dataset.username = u.username;
+                        userEl.href = `profile.html?username=${encodeURIComponent(u.username)}`;
+                        userEl.style.textDecoration = "none";
+                        userEl.style.color = "inherit";
+                        userEl.innerHTML = `
                             <div class="online-user">
                                 <span class="online-dot"></span>
                                 <span style="color: ${roleColors[u.role] || '#fff'};">${escapeHtml(u.username)}</span>
                             </div>
-                        </a>`
-                    ).join('');
-                }
-                if (list.innerHTML !== listHTML) {
-                    list.innerHTML = listHTML;
-                }
+                        `;
+
+                        if (index === 0) {
+                            list.prepend(userEl);
+                        } else {
+                            const referenceNode = list.children[index];
+                            if (referenceNode) {
+                                list.insertBefore(userEl, referenceNode);
+                            } else {
+                                list.appendChild(userEl);
+                            }
+                        }
+                    } else {
+                        const nameSpan = userEl.querySelector(".online-user span:last-child");
+                        if (nameSpan) {
+                            nameSpan.style.color = roleColors[u.role] || '#fff';
+                        }
+                        if (list.children[index] !== userEl) {
+                            const referenceNode = list.children[index];
+                            if (referenceNode) {
+                                list.insertBefore(userEl, referenceNode);
+                            } else {
+                                list.appendChild(userEl);
+                            }
+                        }
+                    }
+                });
             })
             .catch(() => {
                 const list = document.getElementById("onlineList");
-                const errorHTML = '<p class="loading-text">Ошибка загрузки</p>';
-                if (list.innerHTML !== errorHTML) {
-                    list.innerHTML = errorHTML;
-                }
+                list.innerHTML = '<p class="loading-text">Ошибка загрузки</p>';
             });
     }
 

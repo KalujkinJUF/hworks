@@ -43,30 +43,113 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (list.innerHTML !== emptyHTML) {
                     list.innerHTML = emptyHTML;
                 }
-            } else {
-                const listHTML = friends.map(friend => {
-                    const statusClass = `status-${friend.user_status || 'offline'}`;
-                    const statusText = {
-                        online: 'Online',
-                        offline: 'Offline',
-                        away: 'Away',
-                        dnd: 'DND'
-                    }[friend.user_status || 'offline'];
-                    const hasUnread = unreadIds.has(friend.id);
-                    return `
-                        <div class="chat-friend-item ${hasUnread ? 'has-unread' : ''}" data-id="${friend.id}" data-username="${escapeHtml(friend.username)}" data-avatar="${escapeHtml(friend.avatar || '')}" data-status="${escapeHtml(friend.user_status || 'offline')}">
-                            ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
-                            <div class="friend-item-info">
-                                <span class="friend-item-name" style="color: ${roleColors[friend.role] || '#fff'};">${escapeHtml(friend.username)}</span>
-                                <span class="friend-item-status"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
-                            </div>
+                return;
+            }
+
+            if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("У вас нет друзей")) {
+                list.innerHTML = '';
+            }
+
+            const existingItems = Array.from(list.querySelectorAll(".chat-friend-item"));
+            const newIds = new Set(friends.map(f => String(f.id)));
+
+            // Удаляем друзей, которых больше нет
+            existingItems.forEach(el => {
+                if (!newIds.has(el.dataset.id)) {
+                    el.remove();
+                }
+            });
+
+            // Добавляем / обновляем друзей
+            friends.forEach((friend, index) => {
+                const friendId = String(friend.id);
+                const hasUnread = unreadIds.has(friend.id);
+                const statusClass = `status-${friend.user_status || 'offline'}`;
+                const statusText = {
+                    online: 'Online',
+                    offline: 'Offline',
+                    away: 'Away',
+                    dnd: 'DND'
+                }[friend.user_status || 'offline'];
+                const roleColor = roleColors[friend.role] || '#fff';
+                const avatarUrl = friend.avatar || '';
+
+                let item = list.querySelector(`.chat-friend-item[data-id="${friendId}"]`);
+                if (!item) {
+                    item = document.createElement("div");
+                    item.className = `chat-friend-item ${hasUnread ? 'has-unread' : ''}`;
+                    item.dataset.id = friendId;
+                    item.dataset.username = friend.username;
+                    item.dataset.avatar = avatarUrl;
+                    item.dataset.status = friend.user_status || 'offline';
+
+                    item.innerHTML = `
+                        ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
+                        <div class="friend-item-info">
+                            <span class="friend-item-name" style="color: ${roleColor};">${escapeHtml(friend.username)}</span>
+                            <span class="friend-item-status"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
                         </div>
                     `;
-                }).join('');
-                if (list.innerHTML !== listHTML) {
-                    list.innerHTML = listHTML;
+
+                    if (index === 0) {
+                        list.prepend(item);
+                    } else {
+                        const referenceNode = list.children[index];
+                        if (referenceNode) {
+                            list.insertBefore(item, referenceNode);
+                        } else {
+                            list.appendChild(item);
+                        }
+                    }
+                } else {
+                    // Обновляем unread статус
+                    if (hasUnread) {
+                        item.classList.add("has-unread");
+                    } else {
+                        item.classList.remove("has-unread");
+                    }
+
+                    // Обновляем статус
+                    const statusTextEl = item.querySelector(".friend-item-status");
+                    if (statusTextEl) {
+                        statusTextEl.innerHTML = `<span class="friend-status-icon ${statusClass}"></span>${statusText}`;
+                    }
+
+                    // Обновляем аватарку
+                    if (item.dataset.avatar !== avatarUrl) {
+                        item.dataset.avatar = avatarUrl;
+                        const avatarEl = item.querySelector("img, .friend-avatar-placeholder");
+                        if (avatarEl) {
+                            if (avatarUrl) {
+                                if (avatarEl.tagName === 'IMG') {
+                                    avatarEl.src = avatarUrl;
+                                } else {
+                                    const newImg = document.createElement("img");
+                                    newImg.src = avatarUrl;
+                                    newImg.className = "friend-chat-avatar";
+                                    avatarEl.replaceWith(newImg);
+                                }
+                            } else {
+                                if (avatarEl.tagName === 'IMG') {
+                                    const newPlaceholder = document.createElement("div");
+                                    newPlaceholder.className = "friend-avatar-placeholder";
+                                    avatarEl.replaceWith(newPlaceholder);
+                                }
+                            }
+                        }
+                    }
+
+                    // Обновляем позицию
+                    if (list.children[index] !== item) {
+                        const referenceNode = list.children[index];
+                        if (referenceNode) {
+                            list.insertBefore(item, referenceNode);
+                        } else {
+                            list.appendChild(item);
+                        }
+                    }
                 }
-            }
+            });
         })
         .catch(err => console.error('Ошибка загрузки друзей и уведомлений:', err));
     }
@@ -117,26 +200,57 @@ document.addEventListener("DOMContentLoaded", () => {
                     container.innerHTML = emptyHTML;
                 }
             } else {
-                // Проверяем положение прокрутки перед рендерингом новых сообщений
                 const isCloseToBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
                 const isFirstLoad = container.innerHTML.includes("loading-text") || container.innerHTML.includes("Нет сообщений");
 
-                const messagesHTML = messages.map(msg => {
-                    const isMine = msg.sender_id === currentUserId;
-                    return `
-                        <div class="message ${isMine ? 'my-message' : 'friend-message'}">
-                            <div class="message-content">${escapeHtml(msg.content)}</div>
-                            <div class="message-time">${new Date(msg.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
-                        </div>
-                    `;
-                }).join('');
+                if (isFirstLoad) {
+                    container.innerHTML = '';
+                }
 
-                if (container.innerHTML !== messagesHTML) {
-                    container.innerHTML = messagesHTML;
-                    // Скроллим вниз только если пользователь читал последние сообщения или открыл чат впервые
-                    if (isFirstLoad || isCloseToBottom) {
-                        container.scrollTop = container.scrollHeight;
+                const existingMessages = Array.from(container.querySelectorAll(".message"));
+                const existingIds = new Set(existingMessages.map(el => el.dataset.msgId));
+                const newIds = new Set(messages.map(msg => String(msg.id)));
+
+                // 1. Удаляем удаленные сообщения
+                existingMessages.forEach(el => {
+                    if (!newIds.has(el.dataset.msgId)) {
+                        el.remove();
                     }
+                });
+
+                let addedNewMessage = false;
+
+                // 2. Добавляем новые сообщения и обновляем старые
+                messages.forEach((msg, index) => {
+                    const msgId = String(msg.id);
+                    const isMine = msg.sender_id === currentUserId;
+                    const msgClass = isMine ? 'my-message' : 'friend-message';
+                    const timeStr = new Date(msg.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    const contentHtml = escapeHtml(msg.content);
+
+                    let msgNode = container.querySelector(`.message[data-msg-id="${msgId}"]`);
+                    if (!msgNode) {
+                        msgNode = document.createElement("div");
+                        msgNode.className = `message ${msgClass}${!isFirstLoad ? ' new-message-anim' : ''}`;
+                        msgNode.dataset.msgId = msgId;
+                        msgNode.innerHTML = `
+                            <div class="message-content">${contentHtml}</div>
+                            <div class="message-time">${timeStr}</div>
+                        `;
+                        container.appendChild(msgNode);
+                        addedNewMessage = true;
+                    } else {
+                        // Обновляем контент, если изменился
+                        const contentEl = msgNode.querySelector(".message-content");
+                        if (contentEl && contentEl.innerHTML !== contentHtml) {
+                            contentEl.innerHTML = contentHtml;
+                        }
+                    }
+                });
+
+                // Скроллим вниз при первом открытии или при получении новых сообщений, если пользователь был внизу
+                if (isFirstLoad || (addedNewMessage && isCloseToBottom)) {
+                    container.scrollTop = container.scrollHeight;
                 }
             }
         })

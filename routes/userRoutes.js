@@ -51,15 +51,19 @@ const updateLastActive = (userId) => {
     db.query('UPDATE users SET last_active = NOW() WHERE id = ?', [userId]);
 };
 
-// Получить всех пользователей
+// Получить всех пользователей (только безопасные публичные поля)
 router.get('/', (req, res) => {
-    db.query('SELECT * FROM users', (err, results) => {
-        if (err) {
-            console.error('Ошибка БД при получении всех пользователей:', err);
-            return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    db.query(
+        'SELECT id, username, role, avatar, about, user_status, created_at FROM users WHERE role != ?',
+        ['banned'],
+        (err, results) => {
+            if (err) {
+                console.error('Ошибка БД при получении всех пользователей:', err);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
+            res.json(results);
         }
-        res.json(results);
-    });
+    );
 });
 
 // Поиск пользователей
@@ -136,7 +140,7 @@ router.post('/register', async (req, res) => {
                 return res.status(500).json({ error: 'Ошибка при создании пользователя' });
             }
             const newUserId = result.insertId;
-            const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+            const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
 
             sendVerificationCode(email, emailCode)
                 .then(() => console.log(`Код отправлен на ${email}: ${emailCode}`))
@@ -184,7 +188,7 @@ router.post('/login', (req, res) => {
         // Обновляем last_active при входе
         db.query('UPDATE users SET last_active = NOW() WHERE id = ?', [user.id]);
 
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });
         res.json({ token });
     });
 });

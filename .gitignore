@@ -3,4 +3,5 @@ client/
 xampp/
 .env
 *.exe
+*.log
 public/uploads/

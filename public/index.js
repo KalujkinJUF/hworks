@@ -104,8 +104,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!card) {
                 card = document.createElement("div");
-                card.className = "post-card";
+                card.className = "post-card animate-fade-in";
                 card.dataset.postId = postId;
+                card.addEventListener('animationend', () => {
+                    card.classList.remove('animate-fade-in');
+                }, { once: true });
                 card.innerHTML = `
                     <div class="post-header">
                         ${avatar ? `<img src="${avatar}" class="post-avatar">` : '<div class="post-avatar-placeholder"></div>'}
@@ -221,8 +224,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     let userEl = list.querySelector(`.online-user-link[data-username="${u.username}"]`);
                     if (!userEl) {
                         userEl = document.createElement("a");
-                        userEl.className = "online-user-link";
+                        userEl.className = "online-user-link animate-fade-in";
                         userEl.dataset.username = u.username;
+                        userEl.addEventListener('animationend', () => {
+                            userEl.classList.remove('animate-fade-in');
+                        }, { once: true });
                         userEl.href = `profile.html?username=${encodeURIComponent(u.username)}`;
                         userEl.style.textDecoration = "none";
                         userEl.style.color = "inherit";

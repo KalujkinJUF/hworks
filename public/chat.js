@@ -77,14 +77,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 let item = list.querySelector(`.chat-friend-item[data-id="${friendId}"]`);
                 if (!item) {
                     item = document.createElement("div");
-                    item.className = `chat-friend-item animate-fade-in ${hasUnread ? 'has-unread' : ''}`;
+                    item.className = `chat-friend-item ${hasUnread ? 'has-unread' : ''}`;
                     item.dataset.id = friendId;
                     item.dataset.username = friend.username;
                     item.dataset.avatar = avatarUrl;
                     item.dataset.status = friend.user_status || 'offline';
-                    item.addEventListener('animationend', () => {
-                        item.classList.remove('animate-fade-in');
-                    }, { once: true });
 
                     item.innerHTML = `
                         ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar">` : '<div class="friend-avatar-placeholder"></div>'}

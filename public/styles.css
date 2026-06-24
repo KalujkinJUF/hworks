@@ -10,11 +10,15 @@
 
 /* Отключение видимости полос прокрутки для всех элементов */
 * {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE / Edge */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE / Edge */
 }
+
 *::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera, Electron */
+    display: none;
+    /* Chrome, Safari, Opera, Electron */
 }
 
 body {
@@ -28,7 +32,8 @@ body {
     flex-direction: column;
     min-height: 100vh;
     justify-content: space-between;
-    overflow-x: hidden; /* Предотвращаем горизонтальную прокрутку на всем сайте */
+    overflow-x: hidden;
+    /* Предотвращаем горизонтальную прокрутку на всем сайте */
 }
 
 /* Общая рамка для всех страниц */
@@ -58,9 +63,11 @@ nav {
     display: flex;
     justify-content: center;
     margin-top: 10px;
-    flex-wrap: wrap; /* Разрешаем ссылкам переноситься при нехватке ширины */
+    flex-wrap: wrap;
+    /* Разрешаем ссылкам переноситься при нехватке ширины */
 }
 
+/* Базовый стиль для всех стандартных кнопок навбара — ЖЁЛТЫЙ */
 nav a {
     text-decoration: none;
     color: yellow;
@@ -75,34 +82,62 @@ nav a {
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* Цветовое кодирование кнопок навбара с мягким, последовательным желтым свечением и синим профилем */
-nav a#nav-home { color: #ffff33; border-color: #ffff33; }
-nav a#nav-home:hover { background-color: rgba(255, 255, 51, 0.1); box-shadow: 0 0 15px rgba(255, 255, 51, 0.4); transform: translateY(-3px); }
+nav a:hover {
+    background-color: rgba(255, 255, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+    transform: translateY(-3px);
+}
 
-nav a#nav-search { color: #e6ff00; border-color: #e6ff00; }
-nav a#nav-search:hover { background-color: rgba(230, 255, 0, 0.1); box-shadow: 0 0 15px rgba(230, 255, 0, 0.4); transform: translateY(-3px); }
+/* --- ЦВЕТОВОЕ ВЫДЕЛЕНИЕ ДЛЯ СПЕЦИАЛЬНЫХ КНОПОК --- */
 
-nav a#nav-friends { color: #ffcc00; border-color: #ffcc00; }
-nav a#nav-friends:hover { background-color: rgba(255, 204, 0, 0.1); box-shadow: 0 0 15px rgba(255, 204, 0, 0.4); transform: translateY(-3px); }
+/* Профиль — делаем сочным ЗЕЛЁНЫМ */
+nav a#nav-profile {
+    color: #00ff00;
+    border-color: #00ff00;
+}
 
-nav a#nav-chat { color: #ffee55; border-color: #ffee55; }
-nav a#nav-chat:hover { background-color: rgba(255, 238, 85, 0.1); box-shadow: 0 0 15px rgba(255, 238, 85, 0.4); transform: translateY(-3px); }
+nav a#nav-profile:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    transform: translateY(-3px);
+}
 
-nav a#nav-register { color: #ffa600; border-color: #ffa600; }
-nav a#nav-register:hover { background-color: rgba(255, 166, 0, 0.1); box-shadow: 0 0 15px rgba(255, 166, 0, 0.4); transform: translateY(-3px); }
+/* Выйти — оставляем строгим КРАСНЫМ, как на макете */
+nav a#nav-logout {
+    color: #ff9e9e;
+    border-color: #ff9e9e;
+}
 
-nav a#nav-login { color: #ffea00; border-color: #ffea00; }
-nav a#nav-login:hover { background-color: rgba(255, 234, 0, 0.1); box-shadow: 0 0 15px rgba(255, 234, 0, 0.4); transform: translateY(-3px); }
+nav a#nav-logout:hover {
+    background-color: rgba(255, 158, 158, 0.1);
+    box-shadow: 0 0 15px rgba(255, 158, 158, 0.4);
+    transform: translateY(-3px);
+}
 
-nav a#nav-profile { color: #00a2ff; border-color: #00a2ff; }
-nav a#nav-profile:hover { background-color: rgba(0, 162, 255, 0.1); box-shadow: 0 0 15px rgba(0, 162, 255, 0.4); transform: translateY(-3px); }
+/* Сбрасываем старые клайновские оверрайды, чтобы они не перебивали жёлтый цвет */
+nav a#nav-home,
+nav a#nav-search,
+nav a#nav-friends,
+nav a#nav-chat,
+nav a#nav-register,
+nav a#nav-login,
+nav a#nav-admin {
+    color: inherit;
+    border-color: inherit;
+}
 
-nav a#nav-admin { color: #ffb300; border-color: #ffb300; }
-nav a#nav-admin:hover { background-color: rgba(255, 179, 0, 0.1); box-shadow: 0 0 15px rgba(255, 179, 0, 0.4); transform: translateY(-3px); }
+nav a#nav-home:hover,
+nav a#nav-search:hover,
+nav a#nav-friends:hover,
+nav a#nav-chat:hover,
+nav a#nav-register:hover,
+nav a#nav-login:hover,
+nav a#nav-admin:hover {
+    background-color: rgba(255, 255, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+}
 
-nav a#nav-logout { color: #ffaa00; border-color: #ffaa00; }
-nav a#nav-logout:hover { background-color: rgba(255, 170, 0, 0.1); box-shadow: 0 0 15px rgba(255, 170, 0, 0.4); transform: translateY(-3px); }
-
+/* --- ОСНОВНОЙ КОНТЕНТ И ПОДВАЛ --- */
 main {
     flex-grow: 1;
     display: flex;
@@ -441,8 +476,13 @@ textarea#aboutMe:focus {
 }
 
 @keyframes rainbowMove {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 400% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 400% 50%;
+    }
 }
 
 /* Внутренняя панель админки (чёрная, поверх рамки) */
@@ -1215,7 +1255,8 @@ textarea#aboutMe:focus {
     gap: 20px;
     align-items: flex-start;
     box-sizing: border-box;
-    padding: 10px; /* Добавляем внутренний паддинг, чтобы правая колонка не прилипала к внешней белой стене */
+    padding: 10px;
+    /* Добавляем внутренний паддинг, чтобы правая колонка не прилипала к внешней белой стене */
 }
 
 .chat-friends-column {
@@ -1293,7 +1334,8 @@ textarea#aboutMe:focus {
     border: none;
     padding: 10px 0;
     background-color: transparent;
-    box-sizing: border-box; /* Защита от вылетов за границы */
+    box-sizing: border-box;
+    /* Защита от вылетов за границы */
 }
 
 .chat-header {
@@ -1327,7 +1369,8 @@ textarea#aboutMe:focus {
 
 .friend-chat-info {
     display: flex;
-    flex-direction: column; /* Изменили на column, чтобы имя и статус не слипались горизонтально */
+    flex-direction: column;
+    /* Изменили на column, чтобы имя и статус не слипались горизонтально */
     align-items: flex-start;
     gap: 5px;
     min-width: 0;
@@ -1360,43 +1403,53 @@ textarea#aboutMe:focus {
 .messages-container {
     border: 2px solid white;
     padding: 15px;
-    height: 500px; /* Увеличили с 380px до 500px, чтобы чат стал заметно выше и просторнее */
+    height: 500px;
+    /* Увеличили с 380px до 500px, чтобы чат стал заметно выше и просторнее */
     overflow-y: auto;
-    overflow-x: hidden; /* Скрываем горизонтальный скролл и предотвращаем вылезание сообщений */
+    overflow-x: hidden;
+    /* Скрываем горизонтальный скролл и предотвращаем вылезание сообщений */
     display: flex;
     flex-direction: column;
     gap: 12px;
     background-color: rgba(0, 0, 0, 0.7);
     box-sizing: border-box;
-    width: 100%; /* Заставляем коробку держать структуру */
+    width: 100%;
+    /* Заставляем коробку держать структуру */
 }
 
 .message {
     padding: 12px 15px;
     border-radius: 4px;
     max-width: 75%;
-    display: block; /* Изменили с flex на block для более надежного расчета ширины и переноса строк */
+    display: block;
+    /* Изменили с flex на block для более надежного расчета ширины и переноса строк */
     box-sizing: border-box;
     /* Полная защита от разрыва рамок длинными текстами и ссылками */
     word-break: break-word;
     overflow-wrap: break-word;
-    min-width: 0; /* Разрешаем сжатие в flex-контейнере */
+    min-width: 0;
+    /* Разрешаем сжатие в flex-контейнере */
 }
 
 .my-message {
     align-self: flex-end;
-    background: rgba(0, 255, 0, 0.08); /* Чуть приглушили фон */
-    border: 2px solid #00ff00; /* Вместо border-left делаем полноценную аккуратную рамку */
+    background: rgba(0, 255, 0, 0.08);
+    /* Чуть приглушили фон */
+    border: 2px solid #00ff00;
+    /* Вместо border-left делаем полноценную аккуратную рамку */
     color: #00ff00;
     padding: 10px 15px;
 }
 
 .friend-message {
     align-self: flex-start;
-    background: transparent; /* Убрали серый фон */
-    border-left: 3px solid white; /* Оставляем только аккуратную левую полоску для стиля */
+    background: transparent;
+    /* Убрали серый фон */
+    border-left: 3px solid white;
+    /* Оставляем только аккуратную левую полоску для стиля */
     color: white;
-    padding: 5px 10px; /* Уменьшаем внутренние паддинги, раз рамки больше нет */
+    padding: 5px 10px;
+    /* Уменьшаем внутренние паддинги, раз рамки больше нет */
 }
 
 .message-content {
@@ -1410,7 +1463,8 @@ textarea#aboutMe:focus {
     opacity: 0.6;
     margin-top: 6px;
     display: block;
-    text-align: right; /* Время сообщения прижимается к правому углу внутри облачка */
+    text-align: right;
+    /* Время сообщения прижимается к правому углу внутри облачка */
 }
 
 /* Поле ввода сообщений */
@@ -1424,7 +1478,8 @@ textarea#aboutMe:focus {
 .chat-input-section .input-group {
     margin-bottom: 0;
     display: flex;
-    flex-direction: column; /* Выстраиваем текстареа и кнопку отправки в ровный стек */
+    flex-direction: column;
+    /* Выстраиваем текстареа и кнопку отправки в ровный стек */
     gap: 10px;
     width: 100%;
 }
@@ -1437,7 +1492,8 @@ textarea#aboutMe:focus {
     padding: 12px;
     font-family: 'PublicPixel-rv0pA', monospace;
     font-size: 12px;
-    resize: none; /* Убираем ручной ресайз, чтобы юзер не ломал форму */
+    resize: none;
+    /* Убираем ручной ресайз, чтобы юзер не ломал форму */
     outline: none;
     box-sizing: border-box;
     min-height: 60px;
@@ -1479,7 +1535,8 @@ textarea#aboutMe:focus {
     .chat-page main.chat-layout {
         flex: 1;
         min-height: 0;
-        height: 0; /* Предотвращает раздувание flex-элемента в некоторых браузерах */
+        height: 0;
+        /* Предотвращает раздувание flex-элемента в некоторых браузерах */
     }
 
     .chat-page .chat-friends-column {
@@ -1502,7 +1559,8 @@ textarea#aboutMe:focus {
 
     .chat-page .messages-container {
         flex: 1;
-        height: auto; /* Убираем жесткую высоту 500px, контейнер подстроится под свободное место */
+        height: auto;
+        /* Убираем жесткую высоту 500px, контейнер подстроится под свободное место */
         min-height: 0;
     }
 }
@@ -1517,6 +1575,7 @@ textarea#aboutMe:focus {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1529,6 +1588,7 @@ textarea#aboutMe:focus {
         opacity: 0;
         transform: scale(0.98) translateY(6px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -1541,6 +1601,7 @@ textarea#aboutMe:focus {
         opacity: 0;
         transform: translateX(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -1552,6 +1613,7 @@ textarea#aboutMe:focus {
         opacity: 0;
         transform: translateX(20px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -1564,10 +1626,12 @@ textarea#aboutMe:focus {
         box-shadow: 0 0 4px #00ff00;
         transform: scale(1);
     }
+
     50% {
         box-shadow: 0 0 12px #00ff00;
         transform: scale(1.1);
     }
+
     100% {
         box-shadow: 0 0 4px #00ff00;
         transform: scale(1);
@@ -1580,10 +1644,12 @@ textarea#aboutMe:focus {
         border-color: #ff4444;
         box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
     }
+
     50% {
         border-color: #ff6666;
         box-shadow: 0 0 12px rgba(255, 102, 102, 0.6);
     }
+
     100% {
         border-color: #ff4444;
         box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
@@ -1595,19 +1661,24 @@ textarea#aboutMe:focus {
     0% {
         background-position: -200% 0;
     }
+
     100% {
         background-position: 200% 0;
     }
 }
 
 /* Применение анимации появления ко всем основным боксам и карточкам */
-.post-form-section, 
-.profile-layout, 
-.bio-group, 
-#mutualFriendsSection, 
-#profileCommentsSection, 
-.update-box, 
-.verify-section, 
+.post-card,
+.post-form-section,
+.profile-layout,
+.bio-group,
+#mutualFriendsSection,
+#profileCommentsSection,
+.update-box,
+.verify-section,
+.friend-card,
+.chat-friend-item,
+.search-result-card,
 .admin-panel,
 .chat-section,
 .animate-fade-in {
@@ -1624,7 +1695,8 @@ textarea#aboutMe:focus {
 }
 
 /* Применение пульсации индикатора онлайна */
-.online-dot, .friend-status-icon.status-online {
+.online-dot,
+.friend-status-icon.status-online {
     animation: pulseGreen 2s infinite ease-in-out;
 }
 
@@ -1634,7 +1706,8 @@ textarea#aboutMe:focus {
 }
 
 /* Эффект сияния для бейджа администратора */
-.role-badge.role-admin, .user-card-role.role-admin {
+.role-badge.role-admin,
+.user-card-role.role-admin {
     background: linear-gradient(120deg, transparent 30%, rgba(255, 68, 68, 0.15) 40%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 68, 68, 0.15) 60%);
     background-size: 200% 100%;
     animation: shimmer 4s infinite linear;
@@ -1643,25 +1716,25 @@ textarea#aboutMe:focus {
 }
 
 /* Плавные переходы для всех интерактивных элементов */
-.post-card, 
-.friend-card, 
-.search-result-card, 
+.post-card,
+.friend-card,
+.search-result-card,
 .chat-friend-item,
-.auth-btn, 
-.tab-btn, 
+.auth-btn,
+.tab-btn,
 .user-btn,
 .chat-btn,
 .delete-btn,
-input, 
-textarea, 
+input,
+textarea,
 select,
 nav a {
     transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* Эффект приподнимания и свечения рамок при наведении */
-.post-card:hover, 
-.friend-card:hover, 
+.post-card:hover,
+.friend-card:hover,
 .search-result-card:hover,
 .chat-friend-item:hover:not(.has-unread) {
     transform: translateY(-2px);
@@ -1670,7 +1743,7 @@ nav a {
 }
 
 /* Подсветка кнопок свечением при наведении */
-.auth-btn:hover, 
+.auth-btn:hover,
 .user-btn:hover,
 .chat-btn:hover,
 .delete-btn:hover {
@@ -1684,10 +1757,10 @@ nav a {
 }
 
 /* Тактильный клик (сжатие кнопок) */
-button:active, 
-.auth-btn:active, 
-.user-btn:active, 
-.tab-btn:active, 
+button:active,
+.auth-btn:active,
+.user-btn:active,
+.tab-btn:active,
 .chat-btn:active,
 .delete-btn:active,
 nav a:active {
@@ -1696,9 +1769,29 @@ nav a:active {
 }
 
 /* Мягкое неоновое свечение фокуса для полей ввода */
-input:focus, 
-textarea:focus, 
+input:focus,
+textarea:focus,
 select:focus {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
     border-color: yellow !important;
+}
+
+/* Анимация плавного появления ТОЛЬКО для свежеприбывших постов */
+.just-created-post {
+    animation: fadeInNewPost 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes fadeInNewPost {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        border-color: yellow;
+        /* Вспыхивает жёлтым при появлении */
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        border-color: white;
+    }
 }

@@ -33,6 +33,7 @@
                     <div class="feed-switcher" style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
                         <button id="feedGlobalBtn" class="tab-btn active" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Глобальная лента</button>
                         <button id="feedSubsBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; display: none; cursor: pointer;">Мои подписки</button>
+                        <button id="feedPatchBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Обновления сайта</button>
                     </div>
 
                     <!-- Форма создания поста (только админ/модератор) -->
@@ -50,11 +51,8 @@
                         <p class="loading-text">Загрузка...</p>
                     </div>
 
-                    <hr class="section-divider">
-
-                    <!-- Патч-ноты (обновления сайта) -->
-                    <h2 style="color: #ff8c00;">Обновления сайта</h2>
-                    <div id="patchFeed" class="news-feed">
+                    <!-- Патч-ноты (обновления сайта) — отдельная вкладка -->
+                    <div id="patchFeed" class="news-feed" style="display: none;">
                         <p class="loading-text">Загрузка...</p>
                     </div>
                 </section>

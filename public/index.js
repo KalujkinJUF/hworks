@@ -6,22 +6,22 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/users/profile", {
             headers: { "Authorization": `Bearer ${token}` }
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.role !== 'banned') {
-                document.getElementById("postFormSection").style.display = 'block';
-                // Скрыть кнопку "Обновления" для обычных пользователей
-                if (data.role !== 'admin' && data.role !== 'moderator') {
-                    document.getElementById("postPatchBtn").style.display = 'none';
+            .then(res => res.json())
+            .then(data => {
+                if (data.role !== 'banned') {
+                    document.getElementById("postFormSection").style.display = 'block';
+                    // Скрыть кнопку "Обновления" для обычных пользователей
+                    if (data.role !== 'admin' && data.role !== 'moderator') {
+                        document.getElementById("postPatchBtn").style.display = 'none';
+                    }
                 }
-            }
-            // Устанавливаем статус пользователя как онлайн
-            fetch("/api/users/status/online", {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${token}` }
-            }).catch(() => {});
-        })
-        .catch(() => {});
+                // Устанавливаем статус пользователя как онлайн
+                fetch("/api/users/status/online", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                }).catch(() => { });
+            })
+            .catch(() => { });
     }
 
     let currentFeed = 'global';
@@ -47,29 +47,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const feedGlobalBtn = document.getElementById("feedGlobalBtn");
     const feedSubsBtn = document.getElementById("feedSubsBtn");
-    
+    const feedPatchBtn = document.getElementById("feedPatchBtn");
+
+    // Утилита для переключения вкладок
+    function switchFeedTab(activeBtn) {
+        [feedGlobalBtn, feedSubsBtn, feedPatchBtn].forEach(btn => {
+            if (btn) btn.classList.remove("active");
+        });
+        if (activeBtn) activeBtn.classList.add("active");
+
+        const newsFeed = document.getElementById("newsFeed");
+        const patchFeed = document.getElementById("patchFeed");
+        const postForm = document.getElementById("postFormSection");
+
+        if (currentFeed === 'patches') {
+            newsFeed.style.display = 'none';
+            patchFeed.style.display = 'block';
+        } else {
+            newsFeed.style.display = 'block';
+            patchFeed.style.display = 'none';
+        }
+    }
+
     if (feedGlobalBtn) {
         feedGlobalBtn.addEventListener("click", () => {
             currentFeed = 'global';
-            feedGlobalBtn.classList.add("active");
-            if (feedSubsBtn) feedSubsBtn.classList.remove("active");
+            switchFeedTab(feedGlobalBtn);
+            document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
+            isInitialLoadComplete = false;
             loadPosts();
         });
     }
     if (feedSubsBtn) {
         feedSubsBtn.addEventListener("click", () => {
             currentFeed = 'subscriptions';
-            feedSubsBtn.classList.add("active");
-            if (feedGlobalBtn) feedGlobalBtn.classList.remove("active");
+            switchFeedTab(feedSubsBtn);
+            document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
+            isInitialLoadComplete = false;
+            loadPosts();
+        });
+    }
+    if (feedPatchBtn) {
+        feedPatchBtn.addEventListener("click", () => {
+            currentFeed = 'patches';
+            switchFeedTab(feedPatchBtn);
+            document.getElementById("patchFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
+            isInitialLoadComplete = false;
             loadPosts();
         });
     }
 
-    // Загрузка постов в режиме "in-place"
+    // Глобальный флаг для контроля анимаций (добавь его перед функцией)
+    let isInitialLoadComplete = false;
+
+    // Умная загрузка постов БЕЗ перезапуска анимаций
     function updateFeedInPlace(container, postsList, emptyMsg) {
-        const isFirstLoad = container.innerHTML.includes("loading-text") || 
-                            container.innerHTML.includes(emptyMsg);
-        
+        const isFirstLoad = container.innerHTML.includes("loading-text") ||
+            container.innerHTML.includes(emptyMsg);
+
         if (postsList.length === 0) {
             container.innerHTML = `<p class="loading-text">${emptyMsg}</p>`;
             return;
@@ -83,14 +118,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const existingIds = new Set(existingCards.map(el => el.dataset.postId));
         const newIds = new Set(postsList.map(p => String(p.id)));
 
-        // 1. Удаляем посты, которых больше нет
+        // 1. Удаляем посты, которых больше нет в базе
         existingCards.forEach(el => {
             if (!newIds.has(el.dataset.postId)) {
                 el.remove();
             }
         });
 
-        // 2. Вставляем новые и обновляем старые посты в соответствии с порядком
+        // 2. Рендерим новые карточки или обновляем старые динамически
         postsList.forEach((post, index) => {
             const postId = String(post.id);
             let card = container.querySelector(`.post-card[data-post-id="${postId}"]`);
@@ -102,13 +137,23 @@ document.addEventListener("DOMContentLoaded", () => {
             const dateStr = new Date(post.created_at).toLocaleString();
             const contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
 
+            // Если поста ещё нет на экране (РЕАЛЬНО НОВЫЙ ПОСТ или ПЕРВЫЙ ЗАПУСК)
             if (!card) {
                 card = document.createElement("div");
-                card.className = "post-card animate-fade-in";
+                card.className = "post-card";
                 card.dataset.postId = postId;
-                card.addEventListener('animationend', () => {
-                    card.classList.remove('animate-fade-in');
-                }, { once: true });
+
+                // --- УПРАВЛЕНИЕ АНИМАЦИЯМИ ТУТ ---
+                if (isInitialLoadComplete) {
+                    // Если страница уже загружена и это фоновый авто-апдейт:
+                    // Отключаем дефолтную анимацию и вешаем класс ТОЛЬКО для нового поста
+                    card.style.animation = "none";
+                    card.classList.add("just-created-post");
+                } else {
+                    // При самом первом заходе оставляем твою стандартную красивую анимацию из CSS
+                    // (ничего не отключаем)
+                }
+
                 card.innerHTML = `
                     <div class="post-header">
                         ${avatar ? `<img src="${avatar}" class="post-avatar">` : '<div class="post-avatar-placeholder"></div>'}
@@ -133,18 +178,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
-                if (index === 0) {
-                    container.prepend(card);
+                // Вставляем на своё порядковое место
+                const referenceNode = container.children[index];
+                if (referenceNode) {
+                    container.insertBefore(card, referenceNode);
                 } else {
-                    const referenceNode = container.children[index];
-                    if (referenceNode) {
-                        container.insertBefore(card, referenceNode);
-                    } else {
-                        container.appendChild(card);
-                    }
+                    container.appendChild(card);
                 }
             } else {
-                // Обновляем лайки
+                // Если пост уже существует — просто точечно обновляем данные, СТРОГО запрещая любые анимации
+                card.style.animation = "none";
+
                 const likeBtn = card.querySelector(".like-btn");
                 if (likeBtn) {
                     const newLikeStr = `${likeText} (${post.likes_count || 0})`;
@@ -154,20 +198,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
-                // Обновляем контент
                 const contentEl = card.querySelector(".post-content");
                 if (contentEl && contentEl.innerHTML !== contentHtml) {
                     contentEl.innerHTML = contentHtml;
-                }
-
-                // Корректируем позицию
-                if (container.children[index] !== card) {
-                    const referenceNode = container.children[index];
-                    if (referenceNode) {
-                        container.insertBefore(card, referenceNode);
-                    } else {
-                        container.appendChild(card);
-                    }
                 }
             }
         });
@@ -179,19 +212,27 @@ document.addEventListener("DOMContentLoaded", () => {
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
-        fetch(`/api/users/posts?feed=${currentFeed}`, { headers })
+
+        // На вкладке "Обновления сайта" грузим все посты, но фильтруем только патчи
+        const feedParam = currentFeed === 'patches' ? 'global' : currentFeed;
+
+        fetch(`/api/users/posts?feed=${feedParam}`, { headers })
             .then(res => res.json())
             .then(posts => {
-                const newsFeed = document.getElementById("newsFeed");
-                const patchFeed = document.getElementById("patchFeed");
+                if (currentFeed === 'patches') {
+                    const patchFeed = document.getElementById("patchFeed");
+                    const patches = posts.filter(p => p.type === 'patch_note');
+                    updateFeedInPlace(patchFeed, patches, "Обновлений пока нет");
+                } else {
+                    const newsFeed = document.getElementById("newsFeed");
+                    const news = posts.filter(p => p.type === 'news');
+                    updateFeedInPlace(newsFeed, news, "Новостей пока нет");
+                }
 
-                const news = posts.filter(p => p.type === 'news');
-                const patches = posts.filter(p => p.type === 'patch_note');
-
-                updateFeedInPlace(newsFeed, news, "Новостей пока нет");
-                updateFeedInPlace(patchFeed, patches, "Обновлений пока нет");
+                // СТРОГО ТУТ: как только первая пачка постов отрисовалась — блокируем повторные анимации!
+                isInitialLoadComplete = true;
             })
-            .catch(() => {});
+            .catch(() => { });
     }
 
     // Загрузка онлайн пользователей
@@ -212,23 +253,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 const existingUsers = Array.from(list.querySelectorAll(".online-user-link"));
                 const newUsernames = new Set(users.map(u => u.username));
 
-                // Удаляем ушедших из сети
                 existingUsers.forEach(el => {
                     if (!newUsernames.has(el.dataset.username)) {
                         el.remove();
                     }
                 });
 
-                // Добавляем / обновляем активных
                 users.forEach((u, index) => {
                     let userEl = list.querySelector(`.online-user-link[data-username="${u.username}"]`);
                     if (!userEl) {
                         userEl = document.createElement("a");
-                        userEl.className = "online-user-link animate-fade-in";
+                        userEl.className = "online-user-link";
                         userEl.dataset.username = u.username;
-                        userEl.addEventListener('animationend', () => {
-                            userEl.classList.remove('animate-fade-in');
-                        }, { once: true });
                         userEl.href = `profile.html?username=${encodeURIComponent(u.username)}`;
                         userEl.style.textDecoration = "none";
                         userEl.style.color = "inherit";
@@ -239,28 +275,16 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         `;
 
-                        if (index === 0) {
-                            list.prepend(userEl);
+                        const referenceNode = list.children[index];
+                        if (referenceNode) {
+                            list.insertBefore(userEl, referenceNode);
                         } else {
-                            const referenceNode = list.children[index];
-                            if (referenceNode) {
-                                list.insertBefore(userEl, referenceNode);
-                            } else {
-                                list.appendChild(userEl);
-                            }
+                            list.appendChild(userEl);
                         }
                     } else {
                         const nameSpan = userEl.querySelector(".online-user span:last-child");
                         if (nameSpan) {
                             nameSpan.style.color = roleColors[u.role] || '#fff';
-                        }
-                        if (list.children[index] !== userEl) {
-                            const referenceNode = list.children[index];
-                            if (referenceNode) {
-                                list.insertBefore(userEl, referenceNode);
-                            } else {
-                                list.appendChild(userEl);
-                            }
                         }
                     }
                 });
@@ -271,23 +295,22 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    // Вспомогательные глобальные функции для работы с комментариями и лайками
-    window.togglePostLike = function(postId) {
+    window.togglePostLike = function (postId) {
         if (!token) { alert("Войдите в систему, чтобы ставить лайки"); return; }
         fetch(`/api/users/posts/${postId}/like`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` }
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.message) {
-                loadPosts();
-            }
-        })
-        .catch(err => console.error(err));
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    loadPosts();
+                }
+            })
+            .catch(err => console.error(err));
     };
 
-    window.toggleCommentsSection = function(postId) {
+    window.toggleCommentsSection = function (postId) {
         const wrapper = document.getElementById(`commentsWrapper-${postId}`);
         if (wrapper) {
             if (wrapper.style.display === 'none') {
@@ -299,38 +322,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    window.loadPostComments = function(postId) {
+    window.loadPostComments = function (postId) {
         fetch(`/api/users/posts/${postId}/comments`)
-        .then(res => res.json())
-        .then(comments => {
-            const list = document.getElementById(`commentsList-${postId}`);
-            if (!list) return;
-            
-            if (comments.length === 0) {
-                list.innerHTML = '<p class="loading-text" style="font-size: 10px;">Комментариев нет. Будьте первыми!</p>';
-            } else {
-                const commentMap = {};
-                comments.forEach(c => {
-                    c.replies = [];
-                    commentMap[c.id] = c;
-                });
-                
-                const rootComments = [];
-                comments.forEach(c => {
-                    if (c.parent_id && commentMap[c.parent_id]) {
-                        commentMap[c.parent_id].replies.push(c);
-                    } else {
-                        rootComments.push(c);
-                    }
-                });
+            .then(res => res.json())
+            .then(comments => {
+                const list = document.getElementById(`commentsList-${postId}`);
+                if (!list) return;
 
-                function renderCommentNode(comment, depth = 0) {
-                    const color = roleColors[comment.role] || '#ffffff';
-                    const indent = depth * 15;
-                    const borderLeft = depth > 0 ? '2px solid rgba(255,255,255,0.2)' : 'none';
-                    const repliesHTML = comment.replies.map(r => renderCommentNode(r, depth + 1)).join('');
-                    
-                    return `
+                if (comments.length === 0) {
+                    list.innerHTML = '<p class="loading-text" style="font-size: 10px;">Комментариев нет. Будьте первыми!</p>';
+                } else {
+                    const commentMap = {};
+                    comments.forEach(c => {
+                        c.replies = [];
+                        commentMap[c.id] = c;
+                    });
+
+                    const rootComments = [];
+                    comments.forEach(c => {
+                        if (c.parent_id && commentMap[c.parent_id]) {
+                            commentMap[c.parent_id].replies.push(c);
+                        } else {
+                            rootComments.push(c);
+                        }
+                    });
+
+                    function renderCommentNode(comment, depth = 0) {
+                        const color = roleColors[comment.role] || '#ffffff';
+                        const indent = depth * 15;
+                        const borderLeft = depth > 0 ? '2px solid rgba(255,255,255,0.2)' : 'none';
+                        const repliesHTML = comment.replies.map(r => renderCommentNode(r, depth + 1)).join('');
+
+                        return `
                         <div style="padding-left: 8px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 4px; padding-bottom: 4px; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 6px; font-size: 10px;">
                                 <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
@@ -341,15 +364,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${repliesHTML}
                         </div>
                     `;
-                }
+                    }
 
-                list.innerHTML = rootComments.map(c => renderCommentNode(c)).join('');
-            }
-        })
-        .catch(err => console.error(err));
+                    list.innerHTML = rootComments.map(c => renderCommentNode(c)).join('');
+                }
+            })
+            .catch(err => console.error(err));
     };
 
-    window.replyToComment = function(postId, commentId, username) {
+    window.replyToComment = function (postId, commentId, username) {
         const input = document.getElementById(`commentInput-${postId}`);
         if (input) {
             input.value = `@${username}, `;
@@ -358,15 +381,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    window.submitPostComment = function(event, postId) {
+    window.submitPostComment = function (event, postId) {
         event.preventDefault();
         if (!token) { alert("Войдите в систему, чтобы комментировать"); return; }
-        
+
         const input = document.getElementById(`commentInput-${postId}`);
         if (!input) return;
         const content = input.value.trim();
         if (!content) return;
-        
+
         const parentId = input.dataset.parentId || null;
 
         fetch(`/api/users/posts/${postId}/comments`, {
@@ -374,27 +397,25 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ content, parent_id: parentId })
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.commentId) {
-                input.value = "";
-                delete input.dataset.parentId;
-                loadPostComments(postId);
-            } else if (data.error) {
-                alert(data.error);
-            }
-        })
-        .catch(err => console.error(err));
+            .then(res => res.json())
+            .then(data => {
+                if (data.commentId) {
+                    input.value = "";
+                    delete input.dataset.parentId;
+                    loadPostComments(postId);
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(err => console.error(err));
     };
 
     loadPosts();
     loadOnline();
-    
-    // Периодическое обновление
-    setInterval(loadOnline, 30000); // обновлять онлайн каждые 30 сек
-    
+
+    setInterval(loadOnline, 30000);
+
     setInterval(() => {
-        // Проверяем: если открыто хоть одно окно комментариев или фокус на инпуте - не обновляем посты автоматически, чтобы не ломать ввод
         const openWrappers = document.querySelectorAll(".comments-wrapper[style*='block']");
         const hasFocusedInput = document.activeElement && document.activeElement.id && document.activeElement.id.startsWith("commentInput-");
         if (openWrappers.length === 0 && !hasFocusedInput) {
@@ -402,28 +423,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 10000);
 
-    // Создание поста
     function createPost(type) {
         if (!token) { alert("Войдите в систему"); return; }
         const content = document.getElementById("postContent").value.trim();
-        if (!content) { document.getElementById("postMessage").textContent = "Напишите текст"; return; }
+        if (!content) { document.getElementById("postMessage").textContent = "Напишите text"; return; }
 
         fetch("/api/users/posts", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ content, type })
         })
-        .then(res => res.json())
-        .then(data => {
-            const msg = document.getElementById("postMessage");
-            msg.textContent = data.message || data.error;
-            msg.style.color = data.message ? "#00ff00" : "#ff4444";
-            if (data.message) {
-                document.getElementById("postContent").value = "";
-                loadPosts();
-            }
-        })
-        .catch(() => {});
+            .then(res => res.json())
+            .then(data => {
+                const msg = document.getElementById("postMessage");
+                msg.textContent = data.message || data.error;
+                msg.style.color = data.message ? "#00ff00" : "#ff4444";
+                if (data.message) {
+                    document.getElementById("postContent").value = "";
+                    loadPosts();
+                }
+            })
+            .catch(() => { });
     }
 
     document.getElementById("postNewsBtn").addEventListener("click", () => createPost('news'));

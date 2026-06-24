@@ -2,3 +2,5 @@ node_modules/
 client/
 xampp/
 .env
+*.exe
+public/uploads/

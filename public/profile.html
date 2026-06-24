@@ -36,8 +36,20 @@
                     <div class="profile-data-section">
                         <div class="profile-info-block">
                             <p>Логин: <span id="username">Загрузка...</span> <span id="roleBadge" class="role-badge"></span></p>
+                            <p id="statusContainer">Статус: <span id="userStatusText">Загрузка...</span>
+                                <select id="userStatusSelect" style="display: none; background: black; color: yellow; border: 2px solid white; font-family: inherit; font-size: 10px; padding: 2px; margin-left: 5px; cursor: pointer;">
+                                    <option value="online">Online</option>
+                                    <option value="away">Away</option>
+                                    <option value="dnd">DND</option>
+                                    <option value="offline">Offline</option>
+                                </select>
+                            </p>
                             <p>Email: <span id="email">Загрузка...</span></p>
                             <p>Дата регистрации: <span id="registrationDate">Загрузка...</span></p>
+                            <p id="subscriptionStats" style="margin-top: 10px; font-size: 11px;">
+                                Подписчики: <span id="followersCount">0</span> | Подписки: <span id="followingCount">0</span>
+                            </p>
+                            <button id="subscribeBtn" class="auth-btn" style="display: none; padding: 6px 12px; font-size: 10px; margin-top: 8px; width: auto; cursor: pointer;"></button>
                         </div>
 
                         <!-- Блок подтверждения email -->
@@ -62,7 +74,7 @@
                             <div class="update-box">
                                 <form id="updateForm" class="auth-form" style="max-width: 100%;">
                                     <div class="input-group">
-                                        <input type="text" id="newUsername" placeholder="Введите новый логин">
+                                        <input type="text" id="newUsername" maxlength="20" placeholder="Введите новый логин">
                                     </div>
                                     <div class="input-group">
                                         <input type="password" id="newPassword" placeholder="Введите новый пароль">
@@ -72,14 +84,30 @@
                                 </form>
                             </div>
                         </div>
+                        
+                        <!-- Блок Общих Друзей -->
+                        <div id="mutualFriendsSection" style="display: none; margin-top: 20px; border: 2px solid white; padding: 15px; background: black;">
+                            <h3 style="color: #00ccff; text-align: center; margin-top: 0; font-size: 14px; text-transform: uppercase;">Общие друзья</h3>
+                            <div id="mutualFriendsList" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок Стены отзывов -->
+                <div id="profileCommentsSection" style="margin-top: 30px; border: 2px solid white; padding: 20px; background-color: black;">
+                    <h3 style="color: #00ff00; border-bottom: 2px dashed white; padding-bottom: 10px; font-size: 16px; text-align: center; margin-top: 0; text-transform: uppercase;">Стена отзывов</h3>
+                    
+                    <form id="commentForm" style="margin-bottom: 20px;">
+                        <textarea id="commentContent" placeholder="Оставьте отзыв о пользователе..." rows="3" style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; resize: none; outline: none;"></textarea>
+                        <button type="submit" class="auth-btn" style="margin-top: 10px; width: 100%;">Оставить отзыв</button>
+                    </form>
+                    
+                    <div id="commentList">
+                        <p class="loading-text">Загрузка отзывов...</p>
                     </div>
                 </div>
             </section>
         </main>
-
-        <footer>
-            <p></p>
-        </footer>
     </div>
 
     <script src="profile.js"></script>

@@ -31,13 +31,20 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(myData => {
         currentUserId = myData.id;
 
+        if (myData.role === 'banned') {
+            const commentForm = document.getElementById("commentForm");
+            if (commentForm) commentForm.style.display = 'none';
+        }
+
         // Если нет параметра URL - показываем свой профиль
         if (!viewingUsername) {
             loadProfile(myData, true);
         } else {
             // Если есть параметр - загружаем профиль того пользователя
             isOwnProfile = false;
-            fetch(`/api/users/profile/${viewingUsername}`)
+            fetch(`/api/users/profile/${viewingUsername}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            })
                 .then(res => {
                     if (!res.ok) throw new Error('User not found');
                     return res.json();
@@ -101,6 +108,34 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // Статус
+        const userStatusText = document.getElementById("userStatusText");
+        const statusMap = {
+            online: 'Online',
+            offline: 'Offline',
+            away: 'Away',
+            dnd: 'DND'
+        };
+        const statusColors = {
+            online: '#00ff00',
+            offline: '#888888',
+            away: '#ffcc00',
+            dnd: '#ff3333'
+        };
+        if (userStatusText) {
+            userStatusText.innerText = statusMap[data.user_status] || 'Offline';
+            userStatusText.style.color = statusColors[data.user_status] || '#888888';
+        }
+        const userStatusSelect = document.getElementById("userStatusSelect");
+        if (userStatusSelect) {
+            if (isOwn) {
+                userStatusSelect.style.display = 'inline-block';
+                userStatusSelect.value = data.user_status || 'online';
+            } else {
+                userStatusSelect.style.display = 'none';
+            }
+        }
+
         // Блок подтверждения email (только для своего профиля)
         const verifySection = document.getElementById("verifySection");
         if (verifySection) {
@@ -144,6 +179,71 @@ document.addEventListener("DOMContentLoaded", () => {
             if (bioGroup) bioGroup.style.display = 'none';
             const avatarUpload = document.querySelector('.avatar-upload');
             if (avatarUpload) avatarUpload.style.display = 'none';
+        }
+
+        // Обновляем статистику подписок
+        document.getElementById("followersCount").innerText = data.followers_count || 0;
+        document.getElementById("followingCount").innerText = data.following_count || 0;
+
+        const subscribeBtn = document.getElementById("subscribeBtn");
+        if (subscribeBtn) {
+            if (!isOwn) {
+                subscribeBtn.style.display = 'inline-block';
+                subscribeBtn.textContent = data.is_subscribed ? 'Отписаться' : 'Подписаться';
+                subscribeBtn.onclick = () => {
+                    fetch(`/api/users/subscribe/${data.id}`, {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${token}` }
+                    })
+                    .then(res => res.json())
+                    .then(subRes => {
+                        if (subRes.message) {
+                            data.is_subscribed = subRes.subscribed;
+                            subscribeBtn.textContent = subRes.subscribed ? 'Отписаться' : 'Подписаться';
+                            const currentCount = parseInt(document.getElementById("followersCount").innerText);
+                            document.getElementById("followersCount").innerText = subRes.subscribed ? currentCount + 1 : currentCount - 1;
+                        }
+                    })
+                    .catch(err => console.error(err));
+                };
+            } else {
+                subscribeBtn.style.display = 'none';
+            }
+        }
+
+        // Общие друзья (только при просмотре чужого профиля)
+        if (!isOwn) {
+            loadMutualFriends(data.id);
+        } else {
+            document.getElementById("mutualFriendsSection").style.display = 'none';
+        }
+
+        // Загрузка стены отзывов
+        loadProfileComments(data.id);
+
+        // Настройка формы отправки отзывов
+        const commentForm = document.getElementById("commentForm");
+        if (commentForm) {
+            commentForm.onsubmit = (e) => {
+                e.preventDefault();
+                const content = document.getElementById("commentContent").value.trim();
+                if (!content) return;
+                fetch(`/api/comments/profile/${data.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ content })
+                })
+                .then(res => res.json())
+                .then(commentRes => {
+                    if (commentRes.commentId) {
+                        document.getElementById("commentContent").value = "";
+                        loadProfileComments(data.id);
+                    } else if (commentRes.error) {
+                        alert(commentRes.error);
+                    }
+                })
+                .catch(err => console.error(err));
+            };
         }
     }
 
@@ -239,13 +339,34 @@ document.addEventListener("DOMContentLoaded", () => {
             const finalUsername = newUsernameInput || document.getElementById("username").innerText;
             if (messageDiv) messageDiv.textContent = "";
 
+            if (newUsernameInput) {
+                if (newUsernameInput.length < 3 || newUsernameInput.length > 20) {
+                    if (messageDiv) {
+                        messageDiv.style.color = "red";
+                        messageDiv.textContent = "Имя пользователя должно быть от 3 до 20 символов";
+                    }
+                    return;
+                }
+                const usernameRegex = /^[a-zA-Z0-9а-яА-ЯёЁ_.-]+$/;
+                if (!usernameRegex.test(newUsernameInput)) {
+                    if (messageDiv) {
+                        messageDiv.style.color = "red";
+                        messageDiv.textContent = "Имя пользователя может содержать только буквы, цифры, подчёркивание, точку и дефис";
+                    }
+                    return;
+                }
+            }
+
             fetch(`/api/users/${currentUserId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ username: finalUsername, password: newPasswordInput || null, about: newAbout })
             })
-            .then(response => {
-                if (!response.ok) throw new Error("Ошибка обновления профиля");
+            .then(async response => {
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || "Ошибка обновления профиля");
+                }
                 if (messageDiv) {
                     messageDiv.style.color = "#00ff00";
                     messageDiv.textContent = "Профиль успешно обновлён!";
@@ -256,10 +377,99 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error(error);
                 if (messageDiv) {
                     messageDiv.style.color = "red";
-                    messageDiv.textContent = "Ошибка при обновлении профиля.";
+                    messageDiv.textContent = error.message || "Ошибка при обновлении профиля.";
                 }
             });
         });
+    }
+
+    // Обработчик смены статуса
+    const userStatusSelect = document.getElementById("userStatusSelect");
+    if (userStatusSelect) {
+        userStatusSelect.addEventListener("change", (e) => {
+            const status = e.target.value;
+            fetch(`/api/users/status/${status}`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    const statusText = document.getElementById("userStatusText");
+                    const statusMap = {
+                        online: 'Online',
+                        offline: 'Offline',
+                        away: 'Away',
+                        dnd: 'DND'
+                    };
+                    const statusColors = {
+                        online: '#00ff00',
+                        offline: '#888888',
+                        away: '#ffcc00',
+                        dnd: '#ff3333'
+                    };
+                    if (statusText) {
+                        statusText.innerText = statusMap[status];
+                        statusText.style.color = statusColors[status];
+                    }
+                }
+            })
+            .catch(err => console.error("Error setting status:", err));
+        });
+    }
+
+    function loadMutualFriends(targetId) {
+        fetch(`/api/friends/mutual/${targetId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(friends => {
+            const list = document.getElementById("mutualFriendsList");
+            const sect = document.getElementById("mutualFriendsSection");
+            if (friends.length === 0) {
+                sect.style.display = 'none';
+            } else {
+                sect.style.display = 'block';
+                list.innerHTML = friends.map(f => {
+                    const color = roleColors[f.role] || '#ffffff';
+                    return `
+                        <a href="profile.html?username=${encodeURIComponent(f.username)}" style="text-decoration: none; color: inherit;">
+                            <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
+                                ${f.avatar ? `<img src="${escapeHtml(f.avatar)}" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;">` : '<div style="width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                <span style="font-size: 8px; margin-top: 5px; color: ${color}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center;">${escapeHtml(f.username)}</span>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+            }
+        })
+        .catch(err => console.error("Error loading mutual friends:", err));
+    }
+
+    function loadProfileComments(targetId) {
+        fetch(`/api/comments/profile/${targetId}`)
+        .then(res => res.json())
+        .then(comments => {
+            const list = document.getElementById("commentList");
+            if (comments.length === 0) {
+                list.innerHTML = '<p class="loading-text">Отзывов пока нет</p>';
+            } else {
+                list.innerHTML = comments.map(c => {
+                    const color = roleColors[c.role] || '#ffffff';
+                    return `
+                        <div style="border: 2px solid white; padding: 10px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.03);">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid white; object-fit: cover;">` : '<div style="width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                <span style="color: ${color}; font-size: 11px; font-weight: bold;">${escapeHtml(c.username)}</span>
+                                <span style="font-size: 8px; color: rgba(255,255,255,0.5); margin-left: auto;">${new Date(c.created_at).toLocaleString()}</span>
+                            </div>
+                            <div style="font-size: 11px; text-align: left; color: white; word-break: break-word; line-height: 1.4;">${escapeHtml(c.content).replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        })
+        .catch(err => console.error("Error loading comments:", err));
     }
 
     // Функция для экранирования HTML

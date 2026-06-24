@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const searchBtn = document.getElementById("searchBtn");
+
     const searchInput = document.getElementById("searchInput");
     const resultsDiv = document.getElementById("searchResults");
     const messageDiv = document.getElementById("searchMessage");
@@ -145,10 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    searchBtn.addEventListener("click", doSearch);
-    searchInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") doSearch();
-    });
+
 
     // Поиск при вводе (в реальном времени)
     searchInput.addEventListener("input", doSearch);

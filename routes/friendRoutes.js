@@ -11,7 +11,7 @@ router.use(verifyNotBanned);
 router.get('/', (req, res) => {
     const userId = req.user.id;
     db.query(
-        `SELECT u.id, u.username, u.avatar, u.role, u.user_status FROM users u
+        `SELECT u.id, u.username, u.avatar, u.role, IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status FROM users u
          INNER JOIN friends f ON (f.user_id = u.id OR f.friend_id = u.id)
          WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted' AND u.id != ?`,
         [userId, userId, userId],
@@ -29,7 +29,7 @@ router.get('/', (req, res) => {
 router.get('/requests/incoming', (req, res) => {
     const userId = req.user.id;
     db.query(
-        `SELECT u.id, u.username, u.avatar, u.role, u.user_status, f.id as request_id FROM users u
+        `SELECT u.id, u.username, u.avatar, u.role, IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status, f.id as request_id FROM users u
          INNER JOIN friends f ON f.user_id = u.id
          WHERE f.friend_id = ? AND f.status = 'pending'`,
         [userId],
@@ -47,7 +47,7 @@ router.get('/requests/incoming', (req, res) => {
 router.get('/requests/outgoing', (req, res) => {
     const userId = req.user.id;
     db.query(
-        `SELECT u.id, u.username, u.avatar, u.role, u.user_status, f.id as request_id FROM users u
+        `SELECT u.id, u.username, u.avatar, u.role, IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status, f.id as request_id FROM users u
          INNER JOIN friends f ON f.friend_id = u.id
          WHERE f.user_id = ? AND f.status = 'pending'`,
         [userId],
@@ -162,6 +162,41 @@ router.delete('/:friendId', (req, res) => {
                 return res.status(404).json({ error: 'Друг не найден' });
             }
             res.json({ message: 'Друг удален' });
+        }
+    );
+});
+
+// Получить список общих друзей
+router.get('/mutual/:userId', (req, res) => {
+    const userId = req.user.id;
+    const targetUserId = parseInt(req.params.userId);
+
+    if (userId === targetUserId) {
+        return res.json([]);
+    }
+
+    const query = `
+        SELECT u.id, u.username, u.avatar, u.role FROM users u
+        WHERE u.id IN (
+            SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END
+            FROM friends 
+            WHERE (user_id = ? OR friend_id = ?) AND status = 'accepted'
+        ) AND u.id IN (
+            SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END
+            FROM friends 
+            WHERE (user_id = ? OR friend_id = ?) AND status = 'accepted'
+        ) AND u.id != ? AND u.id != ?
+    `;
+
+    db.query(
+        query,
+        [userId, userId, userId, targetUserId, targetUserId, targetUserId, userId, targetUserId],
+        (err, results) => {
+            if (err) {
+                console.error('Ошибка БД при поиске общих друзей:', err);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
+            res.json(results);
         }
     );
 });

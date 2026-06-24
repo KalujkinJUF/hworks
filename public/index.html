@@ -29,6 +29,12 @@
                 <section class="main-content-wrapper">
                     <h2>Посты</h2>
 
+                    <!-- Переключатель ленты -->
+                    <div class="feed-switcher" style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
+                        <button id="feedGlobalBtn" class="tab-btn active" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Глобальная лента</button>
+                        <button id="feedSubsBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; display: none; cursor: pointer;">Мои подписки</button>
+                    </div>
+
                     <!-- Форма создания поста (только админ/модератор) -->
                     <div id="postFormSection" class="post-form-section" style="display:none;">
                         <textarea id="postContent" rows="3" placeholder="Напишите пост..."></textarea>
@@ -66,8 +72,8 @@
             </aside>
         </main>
 
-        <footer>
-            <p>hworks</p>
+        <footer style="font-size: 10px; padding: 5px 0;">
+            <p>&copy; hworks</p>
         </footer>
     </div>
     <script src="index.js"></script>

@@ -30,11 +30,17 @@ app.use('/api/messages', messageRoutes);
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
+// Эндпоинт получения текущей версии
+app.get('/api/version', (req, res) => {
+    res.json({ version: 'a0.2' });
+});
 
 // Раздача всего из папки public
 app.use(express.static(path.join(__dirname, 'public')));
 // Раздача динамических загрузок из физического каталога (для совместимости с EXE-сборщиками вроде pkg)
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+// Раздача обновлений клиента из физической папки updates
+app.use('/updates', express.static(path.join(process.cwd(), 'updates')));
 
 
 // Запуск сервера

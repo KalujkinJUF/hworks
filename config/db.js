@@ -7,6 +7,7 @@ const db = mysql.createConnection({
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'Motocikl1234!',
     database: process.env.DB_NAME || 'social-network',
+    charset: 'utf8mb4'
 });
 
 console.log('Подключаемся к БД...');

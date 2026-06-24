@@ -38,9 +38,12 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(friends => {
             const list = document.getElementById("chatFriendsList");
             if (friends.length === 0) {
-                list.innerHTML = '<p class="loading-text">У вас нет друзей</p>';
+                const emptyHTML = '<p class="loading-text">У вас нет друзей</p>';
+                if (list.innerHTML !== emptyHTML) {
+                    list.innerHTML = emptyHTML;
+                }
             } else {
-                list.innerHTML = friends.map(friend => {
+                const listHTML = friends.map(friend => {
                     const statusClass = `status-${friend.user_status || 'offline'}`;
                     const statusText = {
                         online: 'Online',
@@ -58,6 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     `;
                 }).join('');
+                if (list.innerHTML !== listHTML) {
+                    list.innerHTML = listHTML;
+                }
             }
         })
         .catch(err => console.error('Ошибка загрузки друзей:', err));
@@ -104,13 +110,16 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(messages => {
             const container = document.getElementById("messagesContainer");
             if (messages.length === 0) {
-                container.innerHTML = '<p class="loading-text">Нет сообщений. Начните диалог!</p>';
+                const emptyHTML = '<p class="loading-text">Нет сообщений. Начните диалог!</p>';
+                if (container.innerHTML !== emptyHTML) {
+                    container.innerHTML = emptyHTML;
+                }
             } else {
                 // Проверяем положение прокрутки перед рендерингом новых сообщений
                 const isCloseToBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
                 const isFirstLoad = container.innerHTML.includes("loading-text") || container.innerHTML.includes("Нет сообщений");
 
-                container.innerHTML = messages.map(msg => {
+                const messagesHTML = messages.map(msg => {
                     const isMine = msg.sender_id === currentUserId;
                     return `
                         <div class="message ${isMine ? 'my-message' : 'friend-message'}">
@@ -120,15 +129,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     `;
                 }).join('');
 
-                // Скроллим вниз только если пользователь читал последние сообщения или открыл чат впервые
-                if (isFirstLoad || isCloseToBottom) {
-                    container.scrollTop = container.scrollHeight;
+                if (container.innerHTML !== messagesHTML) {
+                    container.innerHTML = messagesHTML;
+                    // Скроллим вниз только если пользователь читал последние сообщения или открыл чат впервые
+                    if (isFirstLoad || isCloseToBottom) {
+                        container.scrollTop = container.scrollHeight;
+                    }
                 }
             }
         })
         .catch(err => {
             console.error('Ошибка загрузки сообщений:', err);
-            document.getElementById("messagesContainer").innerHTML = '<p class="loading-text">Ошибка загрузки</p>';
+            const container = document.getElementById("messagesContainer");
+            const errorHTML = '<p class="loading-text">Ошибка загрузки</p>';
+            if (container.innerHTML !== errorHTML) {
+                container.innerHTML = errorHTML;
+            }
         });
     }
 

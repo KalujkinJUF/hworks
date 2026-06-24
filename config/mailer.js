@@ -1,12 +1,19 @@
 const nodemailer = require('nodemailer');
 
+const mailHost = process.env.MAIL_HOST || 'smtp.gmail.com';
+const mailPort = parseInt(process.env.MAIL_PORT || '465', 10);
+const mailSecure = process.env.MAIL_SECURE !== 'false'; // default is true
+const mailUser = process.env.MAIL_USER || 'dmitriyjari@gmail.com';
+const mailPass = process.env.MAIL_PASS || 'lsuw zdzx jpob khat';
+const mailFrom = process.env.MAIL_FROM || '"Сайт" <dmitriyjari@gmail.com>';
+
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    host: mailHost,
+    port: mailPort,
+    secure: mailSecure,
     auth: {
-        user: 'dmitriyjari@gmail.com',
-        pass: 'lsuw zdzx jpob khat'
+        user: mailUser,
+        pass: mailPass
     }
 });
 
@@ -17,7 +24,7 @@ const transporter = nodemailer.createTransport({
  */
 const sendVerificationCode = async (to, code) => {
     const mailOptions = {
-        from: '"Сайт" <dmitriyjari@gmail.com>',
+        from: mailFrom,
         to,
         subject: 'Подтверждение почты',
         text: `Ваш код подтверждения: ${code}`,

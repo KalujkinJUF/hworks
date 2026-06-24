@@ -82,7 +82,7 @@ router.get('/search', (req, res) => {
 // Онлайн пользователи (активны последние 5 минут)
 router.get('/online', (req, res) => {
     db.query(
-        "SELECT id, username, role, avatar FROM users WHERE last_active >= NOW() - INTERVAL 5 MINUTE AND role != 'banned'",
+        "SELECT id, username, role, avatar FROM users WHERE last_active >= NOW() - INTERVAL 5 MINUTE AND role != 'banned' AND user_status != 'offline'",
         (err, results) => {
             if (err) {
                 console.error('Ошибка БД при получении онлайн-пользователей:', err);
@@ -193,7 +193,7 @@ router.post('/login', (req, res) => {
 router.get('/profile', verifyToken, async (req, res) => {
     try {
         db.query(
-            'SELECT id, username, email, verified, created_at, about, avatar, role FROM users WHERE id = ?',
+            'SELECT id, username, email, verified, created_at, about, avatar, role, user_status FROM users WHERE id = ?',
             [req.user.id],
             (err, results) => {
                 if (err || results.length === 0) return res.status(404).send('User not found');
@@ -207,7 +207,8 @@ router.get('/profile', verifyToken, async (req, res) => {
                     created_at: user.created_at,
                     about: user.about,
                     avatar: user.avatar,
-                    role: user.role
+                    role: user.role,
+                    user_status: user.user_status
                 });
             }
         );
@@ -219,12 +220,36 @@ router.get('/profile', verifyToken, async (req, res) => {
 // Профиль другого пользователя (публичный)
 router.get('/profile/:username', (req, res) => {
     const { username } = req.params;
+    
+    // Попытка получить ID залогиненного пользователя из токена (если передан)
+    let requesterId = 0;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+            requesterId = decoded.id;
+        } catch (e) {}
+    }
+
+    const query = `
+        SELECT u.id, u.username, u.created_at, u.about, u.avatar, u.role, 
+               IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status,
+               (SELECT COUNT(*) FROM subscriptions WHERE following_id = u.id) AS followers_count,
+               (SELECT COUNT(*) FROM subscriptions WHERE follower_id = u.id) AS following_count,
+               (SELECT COUNT(*) FROM subscriptions WHERE follower_id = ? AND following_id = u.id) AS is_subscribed
+        FROM users u 
+        WHERE u.username = ?
+    `;
+
     db.query(
-        'SELECT id, username, created_at, about, avatar, role FROM users WHERE username = ?',
-        [username],
+        query,
+        [requesterId, username],
         (err, results) => {
             if (err || results.length === 0) return res.status(404).json({ error: 'User not found' });
-            res.json(results[0]);
+            const profile = results[0];
+            profile.is_subscribed = !!profile.is_subscribed;
+            res.json(profile);
         }
     );
 });
@@ -242,22 +267,55 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), (r
     });
 });
 
-// Посты — получить все
+// Посты — получить все с учетом лайков и подписок
 router.get('/posts', (req, res) => {
     const type = req.query.type || null;
+    const feed = req.query.feed || 'global';
+    
+    // Попытка получить ID залогиненного пользователя из токена (если передан)
+    let requesterId = 0;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+            requesterId = decoded.id;
+        } catch (e) {}
+    }
+
     let query = `
-        SELECT posts.*, users.username, users.role, users.avatar 
+        SELECT posts.*, users.username, users.role, users.avatar,
+               (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) AS likes_count,
+               (SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = posts.id) AS is_liked
         FROM posts 
         JOIN users ON posts.user_id = users.id
     `;
-    const params = [];
+    
+    const params = [requesterId];
+    const whereClauses = [];
+
     if (type === 'news' || type === 'patch_note') {
-        query += ' WHERE posts.type = ?';
+        whereClauses.push('posts.type = ?');
         params.push(type);
     }
+
+    if (feed === 'subscriptions' && requesterId > 0) {
+        whereClauses.push('(posts.user_id = ? OR posts.user_id IN (SELECT following_id FROM subscriptions WHERE follower_id = ?))');
+        params.push(requesterId, requesterId);
+    }
+
+    if (whereClauses.length > 0) {
+        query += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
     query += ' ORDER BY posts.created_at DESC LIMIT 50';
+
     db.query(query, params, (err, results) => {
-        if (err) return res.status(500).json({ error: err });
+        if (err) {
+            console.error('Ошибка получения постов:', err);
+            return res.status(500).json({ error: 'Ошибка БД при получении постов' });
+        }
+        results.forEach(p => p.is_liked = !!p.is_liked);
         res.json(results);
     });
 });
@@ -341,12 +399,29 @@ router.put('/:id', verifyToken, async (req, res) => {
         return res.status(500).send('Error checking user status');
     }
     const { username, password, about } = req.body;
+
+    // Валидация имени пользователя
+    const usernameTrim = username ? username.trim() : '';
+    if (!usernameTrim) {
+        return res.status(400).json({ error: 'Имя пользователя обязательно' });
+    }
+    if (usernameTrim.length < 3 || usernameTrim.length > 20) {
+        return res.status(400).json({ error: 'Имя пользователя должно быть от 3 до 20 символов' });
+    }
+    const usernameRegex = /^[a-zA-Z0-9а-яА-ЯёЁ_.-]+$/;
+    if (!usernameRegex.test(usernameTrim)) {
+        return res.status(400).json({ error: 'Имя пользователя может содержать только буквы, цифры, подчёркивание, точку и дефис' });
+    }
+
     try {
-        const result = await updateUser(userId, username, password, about);
+        const result = await updateUser(userId, usernameTrim, password, about);
         if (result.affectedRows === 0) return res.status(404).send('User not found');
         updateLastActive(userId);
         res.send('User updated successfully');
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: 'Пользователь с таким именем уже существует' });
+        }
         res.status(500).send('Error updating user');
     }
 });
@@ -378,6 +453,164 @@ router.post('/status/:status', verifyToken, verifyNotBanned, (req, res) => {
         if (err) return res.status(500).json({ error: 'Ошибка обновления статуса' });
         res.json({ message: 'Статус обновлен' });
     });
+});
+
+// Подписаться / отписаться
+router.post('/subscribe/:id', verifyToken, verifyNotBanned, (req, res) => {
+    const followerId = req.user.id;
+    const followingId = parseInt(req.params.id);
+
+    if (followerId === followingId) {
+        return res.status(400).json({ error: 'Нельзя подписаться на самого себя' });
+    }
+
+    db.query(
+        'SELECT id FROM subscriptions WHERE follower_id = ? AND following_id = ?',
+        [followerId, followingId],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'Ошибка БД' });
+            if (results.length > 0) {
+                db.query(
+                    'DELETE FROM subscriptions WHERE follower_id = ? AND following_id = ?',
+                    [followerId, followingId],
+                    (err) => {
+                        if (err) return res.status(500).json({ error: 'Ошибка БД при отписке' });
+                        res.json({ message: 'Вы отписались', subscribed: false });
+                    }
+                );
+            } else {
+                db.query(
+                    'INSERT INTO subscriptions (follower_id, following_id) VALUES (?, ?)',
+                    [followerId, followingId],
+                    (err) => {
+                        if (err) return res.status(500).json({ error: 'Ошибка БД при подписке' });
+                        res.json({ message: 'Вы подписались', subscribed: true });
+                    }
+                );
+            }
+        }
+    );
+});
+
+// Написать отзыв в профиле
+router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res) => {
+    const userId = req.user.id;
+    const targetId = parseInt(req.params.userId);
+    const { content } = req.body;
+
+    if (!content || content.trim() === '') {
+        return res.status(400).json({ error: 'Комментарий не может быть пустым' });
+    }
+
+    db.query(
+        "INSERT INTO comments (user_id, target_id, target_type, content) VALUES (?, ?, 'profile', ?)",
+        [userId, targetId, content.trim()],
+        (err, result) => {
+            if (err) {
+                console.error('Ошибка создания отзыва:', err);
+                return res.status(500).json({ error: 'Ошибка БД при создании отзыва' });
+            }
+            res.status(201).json({ message: 'Отзыв добавлен', commentId: result.insertId });
+        }
+    );
+});
+
+// Получить все отзывы профиля
+router.get('/comments/profile/:userId', (req, res) => {
+    const targetId = parseInt(req.params.userId);
+
+    db.query(
+        `SELECT c.id, c.content, c.created_at, u.id AS user_id, u.username, u.avatar, u.role 
+         FROM comments c
+         JOIN users u ON c.user_id = u.id
+         WHERE c.target_id = ? AND c.target_type = 'profile'
+         ORDER BY c.created_at DESC`,
+        [targetId],
+        (err, results) => {
+            if (err) {
+                console.error('Ошибка получения отзывов:', err);
+                return res.status(500).json({ error: 'Ошибка БД при получении отзывов' });
+            }
+            res.json(results);
+        }
+    );
+});
+
+// Поставить/убрать лайк
+router.post('/posts/:id/like', verifyToken, verifyNotBanned, (req, res) => {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.id);
+
+    db.query(
+        'SELECT id FROM likes WHERE user_id = ? AND post_id = ?',
+        [userId, postId],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'Ошибка БД' });
+            if (results.length > 0) {
+                db.query(
+                    'DELETE FROM likes WHERE user_id = ? AND post_id = ?',
+                    [userId, postId],
+                    (err) => {
+                        if (err) return res.status(500).json({ error: 'Ошибка БД' });
+                        res.json({ message: 'Лайк убран', liked: false });
+                    }
+                );
+            } else {
+                db.query(
+                    'INSERT INTO likes (user_id, post_id) VALUES (?, ?)',
+                    [userId, postId],
+                    (err) => {
+                        if (err) return res.status(500).json({ error: 'Ошибка БД' });
+                        res.json({ message: 'Лайк поставлен', liked: true });
+                    }
+                );
+            }
+        }
+    );
+});
+
+// Написать комментарий к посту
+router.post('/posts/:id/comments', verifyToken, verifyNotBanned, (req, res) => {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.id);
+    const { content, parent_id } = req.body;
+
+    if (!content || content.trim() === '') {
+        return res.status(400).json({ error: 'Комментарий не может быть пустым' });
+    }
+
+    db.query(
+        "INSERT INTO comments (user_id, target_id, target_type, content, parent_id) VALUES (?, ?, 'post', ?, ?)",
+        [userId, postId, content.trim(), parent_id || null],
+        (err, result) => {
+            if (err) {
+                console.error('Ошибка добавления комментария:', err);
+                return res.status(500).json({ error: 'Ошибка БД при добавлении комментария' });
+            }
+            res.status(201).json({ message: 'Комментарий добавлен', commentId: result.insertId });
+        }
+    );
+});
+
+// Получить все комментарии к посту
+router.get('/posts/:id/comments', (req, res) => {
+    const postId = parseInt(req.params.id);
+
+    db.query(
+        `SELECT c.id, c.content, c.parent_id, c.created_at, u.id AS user_id, u.username, u.avatar, u.role
+         FROM comments c
+         JOIN users u ON c.user_id = u.id
+         WHERE c.target_id = ? AND c.target_type = 'post'
+         ORDER BY c.created_at ASC`,
+        [postId],
+        (err, results) => {
+            if (err) {
+                console.error('Ошибка получения комментариев поста:', err);
+                return res.status(500).json({ error: 'Ошибка БД при получении комментариев' });
+            }
+            res.json(results);
+        }
+    );
 });
 
 module.exports = router;

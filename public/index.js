@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="post-card" data-post-id="${post.id}">
                 <div class="post-header">
                     ${avatar ? `<img src="${avatar}" class="post-avatar">` : '<div class="post-avatar-placeholder"></div>'}
-                    <span class="post-author" style="color: ${color};">${escapeHtml(post.username)}</span>
+                    <a href="profile.html?username=${encodeURIComponent(post.username)}" style="color: ${color}; text-decoration: none; font-weight: bold;" class="post-author">${escapeHtml(post.username)}</a>
                     <span class="post-date">${new Date(post.created_at).toLocaleString()}</span>
                 </div>
                 <div class="post-content">${escapeHtml(post.content).replace(/\n/g, '<br>')}</div>
@@ -225,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     return `
                         <div style="padding-left: 8px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 4px; padding-bottom: 4px; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 6px; font-size: 10px;">
-                                <span style="color: ${color}; font-weight: bold;">${escapeHtml(comment.username)}</span>
+                                <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
                                 <span style="font-size: 8px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
                                 ${token ? `<span style="color: yellow; cursor: pointer; font-size: 8px; font-weight: bold; margin-left: 5px;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</span>` : ''}
                             </div>

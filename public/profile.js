@@ -490,10 +490,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 list.innerHTML = comments.map(c => {
                     const color = roleColors[c.role] || '#ffffff';
                     return `
-                        <div style="border: 2px solid white; padding: 10px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.03);">
+                        <div style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 10px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.01);">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                                 ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid white; object-fit: cover;">` : '<div style="width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
-                                <span style="color: ${color}; font-size: 11px; font-weight: bold;">${escapeHtml(c.username)}</span>
+                                <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 11px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
                                 <span style="font-size: 8px; color: rgba(255,255,255,0.5); margin-left: auto;">${new Date(c.created_at).toLocaleString()}</span>
                             </div>
                             <div style="font-size: 11px; text-align: left; color: white; word-break: break-word; line-height: 1.4;">${escapeHtml(c.content).replace(/\n/g, '<br>')}</div>

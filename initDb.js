@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS messages (
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     content TEXT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -98,6 +99,9 @@ CREATE TABLE IF NOT EXISTS comments (
 
 -- Корректировка default для поля about в существующей таблице
 ALTER TABLE users MODIFY COLUMN about TEXT DEFAULT NULL;
+
+-- Добавление колонки прочтения для личных сообщений
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read TINYINT(1) DEFAULT 0;
 `;
 
 const queries = migrationsSQL.split(';').filter(q => q.trim());

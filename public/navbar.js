@@ -30,6 +30,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnChat && currentPage === 'chat.html') btnChat.style.display = "none";
     if (btnAdmin && currentPage === 'admin.html') btnAdmin.style.display = "none";
 
+    function updateNavbarNotifications() {
+        if (!token) return;
+
+        // Получаем непрочитанные сообщения
+        fetch("/api/messages/unread/count", {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const count = data.count || 0;
+            const btnChat = document.getElementById("nav-chat");
+            if (btnChat) {
+                btnChat.textContent = count > 0 ? `Чат (+${count})` : "Чат";
+            }
+        })
+        .catch(err => console.error("Ошибка при получении непрочитанных сообщений:", err));
+
+        // Получаем входящие запросы в друзья
+        fetch("/api/friends/requests/incoming", {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(requests => {
+            const count = requests.length || 0;
+            const btnFriends = document.getElementById("nav-friends");
+            if (btnFriends) {
+                btnFriends.textContent = count > 0 ? `Друзья (+${count})` : "Друзья";
+            }
+        })
+        .catch(err => console.error("Ошибка при получении запросов в друзья:", err));
+    }
+
     if (token) {
         // Если пользователь ЗАЛОГИНИЛСЯ:
         if (btnRegister) btnRegister.style.display = "none";
@@ -39,6 +71,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btnChat && currentPage !== 'chat.html') btnChat.style.display = "inline-block";
         if (btnSearch && currentPage !== 'search.html' && currentPage !== 'profile.html') btnSearch.style.display = "inline-block";
         if (btnLogout) btnLogout.style.display = "inline-block";
+
+        updateNavbarNotifications();
+        setInterval(updateNavbarNotifications, 5000);
 
         // Проверяем роль через профиль, чтобы показать кнопку админки или скрыть функции забаненного
         fetch("/api/users/profile", {

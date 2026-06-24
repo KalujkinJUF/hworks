@@ -7,10 +7,38 @@ const { verifyToken, verifyNotBanned } = require('../middleware/auth');
 router.use(verifyToken);
 router.use(verifyNotBanned);
 
+// Получить общее количество непрочитанных сообщений
+router.get('/unread/count', (req, res) => {
+    const userId = req.user.id;
+    db.query(
+        'SELECT COUNT(*) AS count FROM messages WHERE receiver_id = ? AND is_read = 0',
+        [userId],
+        (err, results) => {
+            if (err) {
+                console.error('Ошибка БД при получении непрочитанных сообщений:', err);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
+            res.json({ count: results[0].count });
+        }
+    );
+});
+
 // Получить сообщения с конкретным пользователем
 router.get('/:friendId', (req, res) => {
     const userId = req.user.id;
     const friendId = parseInt(req.params.friendId);
+
+    // Помечаем входящие сообщения как прочитанные
+    db.query(
+        `UPDATE messages SET is_read = 1
+         WHERE sender_id = ? AND receiver_id = ? AND is_read = 0`,
+        [friendId, userId],
+        (err) => {
+            if (err) {
+                console.error('Ошибка БД при обновлении статуса прочтения сообщений:', err);
+            }
+        }
+    );
 
     db.query(
         `SELECT * FROM messages

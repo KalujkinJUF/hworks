@@ -24,19 +24,19 @@
         <main class="main-layout chat-layout">
             <!-- Левая колонка: список друзей -->
             <div class="chat-friends-column">
-                <div class="feed-wrapper">
-                    <section class="friends-sidebar">
-                        <h2>Чаты</h2>
-                        <div id="chatFriendsList" class="friends-list">
-                            <p class="loading-text">Загрузка друзей...</p>
-                        </div>
-                    </section>
+                <div class="chat-section">
+                    <div class="chat-header" style="justify-content: center; align-items: center;">
+                        <h2 style="margin: 0; padding: 0; border: none; font-size: 16px; color: white; text-transform: uppercase; text-align: center;">Чаты</h2>
+                    </div>
+                    <div id="chatFriendsList" class="friends-list" style="margin-top: 15px;">
+                        <p class="loading-text">Загрузка друзей...</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Правая колонка: чат -->
             <div class="chat-main-column">
-                <section class="chat-section">
+                <div class="chat-section">
                     <div class="chat-header">
                         <div id="chatInfo" class="chat-info" style="display: none;">
                             <img id="friendAvatar" src="" alt="Аватар" class="friend-chat-avatar" style="display: none;">
@@ -59,7 +59,7 @@
                         <button id="sendBtn" class="auth-btn" style="width: 100%;">Отправить</button>
                         <div id="sendMessage" class="verify-message"></div>
                     </div>
-                </section>
+                </div>
             </div>
         </main>
     </div>

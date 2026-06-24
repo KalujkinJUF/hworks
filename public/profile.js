@@ -162,6 +162,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // Показ кнопки настроек только для своего незабаненного профиля
+        const settingsBtn = document.getElementById("tabSettingsBtn");
+        if (settingsBtn) {
+            settingsBtn.style.display = (isOwn && data.role !== 'banned') ? 'inline-block' : 'none';
+        }
+
         // Скрыть элементы редактирования для чужого профиля
         if (!isOwn) {
             const avatarUpload = document.querySelector('.avatar-upload');
@@ -482,4 +488,23 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
+
+    window.switchProfileTab = function(tabName) {
+        const tabInfo = document.getElementById("tabInfo");
+        const tabSettings = document.getElementById("tabSettings");
+        const tabInfoBtn = document.getElementById("tabInfoBtn");
+        const tabSettingsBtn = document.getElementById("tabSettingsBtn");
+        
+        if (tabName === 'info') {
+            if (tabInfo) tabInfo.classList.add("active");
+            if (tabSettings) tabSettings.classList.remove("active");
+            if (tabInfoBtn) tabInfoBtn.classList.add("active");
+            if (tabSettingsBtn) tabSettingsBtn.classList.remove("active");
+        } else if (tabName === 'settings') {
+            if (tabInfo) tabInfo.classList.remove("active");
+            if (tabSettings) tabSettings.classList.add("active");
+            if (tabInfoBtn) tabInfoBtn.classList.remove("active");
+            if (tabSettingsBtn) tabSettingsBtn.classList.add("active");
+        }
+    };
 });

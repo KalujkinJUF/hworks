@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.loadPostComments = function(postId) {
-        fetch(`/api/posts/${postId}/comments`)
+        fetch(`/api/users/posts/${postId}/comments`)
         .then(res => res.json())
         .then(comments => {
             const list = document.getElementById(`commentsList-${postId}`);
@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         const parentId = input.dataset.parentId || null;
 
-        fetch(`/api/posts/${postId}/comments`, {
+        fetch(`/api/users/posts/${postId}/comments`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ content, parent_id: parentId })

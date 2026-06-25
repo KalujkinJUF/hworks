@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обновление</title>
+    <link rel="stylesheet" href="setup.css">
+    <style>
+        body {
+            padding: 10px;
+            min-height: 100vh;
+        }
+        main {
+            padding: 20px;
+            text-align: center;
+        }
+        .buttons-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .cancel-btn {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        .cancel-btn:hover {
+            background-color: rgba(255, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="auth-form">
+                <h2 style="color: #ffcc00; font-size: 14px; margin-bottom: 15px;">ДОСТУПНО ОБНОВЛЕНИЕ</h2>
+                <div style="font-size: 10px; line-height: 1.8; margin-bottom: 20px; text-transform: uppercase;">
+                    Рекомендуется обновить клиент для стабильной работы приложения.
+                </div>
+                <div class="buttons-container">
+                    <button type="button" id="update-btn" class="auth-btn">ОБНОВИТЬ</button>
+                    <button type="button" id="later-btn" class="auth-btn cancel-btn">ПОЗЖЕ</button>
+                </div>
+                <div id="message" style="margin-top: 15px; font-size: 8px; color: yellow;"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { invoke } = window.__TAURI__.core;
+        
+        document.getElementById('later-btn').addEventListener('click', () => {
+            window.close();
+        });
+
+        document.getElementById('update-btn').addEventListener('click', async () => {
+            document.getElementById('update-btn').disabled = true;
+            document.getElementById('later-btn').disabled = true;
+            document.getElementById('message').innerText = 'ЗАГРУЗКА И УСТАНОВКА...';
+            
+            try {
+                await invoke('start_update');
+            } catch (err) {
+                document.getElementById('update-btn').disabled = false;
+                document.getElementById('later-btn').disabled = false;
+                document.getElementById('message').innerText = 'ОШИБКА: ' + String(err).toUpperCase();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -109,26 +109,19 @@ fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
             if let Some(srv_ver) = json["version"].as_str() {
                 if srv_ver != "a0.2" {
                     let app_clone = app.clone();
-                    let server_url_clone = server_url.to_string();
                     let _ = app.run_on_main_thread(move || {
-                        use tauri_plugin_dialog::DialogExt;
-                        let app_handle = app_clone.clone();
-                        let url = server_url_clone.clone();
-                        
-                        app_clone.dialog()
-                            .message("Доступна новая версия клиента. Рекомендуется обновиться.")
-                            .title("Доступно обновление")
-                            .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom("Обновить сейчас".to_string(), "Позже".to_string()))
-                            .kind(tauri_plugin_dialog::MessageDialogKind::Info)
-                            .show(move |ans| {
-                                if ans {
-                                    let app_download = app_handle.clone();
-                                    let url_download = url.clone();
-                                    std::thread::spawn(move || {
-                                        let _ = download_and_update(&app_download, &url_download);
-                                    });
-                                }
-                            });
+                        let _ = tauri::WebviewWindowBuilder::new(
+                            &app_clone,
+                            "update_window",
+                            tauri::WebviewUrl::App(std::path::PathBuf::from("updates.html")),
+                        )
+                        .title("ОБНОВЛЕНИЕ")
+                        .inner_size(500.0, 250.0)
+                        .resizable(false)
+                        .maximizable(false)
+                        .minimizable(false)
+                        .center()
+                        .build();
                     });
                 }
             }
@@ -139,17 +132,6 @@ fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
 
 fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> {
     let update_url = format!("{}/updates/anotree.exe", server_url.trim_end_matches('/'));
-    
-    let app_dialog = app.clone();
-    let _ = app.run_on_main_thread(move || {
-        use tauri_plugin_dialog::DialogExt;
-        app_dialog.dialog()
-            .message("Скачивание обновления запущено в фоновом режиме. Приложение автоматически перезапустится после установки.")
-            .title("Обновление")
-            .kind(tauri_plugin_dialog::MessageDialogKind::Info)
-            .show(|_| {});
-    });
-
     let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let temp_exe = current_exe.with_extension("exe.tmp");
 
@@ -187,6 +169,16 @@ fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> 
 
     app.exit(0);
     Ok(())
+}
+
+#[tauri::command]
+fn start_update(app: AppHandle) -> Result<(), String> {
+    let config = read_config(&app);
+    if let Some(url) = config.server_url {
+        download_and_update(&app, &url)
+    } else {
+        Err("Адрес сервера не найден в конфигурации".to_string())
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -230,7 +222,7 @@ pub fn run() {
         });
         Ok(())
     })
-    .invoke_handler(tauri::generate_handler![get_version, try_connect])
+    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

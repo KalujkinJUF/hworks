@@ -1,7 +1,7 @@
 {
-  "name": "anotree-client",
+  "name": "voidtree-client",
   "version": "a0.2",
-  "description": "Client application for Anotree",
+  "description": "Client application for Voidtree",
   "scripts": {
     "start": "tauri dev",
     "build": "tauri build"

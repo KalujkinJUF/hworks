@@ -131,7 +131,7 @@ fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
 }
 
 fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> {
-    let update_url = format!("{}/updates/anotree.exe", server_url.trim_end_matches('/'));
+    let update_url = format!("{}/updates/voidtree.exe", server_url.trim_end_matches('/'));
     let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let temp_exe = current_exe.with_extension("exe.tmp");
 

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "anotree",
+  "productName": "voidtree",
   "version": "0.2.0",
-  "identifier": "com.anotree.client",
+  "identifier": "com.voidtree.client",
   "build": {
     "frontendDist": "../ui",
     "devUrl": "http://localhost:3000",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Anotree",
+        "title": "Voidtree",
         "width": 1280,
         "height": 800,
         "minWidth": 800,

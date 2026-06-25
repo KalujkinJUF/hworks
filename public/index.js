@@ -615,16 +615,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadPosts();
     loadOnline();
 
-    setInterval(loadOnline, 30000);
-
-    setInterval(() => {
-        const openWrappers = document.querySelectorAll(".comments-wrapper[style*='block']");
-        const hasFocusedInput = document.activeElement && document.activeElement.id && document.activeElement.id.startsWith("commentInput-");
-        if (openWrappers.length === 0 && !hasFocusedInput) {
-            loadPosts();
-        }
-    }, 10000);
-
     async function createPost(type) {
         if (!token) { await window.showCustomAlert("Войдите в систему"); return; }
         const content = document.getElementById("postContent").value.trim();

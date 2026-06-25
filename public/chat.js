@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Загрузка списка друзей слева
     function loadFriendsList() {
         Promise.all([
-            fetch("/api/friends", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json()),
+            fetch("/api/friends?limit=1000", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json()).then(data => data.friends || data),
             fetch("/api/messages/unread/friends", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json())
         ])
         .then(([friends, unreadFriends]) => {
@@ -364,11 +364,6 @@ document.addEventListener("DOMContentLoaded", () => {
             loadMessages();
         }
     }, 2000);
-
-    // Автообновление списка друзей/статусов каждые 10 секунд (оптимизация производительности)
-    setInterval(() => {
-        loadFriendsList();
-    }, 10000);
 
     // Делегирование кликов для выбора друга (избегаем inline onclick из-за проблем с кавычками в именах)
     const friendsListContainer = document.getElementById("chatFriendsList");

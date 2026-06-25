@@ -337,12 +337,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Загрузка стены отзывов
         loadProfileComments(data.id);
-        if (!isPollingStarted) {
-            isPollingStarted = true;
-            setInterval(() => {
-                loadProfileComments(data.id);
-            }, 5000);
-        }
 
         // Настройка формы отправки отзывов
         const commentForm = document.getElementById("commentForm");

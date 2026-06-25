@@ -228,7 +228,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btnLogout) btnLogout.style.display = "inline-block";
 
         updateNavbarNotifications();
-        setInterval(updateNavbarNotifications, 5000);
 
         // Детекция активности и фоновый пинг присутствия
         let lastActivityTime = Date.now();

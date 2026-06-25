@@ -11,6 +11,7 @@ const router = express.Router();
 const db = require('../config/db');
 const { sendVerificationCode } = require('../config/mailer');
 const { verifyEmail } = require('../models/user');
+const logger = require('../config/logger');
 
 // Санитизация HTML для защиты от XSS
 const sanitize = (dirty) => sanitizeHtml(dirty, {
@@ -73,7 +74,7 @@ const updateLastActive = (userId) => {
 router.get('/', (req, res) => {
     db.query('SELECT id, username, role, avatar, about, created_at FROM users', (err, results) => {
         if (err) {
-            console.error('Ошибка БД при получении всех пользователей:', err);
+            logger.error('Ошибка БД при получении всех пользователей');
             return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
         }
         res.json(results);
@@ -94,7 +95,7 @@ router.get('/search', (req, res) => {
         [`%${q}%`],
         (countErr, countResults) => {
             if (countErr) {
-                console.error('Ошибка подсчета при поиске пользователей:', countErr);
+                logger.error('Ошибка подсчета при поиске пользователей');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
 
@@ -106,7 +107,7 @@ router.get('/search', (req, res) => {
                 [`%${q}%`, limit, offset],
                 (err, results) => {
                     if (err) {
-                        console.error('Ошибка БД при поиске пользователей:', err);
+                        logger.error('Ошибка БД при поиске пользователей');
                         return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                     }
                     res.json({
@@ -126,7 +127,7 @@ router.get('/online', (req, res) => {
         "SELECT id, username, role, avatar, user_status FROM users WHERE last_active >= NOW() - INTERVAL 5 MINUTE AND role != 'banned' AND user_status != 'offline'",
         (err, results) => {
             if (err) {
-                console.error('Ошибка БД при получении онлайн-пользователей:', err);
+                logger.error('Ошибка БД при получении онлайн-пользователей');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json(results);
@@ -182,7 +183,7 @@ router.post('/register', authLimiter, async (req, res) => {
             return res.status(400).json({ error: 'Проверка капчи не пройдена' });
         }
     } catch (err) {
-        console.error('Ошибка проверки Turnstile:', err);
+        logger.error('Ошибка проверки Turnstile');
         return res.status(500).json({ error: 'Ошибка проверки капчи на сервере' });
     }
     
@@ -243,7 +244,7 @@ router.post('/register', authLimiter, async (req, res) => {
 
             // Отправляем код (без логирования кода в консоль)
             sendVerificationCode(email, emailCode)
-                .catch(err => console.error('Ошибка отправки письма:', err));
+                .catch(err => logger.error('Ошибка отправки письма'));
 
             // Устанавливаем httpOnly cookie с JWT
             res.cookie('token', token, {
@@ -321,7 +322,7 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
 
                     // Отправляем код (без логирования в консоль)
                     sendVerificationCode(cleanEmail, emailCode)
-                        .catch(err => console.error('Ошибка отправки письма:', err));
+                        .catch(err => logger.error('Ошибка отправки письма'));
 
                     res.json({ message: 'Email успешно изменен. Новый код отправлен на почту.' });
                 }
@@ -362,7 +363,7 @@ router.post('/login', authLimiter, (req, res) => {
 });
 
 // Профиль (свой)
-router.get('/profile', verifyToken, async (req, res) => {
+router.get('/profile', verifyToken, verifyNotBanned, async (req, res) => {
     try {
         db.query(
             `SELECT id, username, email, verified, created_at, about, avatar, role, user_status, custom_status,
@@ -415,20 +416,9 @@ router.get('/unread-wall-count', verifyToken, (req, res) => {
 });
 
 // Профиль другого пользователя (публичный)
-router.get('/profile/:username', (req, res) => {
+router.get('/profile/:username', verifyToken, (req, res) => {
     const { username } = req.params;
     
-    // Попытка получить ID залогиненного пользователя из токена (если передан)
-    let requesterId = 0;
-    const authHeader = req.headers['authorization'];
-    const token = (authHeader && authHeader.split(' ')[1]) || (req.cookies && req.cookies.token);
-    if (token) {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            requesterId = decoded.id;
-        } catch (e) {}
-    }
-
     const query = `
         SELECT u.id, u.username, u.created_at, u.about, u.avatar, u.role, 
                IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status,
@@ -447,7 +437,7 @@ router.get('/profile/:username', (req, res) => {
 
     db.query(
         query,
-        [requesterId, requesterId, requesterId, requesterId, requesterId, username],
+        [req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, username],
         (err, results) => {
             if (err || results.length === 0) return res.status(404).json({ error: 'User not found' });
             const profile = results[0];
@@ -481,7 +471,7 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), as
     // Получаем старый аватар перед обновлением
     db.query('SELECT avatar FROM users WHERE id = ?', [req.user.id], (err, results) => {
         if (err) {
-            console.error('Ошибка БД при получении старого аватара:', err);
+            logger.error('Ошибка БД при получении старого аватара');
             // Продолжаем, даже если не удалось получить старый аватар
         } else if (results.length > 0 && results[0].avatar) {
             const oldAvatar = results[0].avatar;
@@ -489,7 +479,7 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), as
             if (oldAvatar.startsWith('/uploads/')) {
                 const oldAvatarPath = path.join(process.cwd(), 'public', oldAvatar);
                 fs.unlink(oldAvatarPath, (unlinkErr) => {
-                    if (unlinkErr) console.error('Ошибка удаления старого аватара:', unlinkErr);
+                    if (unlinkErr) logger.error('Ошибка удаления старого аватара');
                 });
             }
         }
@@ -497,7 +487,7 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), as
         const avatarUrl = `/uploads/${req.file.filename}`;
         db.query('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, req.user.id], (updateErr) => {
             if (updateErr) {
-                console.error('Ошибка БД при обновлении аватара:', updateErr);
+                logger.error('Ошибка БД при обновлении аватара');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json({ avatar: avatarUrl, message: 'Аватарка обновлена' });
@@ -506,23 +496,14 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), as
 });
 
 // Посты — получить все с учетом лайков и подписок
-router.get('/posts', (req, res) => {
+router.get('/posts', verifyToken, (req, res) => {
     const type = req.query.type || null;
     const feed = req.query.feed || 'global';
     const page = parseInt(req.query.page || '1', 10);
     const limit = parseInt(req.query.limit || '15', 10);
     const offset = (page - 1) * limit;
     
-    // Попытка получить ID залогиненного пользователя из токена (если передан)
-    let requesterId = 0;
-    const authHeader = req.headers['authorization'];
-    const token = (authHeader && authHeader.split(' ')[1]) || (req.cookies && req.cookies.token);
-    if (token) {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            requesterId = decoded.id;
-        } catch (e) {}
-    }
+    const requesterId = req.user.id;
 
     const whereClauses = [];
     const whereParams = [];
@@ -545,7 +526,7 @@ router.get('/posts', (req, res) => {
 
     db.query(countQuery, whereParams, (countErr, countResults) => {
         if (countErr) {
-            console.error('Ошибка подсчета постов:', countErr);
+            logger.error('Ошибка подсчета постов');
             return res.status(500).json({ error: 'Ошибка БД при подсчете постов' });
         }
         
@@ -570,7 +551,7 @@ router.get('/posts', (req, res) => {
 
         db.query(query, selectParams, (err, results) => {
             if (err) {
-                console.error('Ошибка получения постов:', err);
+                logger.error('Ошибка получения постов');
                 return res.status(500).json({ error: 'Ошибка БД при получении постов' });
             }
             results.forEach(p => p.is_liked = !!p.is_liked);
@@ -612,7 +593,7 @@ router.post('/posts', verifyToken, verifyNotBanned, (req, res) => {
             [userId],
             (err, postResults) => {
                 if (err) {
-                    console.error('Ошибка БД при проверке КД поста:', err);
+                    logger.error('Ошибка БД при проверке КД поста');
                     return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                 }
 
@@ -636,7 +617,7 @@ router.post('/posts', verifyToken, verifyNotBanned, (req, res) => {
                     [userId, sanitizedContent, postType],
                     (err, result) => {
                         if (err) {
-                            console.error('Ошибка БД при создании поста:', err);
+                            logger.error('Ошибка БД при создании поста');
                             return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                         }
                         res.status(201).json({ message: 'Пост создан', id: result.insertId });
@@ -650,7 +631,7 @@ router.post('/posts', verifyToken, verifyNotBanned, (req, res) => {
 const { updateUser } = require('../models/user');
 
 // Обновление профиля
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', verifyToken, verifyNotBanned, async (req, res) => {
     const userId = req.params.id;
     if (parseInt(req.user.id) !== parseInt(userId)) {
         return res.status(403).json({ error: 'Доступ запрещен: нельзя редактировать чужой профиль' });
@@ -714,7 +695,7 @@ router.post('/status/:status', verifyToken, verifyNotBanned, (req, res) => {
 });
 
 // Пинг / Сердечный ритм для сохранения присутствия и обновления статуса активности
-router.post('/ping', verifyToken, (req, res) => {
+router.post('/ping', verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
     const { isIdle } = req.body;
 
@@ -814,7 +795,7 @@ router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res
             [userId],
             (err, commentResults) => {
                 if (err) {
-                    console.error('Ошибка БД при проверке КД комментария:', err);
+                    logger.error('Ошибка БД при проверке КД комментария');
                     return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                 }
 
@@ -838,7 +819,7 @@ router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res
                     [userId, targetId, sanitizedComment],
                     (err, result) => {
                         if (err) {
-                            console.error('Ошибка создания отзыва:', err);
+                            logger.error('Ошибка создания отзыва');
                             return res.status(500).json({ error: 'Ошибка БД при создании отзыва' });
                         }
                         res.status(201).json({ message: 'Отзыв добавлен', commentId: result.insertId });
@@ -862,7 +843,7 @@ router.get('/comments/profile/:userId', (req, res) => {
         [targetId],
         (countErr, countResults) => {
             if (countErr) {
-                console.error('Ошибка подсчета отзывов:', countErr);
+                logger.error('Ошибка подсчета отзывов');
                 return res.status(500).json({ error: 'Ошибка БД при подсчете отзывов' });
             }
 
@@ -878,7 +859,7 @@ router.get('/comments/profile/:userId', (req, res) => {
                 [targetId, limit, offset],
                 (err, results) => {
                     if (err) {
-                        console.error('Ошибка получения отзывов:', err);
+                        logger.error('Ошибка получения отзывов');
                         return res.status(500).json({ error: 'Ошибка БД при получении отзывов' });
                     }
                     res.json({
@@ -940,7 +921,7 @@ router.post('/posts/:id/comments', verifyToken, verifyNotBanned, (req, res) => {
         [userId],
         (err, commentResults) => {
             if (err) {
-                console.error('Ошибка БД при проверке КД комментария:', err);
+                logger.error('Ошибка БД при проверке КД комментария');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
 
@@ -964,7 +945,7 @@ router.post('/posts/:id/comments', verifyToken, verifyNotBanned, (req, res) => {
                 [userId, postId, sanitizedComment, parent_id || null],
                 (err, result) => {
                     if (err) {
-                        console.error('Ошибка добавления комментария:', err);
+                        logger.error('Ошибка добавления комментария');
                         return res.status(500).json({ error: 'Ошибка БД при добавлении комментария' });
                     }
                     res.status(201).json({ message: 'Комментарий добавлен', commentId: result.insertId });
@@ -987,7 +968,7 @@ router.get('/posts/:id/comments', (req, res) => {
         [postId],
         (err, results) => {
             if (err) {
-                console.error('Ошибка получения комментариев поста:', err);
+                logger.error('Ошибка получения комментариев поста');
                 return res.status(500).json({ error: 'Ошибка БД при получении комментариев' });
             }
             res.json(results);
@@ -999,7 +980,7 @@ router.get('/posts/:id/comments', (req, res) => {
 router.get('/admin-pin', (req, res) => {
     db.query('SELECT content, updated_at FROM admin_pin ORDER BY id DESC LIMIT 1', (err, results) => {
         if (err) {
-            console.error('Ошибка БД при получении закрепленного сообщения:', err);
+            logger.error('Ошибка БД при получении закрепленного сообщения');
             return res.status(500).json({ error: 'Ошибка БД' });
         }
         const pin = results[0] || { content: 'Привет! Это закрепленный пост от админа.' };
@@ -1019,7 +1000,7 @@ router.post('/admin-pin', verifyToken, verifyAdmin, (req, res) => {
         [content.trim(), content.trim()],
         (err) => {
             if (err) {
-                console.error('Ошибка БД при обновлении закрепленного сообщения:', err);
+                logger.error('Ошибка БД при обновлении закрепленного сообщения');
                 return res.status(500).json({ error: 'Ошибка БД' });
             }
             res.json({ message: 'Закреплённое сообщение обновлено' });
@@ -1131,7 +1112,7 @@ router.post('/delete-account/request', verifyToken, verifyNotBanned, (req, res) 
                     res.json({ message: 'Код подтверждения отправлен на почту' });
                 })
                 .catch(err => {
-                    console.error('Ошибка отправки письма для удаления:', err);
+                    logger.error('Ошибка отправки письма для удаления');
                     res.status(500).json({ error: 'Не удалось отправить код подтверждения' });
                 });
         });

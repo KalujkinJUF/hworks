@@ -1,11 +1,12 @@
 require('dotenv').config();
+const logger = require('./config/logger');
 
 // Проверка обязательных переменных окружения
 const requiredEnv = ['DB_PASSWORD', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS', 'TURNSTILE_SECRET', 'CLIENT_URL'];
 const missingEnv = requiredEnv.filter(key => !process.env[key]);
 if (missingEnv.length > 0) {
-    console.error(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствуют обязательные переменные окружения: ${missingEnv.join(', ')}`);
-    console.error('Создайте файл .env на основе .env.example и укажите корректные значения.');
+    logger.error(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствуют обязательные переменные окружения: ${missingEnv.join(', ')}`);
+    logger.error('Создайте файл .env на основе .env.example и укажите корректные значения.');
     process.exit(1);
 }
 
@@ -45,10 +46,19 @@ app.use(helmet({
         connectSrc: ["'self'", process.env.CLIENT_URL],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             frameSrc: ["https://challenges.cloudflare.com"],
-            objectSrc: ["'none'"]
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: []
         }
     },
-    crossOriginEmbedderPolicy: false
+    crossOriginEmbedderPolicy: false,
+    hsts: {
+        maxAge: 31536000, // 1 год
+        includeSubDomains: true,
+        preload: true
+    },
+    referrerPolicy: {
+        policy: 'strict-origin-when-cross-origin'
+    }
 }));
 
 // Принудительный HTTPS (если заголовок X-Forwarded-Proto есть)
@@ -97,5 +107,5 @@ app.use('/updates', express.static(path.join(process.cwd(), 'updates')));
 
 // Запуск сервера
 app.listen(port, '0.0.0.0', () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    logger.info(`Server is running on http://localhost:${port}`);
 });

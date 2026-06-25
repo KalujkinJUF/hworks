@@ -1,11 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
 const { verifyToken, verifyNotBanned } = require('../middleware/auth');
+const logger = require('../config/logger');
+
+// Rate limiter для сообщений
+const messageLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 минут
+    max: 50,
+    message: { error: 'Слишком много сообщений. Попробуйте через 5 минут.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 // Все маршруты сообщений требуют авторизации и проверки на то, что пользователь не забанен
 router.use(verifyToken);
 router.use(verifyNotBanned);
+router.use(messageLimiter);
 
 // Получить общее количество непрочитанных сообщений
 router.get('/unread/count', (req, res) => {
@@ -28,10 +40,10 @@ router.get('/unread/count', (req, res) => {
              WHERE m.receiver_id = ? AND m.is_read = 0 AND f.status = 'accepted'`,
             [userId],
             (err, results) => {
-                if (err) {
-                    console.error('Ошибка БД при получении непрочитанных сообщений:', err);
-                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-                }
+            if (err) {
+                logger.error('Ошибка БД при получении непрочитанных сообщений');
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
                 res.json({ count: results[0].count });
             }
         );
@@ -60,10 +72,10 @@ router.get('/unread/friends', (req, res) => {
              GROUP BY m.sender_id`,
             [userId],
             (err, results) => {
-                if (err) {
-                    console.error('Ошибка БД при получении непрочитанных от друзей:', err);
-                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-                }
+            if (err) {
+                logger.error('Ошибка БД при получении непрочитанных от друзей');
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
                 res.json(results);
             }
         );
@@ -82,7 +94,7 @@ router.get('/:friendId', (req, res) => {
         [friendId, userId],
         (err) => {
             if (err) {
-                console.error('Ошибка БД при обновлении статуса прочтения сообщений:', err);
+                logger.error('Ошибка БД при обновлении статуса прочтения сообщений');
             }
         }
     );
@@ -94,7 +106,7 @@ router.get('/:friendId', (req, res) => {
          [userId, friendId, friendId, userId],
         (err, results) => {
             if (err) {
-                console.error('Ошибка БД при получении сообщений:', err);
+                logger.error('Ошибка БД при получении сообщений');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json(results);
@@ -124,7 +136,7 @@ router.post('/', (req, res) => {
         [senderId, receiverId, receiverId, senderId],
         (err, results) => {
             if (err) {
-                console.error('Ошибка БД при проверке дружбы:', err);
+                logger.error('Ошибка БД при проверке дружбы');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             if (results.length === 0) {
@@ -136,7 +148,7 @@ router.post('/', (req, res) => {
                 [senderId, receiverId, content],
                 (err, result) => {
                     if (err) {
-                        console.error('Ошибка БД при отправке сообщения:', err);
+                        logger.error('Ошибка БД при отправке сообщения');
                         return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                     }
                     res.status(201).json({

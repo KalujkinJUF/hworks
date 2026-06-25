@@ -1,11 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
 const { verifyToken, verifyNotBanned } = require('../middleware/auth');
+const logger = require('../config/logger');
+
+// Rate limiter для операций с друзьями
+const friendLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 минут
+    max: 30,
+    message: { error: 'Слишком много запросов. Попробуйте через 5 минут.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 // Все маршруты друзей требуют авторизации и проверки на бан
 router.use(verifyToken);
 router.use(verifyNotBanned);
+router.use(friendLimiter);
 
 // Получить список друзей текущего пользователя (с пагинацией)
 router.get('/', (req, res) => {
@@ -23,7 +35,7 @@ router.get('/', (req, res) => {
         [userId, userId, userId],
         (countErr, countResults) => {
             if (countErr) {
-                console.error('Ошибка БД при подсчете друзей:', countErr);
+                logger.error('Ошибка БД при подсчете друзей');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
 
@@ -44,7 +56,7 @@ router.get('/', (req, res) => {
                 [userId, userId, userId, userId, userId, limit, offset],
                 (err, results) => {
                     if (err) {
-                        console.error('Ошибка БД при получении друзей:', err);
+                        logger.error('Ошибка БД при получении друзей');
                         return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                     }
                     res.json({
@@ -68,7 +80,7 @@ router.get('/requests/incoming', (req, res) => {
         [userId],
         (err, results) => {
             if (err) {
-                console.error('Ошибка БД при получении входящих запросов:', err);
+                logger.error('Ошибка БД при получении входящих запросов');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json(results);
@@ -86,7 +98,7 @@ router.get('/requests/outgoing', (req, res) => {
         [userId],
         (err, results) => {
             if (err) {
-                console.error('Ошибка БД при получении исходящих запросов:', err);
+                logger.error('Ошибка БД при получении исходящих запросов');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json(results);
@@ -108,7 +120,7 @@ router.post('/request/:userId', (req, res) => {
         [senderId, receiverId, receiverId, senderId],
         (err, results) => {
             if (err) {
-                console.error('Ошибка БД при проверке дружбы:', err);
+                logger.error('Ошибка БД при проверке дружбы');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
 
@@ -126,7 +138,7 @@ router.post('/request/:userId', (req, res) => {
                 [senderId, receiverId, 'pending'],
                 (err, result) => {
                     if (err) {
-                        console.error('Ошибка БД при создании запроса:', err);
+                        logger.error('Ошибка БД при создании запроса');
                         return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                     }
                     res.status(201).json({ message: 'Запрос отправлен' });
@@ -146,7 +158,7 @@ router.post('/accept/:requestId', (req, res) => {
         ['accepted', requestId, userId, 'pending'],
         (err, result) => {
             if (err) {
-                console.error('Ошибка БД при принятии запроса:', err);
+                logger.error('Ошибка БД при принятии запроса');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             if (result.affectedRows === 0) {
@@ -167,7 +179,7 @@ router.post('/reject/:requestId', (req, res) => {
         [requestId, userId, 'pending'],
         (err, result) => {
             if (err) {
-                console.error('Ошибка БД при отклонении запроса:', err);
+                logger.error('Ошибка БД при отклонении запроса');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             if (result.affectedRows === 0) {
@@ -188,7 +200,7 @@ router.delete('/:friendId', (req, res) => {
         ['accepted', userId, friendId, friendId, userId],
         (err, result) => {
             if (err) {
-                console.error('Ошибка БД при удалении друга:', err);
+                logger.error('Ошибка БД при удалении друга');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             if (result.affectedRows === 0) {
@@ -226,7 +238,7 @@ router.get('/mutual/:userId', (req, res) => {
         [userId, userId, userId, targetUserId, targetUserId, targetUserId, userId, targetUserId],
         (err, results) => {
             if (err) {
-                console.error('Ошибка БД при поиске общих друзей:', err);
+                logger.error('Ошибка БД при поиске общих друзей');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json(results);
@@ -244,7 +256,7 @@ router.post('/accept-user/:senderId', (req, res) => {
         [senderId, userId],
         (err, result) => {
             if (err) {
-                console.error('Ошибка БД при принятии запроса по ID отправителя:', err);
+                logger.error('Ошибка БД при принятии запроса по ID отправителя');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             if (result.affectedRows === 0) {
@@ -266,7 +278,7 @@ router.post('/reject-user/:targetUserId', (req, res) => {
         [userId, targetUserId, targetUserId, userId],
         (err, result) => {
             if (err) {
-                console.error('Ошибка БД при отклонении/отмене запроса по ID пользователя:', err);
+                logger.error('Ошибка БД при отклонении/отмене запроса по ID пользователя');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json({ message: 'Запрос отклонен или отменен' });

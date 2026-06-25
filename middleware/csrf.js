@@ -7,16 +7,14 @@ const generateCsrfToken = () => {
 
 // Middleware: установка CSRF токена в cookie (не httpOnly, чтобы фронт мог его прочитать)
 const setCsrfToken = (req, res, next) => {
-    // Генерируем токен только если его нет в cookie
-    if (!req.cookies.csrfToken) {
-        const token = generateCsrfToken();
-        res.cookie('csrfToken', token, {
-            httpOnly: false, // Фронт должен уметь прочитать этот cookie
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000 // 24 часа
-        });
-    }
+    // Ротируем токен при каждом запросе для дополнительной безопасности
+    const token = generateCsrfToken();
+    res.cookie('csrfToken', token, {
+        httpOnly: false, // Фронт должен уметь прочитать этот cookie
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000 // 24 часа
+    });
     next();
 };
 
@@ -36,6 +34,15 @@ const verifyCsrfToken = (req, res, next) => {
     if (!clientToken || !cookieToken || clientToken !== cookieToken) {
         return res.status(403).json({ error: 'CSRF токен недействителен или отсутствует' });
     }
+
+    // Ротируем токен после успешной проверки
+    const newToken = generateCsrfToken();
+    res.cookie('csrfToken', newToken, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000
+    });
 
     next();
 };

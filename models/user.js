@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const db = require('../config/db'); // Соединение с БД
+const logger = require('../config/logger');
 
 // Функция для обновления пользователя с учетом изменения "Обо мне" и проверки пароля
 const updateUser = (id, username, password, about) => {
@@ -11,7 +12,7 @@ const updateUser = (id, username, password, about) => {
             
             db.query(query, [username, hashedPassword, about, id], (error, results) => {
                 if (error) {
-                    console.error('Database query error (with password):', error);
+                    logger.error('Database query error (with password)');
                     return reject(error);
                 }
                 resolve(results);
@@ -21,7 +22,7 @@ const updateUser = (id, username, password, about) => {
             
             db.query(query, [username, about, id], (error, results) => {
                 if (error) {
-                    console.error('Database query error (without password):', error);
+                    logger.error('Database query error (without password)');
                     return reject(error);
                 }
                 resolve(results);

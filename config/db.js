@@ -1,6 +1,7 @@
 const mysql = require('mysql');
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 
 const db = mysql.createPool({
     connectionLimit: 10,
@@ -17,19 +18,19 @@ const db = mysql.createPool({
 // FLUSH PRIVILEGES;
 // Не запускайте сайт от root!
 
-console.log('Подключаемся к пулу БД...');
+logger.info('Подключаемся к пулу БД...');
 db.getConnection((err, connection) => {
     if (err) {
-        console.error('Ошибка подключения к пулу БД:', err);
+        logger.error('Ошибка подключения к пулу БД');
         try {
             const logPath = path.join(process.cwd(), 'db-error.log');
             fs.writeFileSync(logPath, `[${new Date().toISOString()}] Ошибка подключения к пулу БД:\n${err.stack || err.toString()}\nConfig Host: ${process.env.DB_HOST}\n`);
         } catch (e) {
-            console.error('Не удалось записать лог ошибки:', e);
+            logger.error('Не удалось записать лог ошибки');
         }
         return;
     }
-    console.log('Подключено к пулу базы данных MySQL');
+    logger.info('Подключено к пулу базы данных MySQL');
     connection.release();
 });
 

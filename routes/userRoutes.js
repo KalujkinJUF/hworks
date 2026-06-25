@@ -170,7 +170,7 @@ router.post('/register', async (req, res) => {
                 return res.status(500).json({ error: 'Ошибка при создании пользователя' });
             }
             const newUserId = result.insertId;
-            const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+            const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
             sendVerificationCode(email, emailCode)
                 .then(() => console.log(`Код отправлен на ${email}: ${emailCode}`))
@@ -271,7 +271,7 @@ router.post('/login', (req, res) => {
         // Обновляем last_active и статус при входе
         db.query('UPDATE users SET last_active = NOW(), user_status = custom_status WHERE id = ?', [user.id]);
 
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.json({ token });
     });
 });
@@ -340,7 +340,7 @@ router.get('/profile/:username', (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
     if (token) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             requesterId = decoded.id;
         } catch (e) {}
     }
@@ -397,7 +397,7 @@ router.get('/posts', (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
     if (token) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             requesterId = decoded.id;
         } catch (e) {}
     }

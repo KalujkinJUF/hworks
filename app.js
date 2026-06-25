@@ -1,4 +1,14 @@
 require('dotenv').config();
+
+// Проверка обязательных переменных окружения
+const requiredEnv = ['DB_PASSWORD', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS'];
+const missingEnv = requiredEnv.filter(key => !process.env[key]);
+if (missingEnv.length > 0) {
+    console.error(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствуют обязательные переменные окружения: ${missingEnv.join(', ')}`);
+    console.error('Создайте файл .env на основе .env.example и укажите корректные значения.');
+    process.exit(1);
+}
+
 const express = require('express'); // Импортируем библиотеку Express
 const bodyParser = require('body-parser'); // Импортируем middleware для обработки тела запросов
 const cors = require('cors'); // Импортируем middleware для CORS
@@ -32,7 +42,7 @@ app.get('/api/health', (req, res) => {
 });
 // Эндпоинт получения текущей версии
 app.get('/api/version', (req, res) => {
-    res.json({ version: 'a0.2.1' });
+    res.json({ version: 'a0.2.2' });
 });
 
 // Раздача всего из папки public

@@ -72,7 +72,7 @@ fn test_connection(url: &str) -> Result<(), String> {
 
 #[tauri::command]
 fn get_version() -> String {
-    "a0.2.1".to_string()
+    "a0.2.2".to_string()
 }
 
 #[tauri::command]

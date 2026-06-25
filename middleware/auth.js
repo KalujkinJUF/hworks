@@ -8,7 +8,7 @@ const verifyToken = (req, res, next) => {
 
     if (!token) return res.status(401).send('Access Denied: No Token Provided');
 
-    jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret', (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) return res.status(403).send('Invalid Token');
         
         req.user = decoded; // Сохраняем id пользователя в запрос (например, req.user.id)

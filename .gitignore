@@ -1,12 +1,10 @@
 node_modules/
 client/node_modules/
 client/dist/
-client/dist_temp/
-client/out/
+client/src-tauri/target/
 xampp/
 .env
 *.exe
 public/uploads/
 .agents/
 db-error.log
-updates/*.zip

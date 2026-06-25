@@ -1,5 +1,5 @@
 {
-  "name": "sait",
+  "name": "anotree",
   "version": "a0.2",
   "description": "",
   "main": "app.js",
@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "start-client": "npm run --prefix client start",
-    "package-client": "npm run --prefix client package-win"
+    "build-client": "npm run --prefix client build"
   },
   "keywords": [],
   "author": "",

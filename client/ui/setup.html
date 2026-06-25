@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anotree</title>
+    <link rel="stylesheet" href="setup.css">
+    <script>
+        // Tauri-to-Electron API compatibility bridge
+        window.api = {
+            getVersion: async () => {
+                try {
+                    return await window.__TAURI__.core.invoke('get_version');
+                } catch (e) {
+                    console.error(e);
+                    return 'a0.2';
+                }
+            },
+            tryConnect: async (url) => {
+                try {
+                    // Send status update event
+                    const statusEvent = new CustomEvent('tauri-status', { detail: 'Проверка соединения...' });
+                    document.dispatchEvent(statusEvent);
+                    
+                    await window.__TAURI__.core.invoke('try_connect', { url });
+                    
+                    const successEvent = new CustomEvent('tauri-status', { detail: 'Подключено! Загрузка...' });
+                    document.dispatchEvent(successEvent);
+                } catch (err) {
+                    const failEvent = new CustomEvent('tauri-failed', { detail: err });
+                    document.dispatchEvent(failEvent);
+                }
+            },
+            onStatusUpdate: (callback) => {
+                document.addEventListener('tauri-status', (e) => callback(e.detail));
+            },
+            onConnectionFailed: (callback) => {
+                document.addEventListener('tauri-failed', (e) => callback(e.detail));
+            },
+            onConnectionError: (callback) => {
+                // Connection errors are handled directly by tryConnect
+            }
+        };
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>ANOTREE</h1>
+        </header>
+
+        <main>
+            <div class="auth-form">
+                <h2>НАСТРОЙКА ПОДКЛЮЧЕНИЯ</h2>
+                <div class="input-group">
+                    <label for="server-url">АДРЕС СЕРВЕРА:</label>
+                    <input type="text" id="server-url" placeholder="http://127.0.0.1:3000"
+                        value="http://localhost:3000">
+                </div>
+                <button type="button" id="connect-btn" class="auth-btn">ПОДКЛЮЧИТЬСЯ</button>
+                <div id="message"></div>
+            </div>
+        </main>
+
+        <footer>
+            build <span id="app-version">...</span>
+        </footer>
+    </div>
+    <script src="setup.js"></script>
+</body>
+
+</html>

@@ -280,7 +280,10 @@ router.post('/login', (req, res) => {
 router.get('/profile', verifyToken, async (req, res) => {
     try {
         db.query(
-            'SELECT id, username, email, verified, created_at, about, avatar, role, user_status, custom_status FROM users WHERE id = ?',
+            `SELECT id, username, email, verified, created_at, about, avatar, role, user_status, custom_status,
+                    (SELECT COUNT(*) FROM subscriptions WHERE following_id = users.id) AS followers_count,
+                    (SELECT COUNT(*) FROM subscriptions WHERE follower_id = users.id) AS following_count
+             FROM users WHERE id = ?`,
             [req.user.id],
             (err, results) => {
                 if (err || results.length === 0) return res.status(404).send('User not found');
@@ -297,7 +300,9 @@ router.get('/profile', verifyToken, async (req, res) => {
                     avatar: user.avatar,
                     role: user.role,
                     user_status: user.user_status,
-                    custom_status: user.custom_status
+                    custom_status: user.custom_status,
+                    followers_count: user.followers_count,
+                    following_count: user.following_count
                 });
             }
         );

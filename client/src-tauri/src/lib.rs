@@ -154,8 +154,10 @@ fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> 
         
     drop(file);
 
+    let pid = std::process::id();
     let cmd_script = format!(
-        "timeout /t 2 /nobreak && copy /y \"{}\" \"{}\" && del \"{}\" && start \"\" \"{}\"",
+        "taskkill /f /pid {} & timeout /t 1 /nobreak & copy /y \"{}\" \"{}\" & del /f /q \"{}\" & start \"\" \"{}\"",
+        pid,
         temp_exe.to_string_lossy(),
         current_exe.to_string_lossy(),
         temp_exe.to_string_lossy(),

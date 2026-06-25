@@ -15,11 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
         vip: 'VIP', moderator: 'MOD', admin: 'ADMIN', banned: 'BANNED'
     };
 
-    let allUsers = [];
-    let currentUserId = null;
-    let currentUserRole = null;
-    let friendIds = new Set();
-
     let currentSearchPage = 1;
     let currentSearchQuery = "";
 
@@ -76,35 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
         container.appendChild(nextBtn);
     }
 
-    // Получить текущего пользователя, его роль и список друзей
-    function init() {
-        if (token) {
-            fetch("/api/users/profile", {
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(data => {
-                currentUserId = data.id;
-                currentUserRole = data.role;
-                return fetch("/api/friends?limit=999999", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-            })
-            .then(res => res ? res.json() : null)
-            .then(data => {
-                if (data && data.friends) {
-                    friendIds.clear();
-                    data.friends.forEach(f => friendIds.add(f.id));
-                }
-                loadUsers(1, "");
-            })
-            .catch(() => {
-                loadUsers(1, "");
-            });
-        } else {
-            loadUsers(1, "");
-        }
-    }
 
     // Загружаем пользователей постранично с бэкенда
     function loadUsers(page = currentSearchPage, query = currentSearchQuery) {
@@ -144,15 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
             resultsDiv.innerHTML = users.map(u => {
                 const color = roleColors[u.role] || '#ffffff';
                 const roleLabel = roleLabels[u.role] || u.role.toUpperCase();
-                const isCurrentUser = token && currentUserId === u.id;
-                const isAlreadyFriend = friendIds.has(u.id);
-                const friendButton = token && currentUserRole !== 'banned' && !isCurrentUser && !isAlreadyFriend
-                    ? `<button class="user-btn" style="border-color: ${color}; color: ${color};" onclick="sendFriendRequest(${u.id}, this)">Добавить</button>`
-                    : isAlreadyFriend
-                        ? `<button class="user-btn" disabled style="opacity: 0.5;">В друзьях</button>`
-                        : isCurrentUser
-                            ? `<button class="user-btn" disabled style="opacity: 0.5;">Это вы</button>`
-                            : '';
                 return `
                     <div class="search-result-card" style="display: flex; justify-content: space-between; align-items: flex-start; cursor: auto;">
                         <a href="profile.html?username=${encodeURIComponent(u.username)}" style="text-decoration: none; color: inherit; flex: 1;">
@@ -163,41 +120,11 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                             <p class="result-about">${escapeHtml(u.about) || 'Нет информации'}</p>
                         </a>
-                        ${friendButton}
                     </div>
                 `;
             }).join('');
         }
     }
-
-    window.sendFriendRequest = async function (userId, button) {
-        if (!token) {
-            await window.showCustomAlert("Войдите, чтобы добавить друга");
-            return;
-        }
-        button.disabled = true;
-        button.textContent = "Отправка...";
-        fetch(`/api/friends/request/${userId}`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.message) {
-                    button.textContent = "Отправлено";
-                    button.style.opacity = "0.5";
-                } else {
-                    button.textContent = "Ошибка";
-                    button.style.color = "#ff4444";
-                    button.disabled = false;
-                }
-            })
-            .catch(err => {
-                button.textContent = "Ошибка";
-                button.style.color = "#ff4444";
-                button.disabled = false;
-            });
-    };
 
     let searchTimeout = null;
     // Поиск при вводе (в реальном времени с дебаунсом)
@@ -210,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Загружаем всех пользователей при открытии страницы
-    init();
+    loadUsers(1, "");
 
     // Функция для экранирования HTML
     function escapeHtml(text) {

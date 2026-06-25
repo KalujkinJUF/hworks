@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "start-client": "npm run --prefix client start",
-    "build-client": "npm run --prefix client build"
+    "build-client": "npm run --prefix client build",
+    "logs": "pm2 logs social-network-api --lines 100"
   },
   "keywords": [],
   "author": "",

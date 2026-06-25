@@ -16,6 +16,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const app = express();
+app.set('trust proxy', 1);
 const jwt = require('jsonwebtoken');
 const mysql = require('mysql');
 const userRoutes = require('./routes/userRoutes');

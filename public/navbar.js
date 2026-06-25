@@ -108,16 +108,24 @@ window.showCustomConfirm = function(message) {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("clear_session") === "true") {
-        localStorage.removeItem("token");
-        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-        window.location.href = "login.html";
-        return;
-    }
+    // Проверка авторизации через cookie (httpOnly)
+    fetch("/api/users/profile", {
+        credentials: 'include'
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Not authorized');
+        return res.json();
+    })
+    .then(data => {
+        initializeNavbar(data);
+    })
+    .catch(() => {
+        initializeNavbar(null);
+    });
+});
 
-    const token = localStorage.getItem("token");
+function initializeNavbar(myData) {
+    const token = myData ? true : false;
 
     // Определяем текущую страницу
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
@@ -163,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Получаем непрочитанные сообщения
         fetch("/api/messages/unread/count", {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(data => {
@@ -188,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Получаем входящие запросы в друзья
         fetch("/api/friends/requests/incoming", {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(requests => {
@@ -202,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Получаем количество непрочитанных отзывов на стене
         fetch("/api/users/unread-wall-count", {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(data => {
@@ -251,9 +259,9 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch('/api/users/ping', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({ isIdle: idleState })
             })
             .then(res => res.json())
@@ -287,26 +295,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 30000);
 
         // Проверяем роль через профиль, чтобы показать кнопку админки или скрыть функции забаненного
-        fetch("/api/users/profile", {
-            headers: { "Authorization": `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(async data => {
-            if (data.role === 'banned') {
-                if (btnFriends) btnFriends.style.display = "none";
-                if (btnChat) btnChat.style.display = "none";
-                
-                // Перенаправление забаненных пользователей
-                if (currentPage === 'friends.html' || currentPage === 'chat.html') {
-                    await window.showCustomAlert("Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.");
-                    window.location.href = "profile.html";
-                }
-            }
-            if ((data.role === 'admin' || data.role === 'moderator') && btnAdmin && currentPage !== 'admin.html') {
-                btnAdmin.style.display = "inline-block";
-            }
-        })
-        .catch(() => {});
+        if (myData) {
+            checkRole(myData);
+        }
     } else {
         // Если пользователь НЕ залогинился:
         if (btnRegister && currentPage !== 'register.html') btnRegister.style.display = "inline-block";
@@ -323,8 +314,34 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnLogout) {
         btnLogout.addEventListener("click", (e) => {
             e.preventDefault();
-            localStorage.removeItem("token");
-            window.location.href = "index.html";
+            fetch('/api/users/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).finally(() => {
+                window.location.href = "index.html";
+            });
         });
     }
-});
+}
+
+function checkRole(data) {
+    const btnFriends = document.getElementById("nav-friends");
+    const btnChat = document.getElementById("nav-chat");
+    const btnAdmin = document.getElementById("nav-admin");
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+
+    if (data.role === 'banned') {
+        if (btnFriends) btnFriends.style.display = "none";
+        if (btnChat) btnChat.style.display = "none";
+        
+        // Перенаправление забаненных пользователей
+        if (currentPage === 'friends.html' || currentPage === 'chat.html') {
+            window.showCustomAlert("Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.").then(() => {
+                window.location.href = "profile.html";
+            });
+        }
+    }
+    if ((data.role === 'admin' || data.role === 'moderator') && btnAdmin && currentPage !== 'admin.html') {
+        btnAdmin.style.display = "inline-block";
+    }
+}

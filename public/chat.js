@@ -1,17 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    // Проверка авторизации через cookie (httpOnly)
+    fetch("/api/users/profile", {
+        credentials: 'include'
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Not authorized');
+        return res.json();
+    })
+    .then(data => {
+        initializeChat(data);
+    })
+    .catch(() => {
         window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
             window.location.href = "login.html";
         });
-        return;
-    }
+    });
+});
 
-    let currentUserId = null;
-    let currentUserRole = null;
+function initializeChat(myData) {
+
+    let currentUserId = myData.id;
+    let currentUserRole = myData.role;
     let currentFriendId = null;
     let currentFriendName = null;
     let currentFriendRole = null;
+
+    // Функция для экранирования HTML
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        var s = String(text);
+        s = s.replace(/&/g, '&');
+        s = s.replace(/</g, '<');
+        s = s.replace(/>/g, '>');
+        s = s.replace(/"/g, '"');
+        s = s.replace(/'/g, '&#039;');
+        return s;
+    }
 
     window.deleteMessage = async function(messageId, event) {
         if (event) event.stopPropagation();
@@ -19,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         fetch(`/api/messages/${messageId}`, {
             method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(async data => {
@@ -40,26 +64,13 @@ document.addEventListener("DOMContentLoaded", () => {
         vip: '#9b59b6', moderator: '#ff8c00', admin: '#ff4444', banned: '#333333'
     };
 
-    // Получаем данные текущего пользователя
-    fetch("/api/users/profile", {
-        headers: { "Authorization": `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-        currentUserId = data.id;
-        currentUserRole = data.role;
-        loadFriendsList();
-    })
-    .catch(error => {
-        console.error(error);
-        window.location.href = "friends.html";
-    });
+    loadFriendsList();
 
     // Загрузка списка друзей слева
     function loadFriendsList() {
         Promise.all([
-            fetch("/api/friends?limit=1000", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json()).then(data => data.friends || data),
-            fetch("/api/messages/unread/friends", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json())
+            fetch("/api/friends?limit=1000", { credentials: 'include' }).then(res => res.json()).then(data => data.friends || data),
+            fetch("/api/messages/unread/friends", { credentials: 'include' }).then(res => res.json())
         ])
         .then(([friends, unreadFriends]) => {
             const unreadIds = new Set((unreadFriends || []).map(uf => uf.sender_id));
@@ -216,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!currentFriendId) return;
 
         fetch(`/api/messages/${currentFriendId}`, {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(messages => {
@@ -324,9 +335,9 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/messages", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
+                "Content-Type": "application/json"
             },
+            credentials: 'include',
             body: JSON.stringify({
                 receiver_id: currentFriendId,
                 content: content
@@ -380,15 +391,4 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-    // Функция для экранирования HTML (быстрая и безопасная, экранирует кавычки)
-    function escapeHtml(text) {
-        if (text === null || text === undefined) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-});
+}

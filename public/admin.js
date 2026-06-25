@@ -1,26 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
-            window.location.href = "login.html";
-        });
-        return;
-    }
-
-    const toggleBtn = document.getElementById("toggleUsersBtn");
-    const usersContainer = document.getElementById("usersContainer");
-    const usersList = document.getElementById("usersList");
-    const adminMessage = document.getElementById("adminMessage");
-    let usersData = [];
-    let currentRole = null; // запомним роль текущего админа/модератора
-    let currentUserId = null; // запомним ID текущего админа/модератора
-
-    // Проверка роли через профиль
+    // Проверка авторизации через cookie (httpOnly)
     fetch("/api/users/profile", {
-        headers: { "Authorization": `Bearer ${token}` }
+        credentials: 'include'
     })
     .then(res => {
-        if (!res.ok) throw new Error("Not authorized");
+        if (!res.ok) throw new Error('Not authorized');
         return res.json();
     })
     .then(data => {
@@ -28,14 +12,26 @@ document.addEventListener("DOMContentLoaded", () => {
             window.showCustomAlert("Доступ запрещён!").then(() => {
                 window.location.href = "index.html";
             });
+            return;
         }
-        currentRole = data.role;
-        currentUserId = data.id;
+        initializeAdmin(data);
     })
     .catch(() => {
-        localStorage.removeItem("token");
-        window.location.href = "login.html";
+        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+            window.location.href = "login.html";
+        });
     });
+});
+
+function initializeAdmin(myData) {
+
+    const toggleBtn = document.getElementById("toggleUsersBtn");
+    const usersContainer = document.getElementById("usersContainer");
+    const usersList = document.getElementById("usersList");
+    const adminMessage = document.getElementById("adminMessage");
+    let usersData = [];
+    let currentRole = myData.role;
+    let currentUserId = myData.id;
 
     // Цвета для ролей
     const roleColors = {
@@ -60,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function loadUsers() {
         fetch("/api/admin/dashboard", {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => {
             if (!res.ok) throw new Error("Ошибка загрузки");
@@ -182,7 +178,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     const role = card.querySelector(".edit-role").value;
                     fetch(`/api/admin/user/${id}/role`, {
                         method: "PUT",
-                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                        headers: { "Content-Type": "application/json" },
+                        credentials: 'include',
                         body: JSON.stringify({ role })
                     })
                     .then(res => res.json())
@@ -201,11 +198,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const id = btn.dataset.id;
                 const card = btn.closest(".user-card");
                 const username = card.querySelector(".edit-username").value;
-                fetch(`/api/admin/user/${id}/username`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ username })
-                })
+                    fetch(`/api/admin/user/${id}/username`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: 'include',
+                        body: JSON.stringify({ username })
+                    })
                 .then(res => res.json())
                 .then(data => {
                     adminMessage.textContent = data.message || data.error;
@@ -221,11 +219,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const id = btn.dataset.id;
                 const card = btn.closest(".user-card");
                 const about = card.querySelector(".edit-about").value;
-                fetch(`/api/admin/user/${id}/about`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ about })
-                })
+                    fetch(`/api/admin/user/${id}/about`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: 'include',
+                        body: JSON.stringify({ about })
+                    })
                 .then(res => res.json())
                 .then(data => {
                     adminMessage.textContent = data.message || data.error;
@@ -241,11 +240,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const id = btn.dataset.id;
                 const card = btn.closest(".user-card");
                 const email = card.querySelector(".edit-email").value;
-                fetch(`/api/admin/user/${id}/email`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ email })
-                })
+                    fetch(`/api/admin/user/${id}/email`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: 'include',
+                        body: JSON.stringify({ email })
+                    })
                 .then(res => res.json())
                 .then(data => {
                     adminMessage.textContent = data.message || data.error;
@@ -266,11 +266,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     adminMessage.style.color = "#ff4444";
                     return;
                 }
-                fetch(`/api/admin/user/${id}/password`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ password })
-                })
+                    fetch(`/api/admin/user/${id}/password`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: 'include',
+                        body: JSON.stringify({ password })
+                    })
                 .then(res => res.json())
                 .then(data => {
                     adminMessage.textContent = data.message || data.error;
@@ -288,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этого пользователя?")) return;
                     fetch(`/api/admin/user/${id}`, {
                         method: "DELETE",
-                        headers: { "Authorization": `Bearer ${token}` }
+                        credentials: 'include'
                     })
                     .then(res => res.json())
                     .then(data => {

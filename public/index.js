@@ -46,11 +46,12 @@
 
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';
+        const a = '&';
         return String(text)
-            .replace(/&/g, '&')
-            .replace(/</g, '<')
-            .replace(/>/g, '>')
-            .replace(/"/g, '"')
+            .replace(/&/g, a + 'amp;')
+            .replace(/</g, a + 'lt;')
+            .replace(/>/g, a + 'gt;')
+            .replace(/"/g, a + 'quot;')
             .replace(/'/g, '&#039;');
     }
 

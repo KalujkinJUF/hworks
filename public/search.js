@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("searchInput");
     const resultsDiv = document.getElementById("searchResults");
     const messageDiv = document.getElementById("searchMessage");
-    const token = localStorage.getItem("token");
 
     const roleColors = {
         admin: '#ff4444', moderator: '#ff8c00', user: '#00ccff',
@@ -77,12 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
         currentSearchPage = page;
         currentSearchQuery = query;
 
-        const headers = {};
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        fetch(`/api/users/search?q=${encodeURIComponent(query)}&page=${page}&limit=15`, { headers })
+        fetch(`/api/users/search?q=${encodeURIComponent(query)}&page=${page}&limit=15`, {
+            credentials: 'include'
+        })
             .then(res => res.json())
             .then(data => {
                 const users = data.users || [];

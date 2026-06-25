@@ -4,10 +4,10 @@ const path = require('path');
 
 const db = mysql.createPool({
     connectionLimit: 10,
-    host: process.env.DB_HOST || '127.0.0.1',
-    user: process.env.DB_USER || 'hworks_user',
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'social-network',
+    database: process.env.DB_NAME,
     charset: 'utf8mb4'
 });
 

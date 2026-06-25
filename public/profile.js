@@ -1,14 +1,26 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    // Проверка авторизации через cookie (httpOnly)
+    fetch("/api/users/profile", {
+        credentials: 'include'
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Not authorized');
+        return res.json();
+    })
+    .then(data => {
+        // Пользователь авторизован, продолжаем загрузку
+        initializeProfile(data);
+    })
+    .catch(() => {
         window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
             window.location.href = "login.html";
         });
-        return;
-    }
+    });
+});
 
-    let currentUserId = null;
-    let currentUserRole = null;
+function initializeProfile(myData) {
+    let currentUserId = myData.id;
+    let currentUserRole = myData.role;
     let viewingProfileId = null;
     let isOwnProfile = true;
     let viewingUsername = null;
@@ -26,47 +38,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     viewingUsername = params.get('username');
 
-    // 1. ЗАГРУЗКА ПРОФИЛЯ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ (для проверки)
-    fetch("/api/users/profile", {
-        headers: { "Authorization": `Bearer ${token}` }
-    })
-    .then(response => response.json())
-    .then(myData => {
-        currentUserId = myData.id;
-        currentUserRole = myData.role;
+    if (myData.role === 'banned') {
+        const commentForm = document.getElementById("commentForm");
+        if (commentForm) commentForm.style.display = 'none';
+    }
 
-        if (myData.role === 'banned') {
-            const commentForm = document.getElementById("commentForm");
-            if (commentForm) commentForm.style.display = 'none';
-        }
-
-        // Если нет параметра URL или имя совпадает с нашим - показываем свой профиль
-        if (!viewingUsername || viewingUsername.toLowerCase() === myData.username.toLowerCase()) {
-            isOwnProfile = true;
-            loadProfile(myData, true);
-        } else {
-            // Если есть параметр - загружаем профиль того пользователя
-            isOwnProfile = false;
-            fetch(`/api/users/profile/${viewingUsername}`, {
-                headers: { "Authorization": `Bearer ${token}` }
+    // Если нет параметра URL или имя совпадает с нашим - показываем свой профиль
+    if (!viewingUsername || viewingUsername.toLowerCase() === myData.username.toLowerCase()) {
+        isOwnProfile = true;
+        loadProfile(myData, true);
+    } else {
+        // Если есть параметр - загружаем профиль того пользователя
+        isOwnProfile = false;
+        fetch(`/api/users/profile/${viewingUsername}`, {
+            credentials: 'include'
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('User not found');
+                return res.json();
             })
-                .then(res => {
-                    if (!res.ok) throw new Error('User not found');
-                    return res.json();
-                })
-                .then(data => loadProfile(data, false))
-                .catch(() => {
-                    window.showCustomAlert('Пользователь не найден').then(() => {
-                        window.location.href = 'index.html';
-                    });
+            .then(data => loadProfile(data, false))
+            .catch(() => {
+                window.showCustomAlert('Пользователь не найден').then(() => {
+                    window.location.href = 'index.html';
                 });
-        }
-    })
-    .catch(error => {
-        console.error(error);
-        localStorage.removeItem("token");
-        window.location.href = "login.html";
-    });
+            });
+    }
 
     function loadProfile(data, isOwn) {
         viewingProfileId = data.id;
@@ -237,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     subscribeBtn.onclick = () => {
                         fetch(`/api/users/subscribe/${data.id}`, {
                             method: "POST",
-                            headers: { "Authorization": `Bearer ${token}` }
+                            credentials: 'include'
                         })
                         .then(res => res.json())
                         .then(subRes => {
@@ -265,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         friendBtn.onclick = () => {
                             fetch(`/api/friends/request/${data.id}`, {
                                 method: "POST",
-                                headers: { "Authorization": `Bearer ${token}` }
+                                credentials: 'include'
                             })
                             .then(res => res.json())
                             .then(resData => {
@@ -284,7 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             friendBtn.onclick = () => {
                                 fetch(`/api/friends/reject-user/${data.id}`, {
                                     method: "POST",
-                                    headers: { "Authorization": `Bearer ${token}` }
+                                    credentials: 'include'
                                 })
                                 .then(res => res.json())
                                 .then(() => {
@@ -298,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             friendBtn.onclick = () => {
                                 fetch(`/api/friends/accept-user/${data.id}`, {
                                     method: "POST",
-                                    headers: { "Authorization": `Bearer ${token}` }
+                                    credentials: 'include'
                                 })
                                 .then(res => res.json())
                                 .then(() => {
@@ -314,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этого пользователя из друзей?")) return;
                             fetch(`/api/friends/${data.id}`, {
                                 method: "DELETE",
-                                headers: { "Authorization": `Bearer ${token}` }
+                                credentials: 'include'
                             })
                             .then(res => res.json())
                             .then(() => {
@@ -347,7 +344,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!content) return;
                 fetch(`/api/users/comments/profile/${data.id}`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    headers: { "Content-Type": "application/json" },
+                    credentials: 'include',
                     body: JSON.stringify({ content })
                 })
                 .then(res => res.json())
@@ -393,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             fetch("/api/users/avatar", {
                 method: "POST",
-                headers: { "Authorization": `Bearer ${token}` },
+                credentials: 'include',
                 body: formData
             })
             .then(res => res.json())
@@ -425,7 +423,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             fetch("/api/users/verify-email", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
+                credentials: 'include',
                 body: JSON.stringify({ code })
             })
             .then(res => res.json())
@@ -487,7 +486,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             fetch(`/api/users/${currentUserId}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
+                credentials: 'include',
                 body: JSON.stringify({ username: finalUsername, password: newPasswordInput || null, about: newAbout })
             })
             .then(async response => {
@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const status = e.target.value;
             fetch(`/api/users/status/${status}`, {
                 method: "POST",
-                headers: { "Authorization": `Bearer ${token}` }
+                credentials: 'include'
             })
             .then(res => res.json())
             .then(data => {
@@ -548,7 +548,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function loadMutualFriends(targetId) {
         fetch(`/api/friends/mutual/${targetId}`, {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(friends => {
@@ -753,22 +753,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.loadProfileComments = loadProfileComments;
 
-    // Функция для экранирования HTML
-    function escapeHtml(text) {
-        if (text === null || text === undefined) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
     window.deleteWallComment = async function(commentId) {
         if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот отзыв?")) return;
         fetch(`/api/users/comments/${commentId}`, {
             method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(async data => {
@@ -795,9 +784,9 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(`/api/users/${viewingProfileId}/bio`, {
                 method: "PUT",
                 headers: { 
-                    "Content-Type": "application/json", 
-                    "Authorization": `Bearer ${token}` 
+                    "Content-Type": "application/json"
                 },
+                credentials: 'include',
                 body: JSON.stringify({ about })
             })
             .then(res => res.json())
@@ -843,9 +832,9 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch("/api/users/change-unverified-email", {
                 method: "POST",
                 headers: { 
-                    "Content-Type": "application/json", 
-                    "Authorization": `Bearer ${token}` 
+                    "Content-Type": "application/json"
                 },
+                credentials: 'include',
                 body: JSON.stringify({ email })
             })
             .then(res => res.json())
@@ -884,7 +873,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             fetch("/api/users/delete-account/request", {
                 method: "POST",
-                headers: { "Authorization": `Bearer ${token}` }
+                credentials: 'include'
             })
             .then(res => res.json())
             .then(data => {
@@ -930,9 +919,9 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch("/api/users/delete-account/confirm", {
                 method: "POST",
                 headers: { 
-                    "Content-Type": "application/json", 
-                    "Authorization": `Bearer ${token}` 
+                    "Content-Type": "application/json"
                 },
+                credentials: 'include',
                 body: JSON.stringify({ code })
             })
             .then(res => res.json())
@@ -942,7 +931,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         deleteMessage.style.color = "#00ff00";
                         deleteMessage.textContent = data.message;
                     }
-                    localStorage.removeItem("token");
                     setTimeout(() => {
                         window.location.href = "register.html";
                     }, 1500);
@@ -981,4 +969,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (tabSettingsBtn) tabSettingsBtn.classList.add("active");
         }
     };
-});
+}
+
+// Функция для экранирования HTML
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const a = '&';
+    return String(text)
+        .replace(/&/g, a + 'amp;')
+        .replace(/</g, a + 'lt;')
+        .replace(/>/g, a + 'gt;')
+        .replace(/"/g, a + 'quot;')
+        .replace(/'/g, '&#039;');
+}

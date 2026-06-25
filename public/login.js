@@ -23,10 +23,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
                 messageDiv.style.color = '#00ff00';
                 messageDiv.textContent = 'Успешный вход!';
             }
-            // Токен также сохраняем в localStorage для обратной совместимости
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-            }
             
             setTimeout(() => {
                 window.location.href = 'index.html';

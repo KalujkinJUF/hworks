@@ -39,11 +39,6 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
                 messageDiv.textContent = 'Успешно! Входим в профиль...';
             }
 
-            // Сохраняем токен, который нам теперь присылает бэкенд
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-            }
-            
             // Делаем небольшую задержку в 1.5 секунды, чтобы юзер успел увидеть надпись об успехе, и перекидываем
             setTimeout(() => {
                 window.location.href = 'profile.html';

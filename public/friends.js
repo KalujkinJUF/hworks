@@ -1,10 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    // Проверка авторизации через cookie (httpOnly)
+    fetch("/api/users/profile", {
+        credentials: 'include'
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Not authorized');
+        return res.json();
+    })
+    .then(data => {
+        initializeFriends(data);
+    })
+    .catch(() => {
         alert("Пожалуйста, войдите в систему.");
         window.location.href = "login.html";
-        return;
-    }
+    });
+});
+
+function initializeFriends(myData) {
 
     const roleColors = {
         newbie: '#888888', user: '#00ccff', premium: '#ffd700',
@@ -12,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     let currentFriendsPage = 1;
+    let currentUserId = myData.id;
+    let currentUserRole = myData.role;
 
     function renderPagination(containerId, currentPage, totalPages, onPageChange) {
         const container = document.getElementById(containerId);
@@ -71,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentFriendsPage = page;
         console.log('Загрузка друзей...');
         fetch(`/api/friends?page=${page}&limit=15`, {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => {
             console.log('Статус ответа:', res.status);
@@ -135,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Загрузка входящих запросов
     function loadRequests() {
         fetch("/api/friends/requests/incoming", {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(requests => {
@@ -182,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Загрузка отправленных запросов
     function loadOutgoing() {
         fetch("/api/friends/requests/outgoing", {
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(requests => {
@@ -227,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.acceptRequest = function(requestId) {
         fetch(`/api/friends/accept/${requestId}`, {
             method: "POST",
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(data => {
@@ -241,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.rejectRequest = function(requestId) {
         fetch(`/api/friends/reject/${requestId}`, {
             method: "POST",
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(data => {
@@ -255,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!confirm('Вы уверены?')) return;
         fetch(`/api/friends/${friendId}`, {
             method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(data => {
@@ -283,11 +297,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Функция для экранирования HTML
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';
+        const a = '&';
         return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
+            .replace(/&/g, a + 'amp;')
+            .replace(/</g, a + 'lt;')
+            .replace(/>/g, a + 'gt;')
+            .replace(/"/g, a + 'quot;')
             .replace(/'/g, '&#039;');
     }
+}
 });

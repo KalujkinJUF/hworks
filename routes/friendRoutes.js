@@ -143,7 +143,7 @@ router.post('/request/:userId', verifyToken, verifyNotBanned, (req, res) => {
                 }
 
                 db.query(
-                    'INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)',
+                    'INSERT IGNORE INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)',
                     [senderId, receiverId, 'pending'],
                     (err, result) => {
                         if (err) {

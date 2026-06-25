@@ -4,7 +4,7 @@ const path = require('path');
 const logger = require('./logger');
 
 const db = mysql.createPool({
-    connectionLimit: 10,
+    connectionLimit: parseInt(process.env.DB_POOL_LIMIT || '20', 10),
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,

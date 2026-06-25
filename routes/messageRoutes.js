@@ -1,10 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
+const sanitizeHtml = require('sanitize-html');
 const db = require('../config/db');
 const { verifyToken, verifyNotBanned } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const logger = require('../config/logger');
+
+// Санитизация HTML для защиты от XSS (как в постах/комментариях)
+const sanitize = (dirty) => sanitizeHtml(dirty, {
+    allowedTags: [],
+    allowedAttributes: {},
+    disallowedTagsMode: 'discard'
+});
 
 // Rate limiter для сообщений
 const messageLimiter = rateLimit({
@@ -161,9 +169,11 @@ router.post('/', (req, res) => {
                 return res.status(403).json({ error: 'Вы не друзья' });
             }
 
+            const sanitizedContent = sanitize(content.trim());
+
             db.query(
                 'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)',
-                [senderId, receiverId, content],
+                [senderId, receiverId, sanitizedContent],
                 (err, result) => {
                     if (err) {
                         logger.error('Ошибка БД при отправке сообщения');

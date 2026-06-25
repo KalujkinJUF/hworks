@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
     email_code VARCHAR(255) DEFAULT NULL,
     role ENUM('newbie', 'user', 'premium', 'vip', 'moderator', 'admin', 'banned') DEFAULT 'newbie',
     verified TINYINT(1) DEFAULT 0,
@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_sender_id (sender_id),
     INDEX idx_receiver_id (receiver_id),
+    INDEX idx_receiver_read (receiver_id, is_read),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -65,7 +66,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_subscription (follower_id, following_id)
+    UNIQUE KEY unique_subscription (follower_id, following_id),
+    INDEX idx_following_id (following_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Таблица лайков
@@ -76,7 +78,8 @@ CREATE TABLE IF NOT EXISTS likes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_like (user_id, post_id)
+    UNIQUE KEY unique_like (user_id, post_id),
+    INDEX idx_post_id (post_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Таблица комментариев
@@ -89,7 +92,10 @@ CREATE TABLE IF NOT EXISTS comments (
     parent_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_target (target_id, target_type),
+    INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Корректировка default для поля about в существующей таблице

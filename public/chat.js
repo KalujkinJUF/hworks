@@ -28,13 +28,13 @@ function initializeChat(myData) {
     // Функция для экранирования HTML
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';
-        var s = String(text);
-        s = s.replace(/&/g, '&');
-        s = s.replace(/</g, '<');
-        s = s.replace(/>/g, '>');
-        s = s.replace(/"/g, '"');
-        s = s.replace(/'/g, '&#039;');
-        return s;
+        const a = '&';
+        return String(text)
+            .replace(/&/g, a + 'amp;')
+            .replace(/</g, a + 'lt;')
+            .replace(/>/g, a + 'gt;')
+            .replace(/"/g, a + 'quot;')
+            .replace(/'/g, '&#039;');
     }
 
     window.deleteMessage = async function(messageId, event) {

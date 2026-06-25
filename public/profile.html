@@ -200,6 +200,10 @@
                                         <input type="password" id="newPassword" placeholder="Введите новый пароль"
                                             style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
                                     </div>
+                                    <div class="input-group" style="margin-bottom: 0; width: 100%;">
+                                        <input type="password" id="currentPassword" placeholder="Текущий пароль (нужен только для смены пароля)"
+                                            style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
+                                    </div>
                                     <div style="text-align: center; width: 100%;">
                                         <button type="submit" class="auth-btn"
                                             style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; text-transform: uppercase;">Сохранить
@@ -245,6 +249,8 @@
         <!-- Единый скрытый инпут для выбора файла -->
         <input type="file" id="avatarInput" accept="image/*" style="display:none;">
     </div>
+
+    <script src="csrf.js"></script>
 
     <script src="profile.js"></script>
     <script src="navbar.js"></script>

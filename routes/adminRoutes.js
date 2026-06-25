@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const sanitizeHtml = require('sanitize-html');
 const { verifyToken } = require('../middleware/auth');
 const { requireAdmin, requireAdminOrModerator, requireHierarchy } = require('../middleware/rbac');
 const db = require('../config/db');
 
+const sanitize = (dirty) => sanitizeHtml(dirty, {
+    allowedTags: [],
+    allowedAttributes: {},
+    disallowedTagsMode: 'discard'
+});
+
 // Получить всех пользователей (админ и модератор)
-router.get('/dashboard', verifyAdminOrModerator, (req, res) => {
+router.get('/dashboard', verifyToken, requireAdminOrModerator, (req, res) => {
     db.query('SELECT id, username, role, about, created_at, email FROM users', (error, results) => {
         if (error) {
             return res.status(500).send('Database error');
@@ -34,7 +41,8 @@ router.put('/user/:id/role', verifyToken, requireAdmin, (req, res) => {
 // Редактировать "обо мне" — админ и модератор
 router.put('/user/:id/about', verifyToken, requireAdminOrModerator, requireHierarchy, (req, res) => {
     const { about } = req.body;
-    db.query('UPDATE users SET about = ? WHERE id = ?', [about, req.params.id], (error, result) => {
+    const sanitizedAbout = about != null ? sanitize(String(about)) : about;
+    db.query('UPDATE users SET about = ? WHERE id = ?', [sanitizedAbout, req.params.id], (error, result) => {
         if (error) return res.status(500).json({ error: 'Database error' });
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });
         res.json({ message: 'Описание обновлено' });

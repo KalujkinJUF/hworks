@@ -4,10 +4,11 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
 const { verifyToken, verifyNotBanned } = require('../middleware/auth');
-const { requireRole, requireAdminOrModerator } = require('../middleware/rbac');
+const { requireRole, requireAdmin, requireAdminOrModerator } = require('../middleware/rbac');
 const { processUploadedImage } = require('../middleware/fileUpload');
 const router = express.Router();
 const db = require('../config/db');
@@ -58,6 +59,15 @@ const searchLimiter = rateLimit({
     legacyHeaders: false
 });
 
+// Rate limiter для ввода кодов подтверждения (защита от перебора 6-значных кодов)
+const codeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 минут
+    max: 5,
+    message: { error: 'Слишком много попыток ввода кода. Попробуйте через 15 минут.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 // Настройка multer для загрузки аватарок в физический каталог на диске (для поддержки EXE)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -99,9 +109,11 @@ const updateLastActive = (userId) => {
     db.query('UPDATE users SET last_active = NOW() WHERE id = ?', [userId]);
 };
 
-// Получить всех пользователей (только публичные данные)
+// Получить пользователей (только публичные данные, с лимитом во избежание выгрузки всей таблицы)
 router.get('/', (req, res) => {
-    db.query('SELECT id, username, role, avatar, about, created_at FROM users', (err, results) => {
+    const limit = Math.min(parseInt(req.query.limit || '100', 10) || 100, 200);
+    const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);
+    db.query('SELECT id, username, role, avatar, about, created_at FROM users ORDER BY id DESC LIMIT ? OFFSET ?', [limit, offset], (err, results) => {
         if (err) {
             logger.error('Ошибка БД при получении всех пользователей');
             return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
@@ -118,10 +130,13 @@ router.get('/search', searchLimiter, (req, res) => {
     const limit = parseInt(req.query.limit || '15', 10);
     const offset = (page - 1) * limit;
 
+    // Экранируем спецсимволы LIKE (%, _, \), чтобы они не работали как маски
+    const likeQ = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
+
     // Считаем количество подходящих под запрос пользователей
     db.query(
         'SELECT COUNT(*) AS total FROM users WHERE username LIKE ?',
-        [`%${q}%`],
+        [likeQ],
         (countErr, countResults) => {
             if (countErr) {
                 logger.error('Ошибка подсчета при поиске пользователей');
@@ -133,7 +148,7 @@ router.get('/search', searchLimiter, (req, res) => {
 
             db.query(
                 'SELECT id, username, role, avatar, about FROM users WHERE username LIKE ? LIMIT ? OFFSET ?',
-                [`%${q}%`, limit, offset],
+                [likeQ, limit, offset],
                 (err, results) => {
                     if (err) {
                         logger.error('Ошибка БД при поиске пользователей');
@@ -232,7 +247,7 @@ router.post('/register', authLimiter, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const emailCode = crypto.randomInt(100000, 1000000).toString();
 
     db.query(
         'INSERT INTO users (username, password, email, email_code, role, verified) VALUES (?, ?, ?, ?, ?, ?)',
@@ -271,7 +286,7 @@ router.post('/register', authLimiter, async (req, res) => {
 });
 
 // Подтверждение email
-router.post('/verify-email', verifyToken, (req, res) => {
+router.post('/verify-email', codeLimiter, verifyToken, (req, res) => {
     const { code } = req.body;
     const userId = req.user.id;
     if (!code || code.trim() === '') {
@@ -315,7 +330,7 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
                 return res.status(409).json({ error: 'Пользователь с таким email уже существует' });
             }
 
-            const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const emailCode = crypto.randomInt(100000, 1000000).toString();
 
             db.query(
                 'UPDATE users SET email = ?, email_code = ? WHERE id = ?',
@@ -651,7 +666,30 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
     } catch (error) {
         return res.status(500).send('Error checking user status');
     }
-    const { username, password, about } = req.body;
+    const { username, password, currentPassword, about } = req.body;
+
+    // Если меняется пароль — обязательно подтверждение текущим паролем
+    if (typeof password === 'string' && password.trim() !== '') {
+        if (!currentPassword || typeof currentPassword !== 'string') {
+            return res.status(400).json({ error: 'Для смены пароля введите текущий пароль' });
+        }
+        try {
+            const rows = await new Promise((resolve, reject) => {
+                db.query('SELECT password FROM users WHERE id = ?', [userId], (e, r) => e ? reject(e) : resolve(r));
+            });
+            if (rows.length === 0) return res.status(404).send('User not found');
+            const ok = await bcrypt.compare(currentPassword, rows[0].password);
+            if (!ok) return res.status(401).json({ error: 'Неверный текущий пароль' });
+        } catch (e) {
+            return res.status(500).send('Error verifying password');
+        }
+        // Те же требования к новому паролю, что и при регистрации
+        if (password.length < 8 || password.length > 128 ||
+            !/[A-Z]/.test(password) || !/[a-z]/.test(password) ||
+            !/[0-9]/.test(password) || !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+            return res.status(400).json({ error: 'Новый пароль не соответствует требованиям (8+ символов, заглавная, строчная, цифра, спецсимвол)' });
+        }
+    }
 
     // Валидация имени пользователя
     const usernameTrim = username ? username.trim() : '';
@@ -667,7 +705,8 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
     }
 
     try {
-        const result = await updateUser(userId, usernameTrim, password, about);
+        const sanitizedAbout = about != null ? sanitize(String(about)) : about;
+        const result = await updateUser(userId, usernameTrim, password, sanitizedAbout);
         if (result.affectedRows === 0) return res.status(404).send('User not found');
         updateLastActive(userId);
         res.send('User updated successfully');
@@ -765,7 +804,7 @@ router.post('/subscribe/:id', verifyToken, verifyNotBanned, (req, res) => {
                     );
                 } else {
                     db.query(
-                        'INSERT INTO subscriptions (follower_id, following_id) VALUES (?, ?)',
+                        'INSERT IGNORE INTO subscriptions (follower_id, following_id) VALUES (?, ?)',
                         [followerId, followingId],
                         (err) => {
                             if (err) return res.status(500).json({ error: 'Ошибка БД при подписке' });
@@ -900,7 +939,7 @@ router.post('/posts/:id/like', verifyToken, verifyNotBanned, (req, res) => {
                 );
             } else {
                 db.query(
-                    'INSERT INTO likes (user_id, post_id) VALUES (?, ?)',
+                    'INSERT IGNORE INTO likes (user_id, post_id) VALUES (?, ?)',
                     [userId, postId],
                     (err) => {
                         if (err) return res.status(500).json({ error: 'Ошибка БД' });
@@ -1021,7 +1060,8 @@ router.put('/:id/bio', verifyToken, verifyNotBanned, (req, res) => {
         return res.status(403).json({ error: 'Доступ запрещен: нельзя редактировать чужой профиль' });
     }
     const { about } = req.body;
-    db.query('UPDATE users SET about = ? WHERE id = ?', [about, userId], (err) => {
+    const sanitizedAbout = about != null ? sanitize(String(about)) : about;
+    db.query('UPDATE users SET about = ? WHERE id = ?', [sanitizedAbout, userId], (err) => {
         if (err) return res.status(500).json({ error: 'Ошибка обновления биографии' });
         updateLastActive(userId);
         res.json({ message: 'Биография обновлена' });
@@ -1103,7 +1143,7 @@ router.delete('/comments/:id', verifyToken, verifyNotBanned, (req, res) => {
 // Запрос на удаление аккаунта (генерация и отправка кода)
 router.post('/delete-account/request', verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = crypto.randomInt(100000, 1000000).toString();
 
     db.query('SELECT email FROM users WHERE id = ?', [userId], (err, results) => {
         if (err || results.length === 0) return res.status(404).json({ error: 'Пользователь не найден' });
@@ -1126,7 +1166,7 @@ router.post('/delete-account/request', verifyToken, verifyNotBanned, (req, res) 
 });
 
 // Подтверждение удаления аккаунта
-router.post('/delete-account/confirm', verifyToken, verifyNotBanned, (req, res) => {
+router.post('/delete-account/confirm', codeLimiter, verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
     const { code } = req.body;
 

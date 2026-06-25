@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const logger = require('../config/logger');
 
 // Единая иерархия ролей
 const ROLE_HIERARCHY = {

@@ -462,6 +462,7 @@ function initializeProfile(myData) {
             }
             const newUsernameInput = document.getElementById("newUsername").value.trim();
             const newPasswordInput = document.getElementById("newPassword").value;
+            const currentPasswordInput = document.getElementById("currentPassword") ? document.getElementById("currentPassword").value : "";
             const newAbout = document.getElementById("aboutMe").value;
             const finalUsername = newUsernameInput || document.getElementById("username").innerText;
             if (messageDiv) messageDiv.textContent = "";
@@ -488,7 +489,7 @@ function initializeProfile(myData) {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: 'include',
-                body: JSON.stringify({ username: finalUsername, password: newPasswordInput || null, about: newAbout })
+                body: JSON.stringify({ username: finalUsername, password: newPasswordInput || null, currentPassword: currentPasswordInput || null, about: newAbout })
             })
             .then(async response => {
                 if (!response.ok) {

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db'); // Твое подключение к базе данных
+const logger = require('../config/logger');
 
 // Helper для получения токена: сначала из Authorization header, потом из cookie
 const getToken = (req) => {

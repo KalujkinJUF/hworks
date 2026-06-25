@@ -142,6 +142,13 @@ fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
 
 fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> {
     let update_url = format!("{}/updates/voidtree.exe", server_url.trim_end_matches('/'));
+
+    // БЕЗОПАСНОСТЬ: обновление заменяет исполняемый файл, поэтому качаем только по HTTPS.
+    // Иначе MITM может подменить .exe (RCE). TODO: добавить проверку цифровой подписи/SHA-256
+    // (например, через официальный tauri-plugin-updater с Ed25519-ключом).
+    if !update_url.starts_with("https://") {
+        return Err("Обновление возможно только по защищённому соединению (HTTPS). Настройте TLS на сервере.".to_string());
+    }
     let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
     
     // Канонизируем путь и убираем UNC-префикс

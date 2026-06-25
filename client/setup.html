@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройка подключения</title>
+    <link rel="stylesheet" href="setup.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>HWORKS КОПИРАЙТ</h1>
+        </header>
+
+        <main>
+            <div class="auth-form">
+                <h2>НАСТРОЙКА ПОДКЛЮЧЕНИЯ</h2>
+                <div class="input-group">
+                    <label for="server-url">АДРЕС СЕРВЕРА:</label>
+                    <input type="text" id="server-url" placeholder="http://127.0.0.1:3000"
+                        value="http://localhost:3000">
+                </div>
+                <button type="button" id="connect-btn" class="auth-btn">ПОДКЛЮЧИТЬСЯ</button>
+                <div id="message"></div>
+            </div>
+        </main>
+
+        <footer>
+            build <span id="app-version">...</span>
+        </footer>
+    </div>
+    <script src="setup.js"></script>
+</body>
+
+</html>

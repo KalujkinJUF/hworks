@@ -1,8 +1,12 @@
 node_modules/
-client/
+client/node_modules/
+client/dist/
+client/dist_temp/
+client/out/
 xampp/
 .env
 *.exe
 public/uploads/
 .agents/
 db-error.log
+updates/*.zip

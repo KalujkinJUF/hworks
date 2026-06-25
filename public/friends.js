@@ -11,10 +11,66 @@ document.addEventListener("DOMContentLoaded", () => {
         vip: '#9b59b6', moderator: '#ff8c00', admin: '#ff4444', banned: '#333333'
     };
 
+    let currentFriendsPage = 1;
+
+    function renderPagination(containerId, currentPage, totalPages, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'pagination-btn';
+        prevBtn.textContent = '<';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.addEventListener('click', () => onPageChange(currentPage - 1));
+        container.appendChild(prevBtn);
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
+                pageBtn.textContent = i;
+                if (i === currentPage) {
+                    pageBtn.disabled = true;
+                } else {
+                    pageBtn.addEventListener('click', () => onPageChange(i));
+                }
+                container.appendChild(pageBtn);
+            } else if (i === 2 && currentPage > 3) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.color = 'white';
+                dots.style.margin = '0 5px';
+                container.appendChild(dots);
+                i = currentPage - 2;
+            } else if (i === currentPage + 2 && currentPage < totalPages - 2) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.color = 'white';
+                dots.style.margin = '0 5px';
+                container.appendChild(dots);
+                i = totalPages - 1;
+            }
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'pagination-btn';
+        nextBtn.textContent = '>';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.addEventListener('click', () => onPageChange(currentPage + 1));
+        container.appendChild(nextBtn);
+    }
+
     // Загрузка друзей
-    function loadFriends() {
+    function loadFriends(page = currentFriendsPage) {
+        currentFriendsPage = page;
         console.log('Загрузка друзей...');
-        fetch("/api/friends", {
+        fetch(`/api/friends?page=${page}&limit=15`, {
             headers: { "Authorization": `Bearer ${token}` }
         })
         .then(res => {
@@ -24,11 +80,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             return res.json();
         })
-        .then(friends => {
+        .then(data => {
+            const friends = data.friends || [];
+            const totalPages = data.totalPages || 0;
+            const currentPage = data.currentPage || 1;
+
             console.log('Получено друзей:', friends.length, friends);
             const list = document.getElementById("friendsList");
             if (friends.length === 0) {
                 list.innerHTML = '<p class="loading-text">У вас пока нет друзей</p>';
+                renderPagination('friendsPagination', currentPage, totalPages, (p) => loadFriends(p));
             } else {
                 list.innerHTML = friends.map(friend => {
                     const statusClass = `status-${friend.user_status || 'offline'}`;
@@ -58,6 +119,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     `;
                 }).join('');
+
+                renderPagination('friendsPagination', currentPage, totalPages, (p) => loadFriends(p));
             }
         })
         .catch(err => {

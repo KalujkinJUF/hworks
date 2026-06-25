@@ -5,6 +5,18 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
+    const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]');
+    const turnstileToken = turnstileResponse ? turnstileResponse.value : null;
+
+    if (!turnstileToken) {
+        const messageDiv = document.getElementById('message');
+        if (messageDiv) {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = 'Пожалуйста, подтвердите, что вы не робот.';
+        }
+        return;
+    }
+
     console.log('Отправка запроса на регистрацию:', { username, email, password });
 
     try {
@@ -14,7 +26,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username, email, password, turnstileToken })
         });
 
         const data = await response.json();
@@ -38,12 +50,14 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
             }, 1500);
 
         } else {
+            if (window.turnstile) window.turnstile.reset();
             if (messageDiv) {
                 messageDiv.style.color = 'red';
                 messageDiv.textContent = data.error || 'Произошла ошибка при регистрации.';
             }
         }
     } catch (error) {
+        if (window.turnstile) window.turnstile.reset();
         console.error('Ошибка при выполнении запроса регистрации:', error);
         const messageDiv = document.getElementById('message');
         if (messageDiv) {

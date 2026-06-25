@@ -108,6 +108,15 @@ window.showCustomConfirm = function(message) {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("clear_session") === "true") {
+        localStorage.removeItem("token");
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        window.location.href = "login.html";
+        return;
+    }
+
     const token = localStorage.getItem("token");
 
     // Определяем текущую страницу

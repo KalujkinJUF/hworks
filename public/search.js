@@ -20,48 +20,118 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentUserRole = null;
     let friendIds = new Set();
 
+    let currentSearchPage = 1;
+    let currentSearchQuery = "";
+
+    function renderPagination(containerId, currentPage, totalPages, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'pagination-btn';
+        prevBtn.textContent = '<';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.addEventListener('click', () => onPageChange(currentPage - 1));
+        container.appendChild(prevBtn);
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
+                pageBtn.textContent = i;
+                if (i === currentPage) {
+                    pageBtn.disabled = true;
+                } else {
+                    pageBtn.addEventListener('click', () => onPageChange(i));
+                }
+                container.appendChild(pageBtn);
+            } else if (i === 2 && currentPage > 3) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.color = 'white';
+                dots.style.margin = '0 5px';
+                container.appendChild(dots);
+                i = currentPage - 2;
+            } else if (i === currentPage + 2 && currentPage < totalPages - 2) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.color = 'white';
+                dots.style.margin = '0 5px';
+                container.appendChild(dots);
+                i = totalPages - 1;
+            }
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'pagination-btn';
+        nextBtn.textContent = '>';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.addEventListener('click', () => onPageChange(currentPage + 1));
+        container.appendChild(nextBtn);
+    }
+
     // Получить текущего пользователя, его роль и список друзей
     function init() {
         if (token) {
             fetch("/api/users/profile", {
                 headers: { "Authorization": `Bearer ${token}` }
             })
-                .then(res => res.json())
-                .then(data => {
-                    currentUserId = data.id;
-                    currentUserRole = data.role;
-                    loadAllUsers();
-                })
-                .catch(() => {
-                    loadAllUsers();
+            .then(res => res.json())
+            .then(data => {
+                currentUserId = data.id;
+                currentUserRole = data.role;
+                return fetch("/api/friends?limit=999999", {
+                    headers: { "Authorization": `Bearer ${token}` }
                 });
+            })
+            .then(res => res ? res.json() : null)
+            .then(data => {
+                if (data && data.friends) {
+                    friendIds.clear();
+                    data.friends.forEach(f => friendIds.add(f.id));
+                }
+                loadUsers(1, "");
+            })
+            .catch(() => {
+                loadUsers(1, "");
+            });
         } else {
-            loadAllUsers();
+            loadUsers(1, "");
         }
     }
 
-    // Загружаем всех пользователей при загрузке страницы
-    function loadAllUsers() {
-        fetch("/api/users")
+    // Загружаем пользователей постранично с бэкенда
+    function loadUsers(page = currentSearchPage, query = currentSearchQuery) {
+        currentSearchPage = page;
+        currentSearchQuery = query;
+
+        const headers = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        fetch(`/api/users/search?q=${encodeURIComponent(query)}&page=${page}&limit=15`, { headers })
             .then(res => res.json())
-            .then(users => {
-                allUsers = users;
-                if (token) {
-                    return fetch("/api/friends", {
-                        headers: { "Authorization": `Bearer ${token}` }
-                    });
-                }
-            })
-            .then(res => res ? res.json() : null)
-            .then(friends => {
-                if (friends) {
-                    friendIds.clear();
-                    friends.forEach(f => friendIds.add(f.id));
-                }
-                displayUsers(allUsers);
+            .then(data => {
+                const users = data.users || [];
+                const totalPages = data.totalPages || 0;
+                const currentPage = data.currentPage || 1;
+
+                displayUsers(users);
                 messageDiv.textContent = "";
+
+                renderPagination('searchPagination', currentPage, totalPages, (p) => {
+                    loadUsers(p, query);
+                });
             })
-            .catch(() => {
+            .catch(err => {
+                console.error("Error loading search users:", err);
                 messageDiv.textContent = "Ошибка загрузки данных";
                 messageDiv.style.color = "#ff4444";
             });
@@ -129,32 +199,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     };
 
-    function doSearch() {
-        const q = searchInput.value.trim().toLowerCase();
-
-        if (!q) {
-            displayUsers(allUsers);
-            messageDiv.textContent = "";
-            return;
-        }
-
-        const filtered = allUsers.filter(u => u.username.toLowerCase().includes(q));
-
-        if (filtered.length === 0) {
-            resultsDiv.innerHTML = '<p class="loading-text">Ничего не найдено</p>';
-            messageDiv.textContent = `Не найдены пользователи по запросу "${q}"`;
-            messageDiv.style.color = "#ff8c00";
-        } else {
-            displayUsers(filtered);
-            messageDiv.textContent = `Найдено: ${filtered.length}`;
-            messageDiv.style.color = "#00ff00";
-        }
-    }
-
-
-
-    // Поиск при вводе (в реальном времени)
-    searchInput.addEventListener("input", doSearch);
+    let searchTimeout = null;
+    // Поиск при вводе (в реальном времени с дебаунсом)
+    searchInput.addEventListener("input", () => {
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const q = searchInput.value.trim();
+            loadUsers(1, q);
+        }, 300);
+    });
 
     // Загружаем всех пользователей при открытии страницы
     init();

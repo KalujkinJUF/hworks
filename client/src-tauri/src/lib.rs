@@ -6,6 +6,7 @@ use tauri::{AppHandle, Manager, WebviewWindow};
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct AppConfig {
     server_url: Option<String>,
+    last_version: Option<String>,
 }
 
 fn get_config_path(app: &AppHandle) -> Option<PathBuf> {
@@ -85,7 +86,11 @@ fn try_connect(app: AppHandle, window: WebviewWindow, url: String) -> Result<Str
     let normalized = normalize_url(&url);
     match test_connection(&normalized) {
         Ok(()) => {
-            write_config(&app, &AppConfig { server_url: Some(normalized.clone()) });
+            let current_ver = get_version();
+            write_config(&app, &AppConfig {
+                server_url: Some(normalized.clone()),
+                last_version: Some(current_ver),
+            });
             let target_url = tauri::Url::parse(&normalized).map_err(|e| e.to_string())?;
             let _ = window.navigate(target_url);
             
@@ -221,12 +226,25 @@ pub fn run() {
     .setup(|app| {
         let handle = app.handle().clone();
         std::thread::spawn(move || {
-            let config = read_config(&handle);
+            let mut config = read_config(&handle);
+            let mut version_changed = false;
+            let current_ver = get_version();
+            if config.last_version.as_ref() != Some(&current_ver) {
+                config.last_version = Some(current_ver.clone());
+                write_config(&handle, &config);
+                version_changed = true;
+            }
+
             if let Some(ref saved_url) = config.server_url {
                 let clean_url = normalize_url(saved_url);
                 if test_connection(&clean_url).is_ok() {
                     if let Some(window) = handle.get_webview_window("main") {
-                        if let Ok(target_url) = tauri::Url::parse(&clean_url) {
+                        let target_url_str = if version_changed {
+                            format!("{}?clear_session=true", clean_url.trim_end_matches('/'))
+                        } else {
+                            clean_url.clone()
+                        };
+                        if let Ok(target_url) = tauri::Url::parse(&target_url_str) {
                             let _ = window.navigate(target_url);
                             let check_url = clean_url.clone();
                             let app_clone = handle.clone();
@@ -240,9 +258,17 @@ pub fn run() {
                 let default_cloud = "http://34.51.214.5:3000".to_string();
                 if test_connection(&default_cloud).is_ok() {
                     if let Some(window) = handle.get_webview_window("main") {
-                        if let Ok(target_url) = tauri::Url::parse(&default_cloud) {
+                        let target_url_str = if version_changed {
+                            format!("{}?clear_session=true", default_cloud.trim_end_matches('/'))
+                        } else {
+                            default_cloud.clone()
+                        };
+                        if let Ok(target_url) = tauri::Url::parse(&target_url_str) {
                             let _ = window.navigate(target_url);
-                            write_config(&handle, &AppConfig { server_url: Some(default_cloud.clone()) });
+                            write_config(&handle, &AppConfig {
+                                server_url: Some(default_cloud.clone()),
+                                last_version: Some(current_ver),
+                            });
                             let check_url = default_cloud.clone();
                             let app_clone = handle.clone();
                             std::thread::spawn(move || {

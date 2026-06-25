@@ -76,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (feedGlobalBtn) {
         feedGlobalBtn.addEventListener("click", () => {
             currentFeed = 'global';
+            currentLoadedPage = 1;
             switchFeedTab(feedGlobalBtn);
             document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
             isInitialLoadComplete = false;
@@ -85,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (feedSubsBtn) {
         feedSubsBtn.addEventListener("click", () => {
             currentFeed = 'subscriptions';
+            currentLoadedPage = 1;
             switchFeedTab(feedSubsBtn);
             document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
             isInitialLoadComplete = false;
@@ -94,6 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (feedPatchBtn) {
         feedPatchBtn.addEventListener("click", () => {
             currentFeed = 'patches';
+            currentLoadedPage = 1;
             switchFeedTab(feedPatchBtn);
             document.getElementById("patchFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
             isInitialLoadComplete = false;
@@ -103,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Глобальный флаг для контроля анимаций (добавь его перед функцией)
     let isInitialLoadComplete = false;
+    let currentLoadedPage = 1;
 
     // Умная загрузка постов БЕЗ перезапуска анимаций
     function updateFeedInPlace(container, postsList, emptyMsg) {
@@ -141,6 +145,18 @@ document.addEventListener("DOMContentLoaded", () => {
             const dateStr = new Date(post.created_at).toLocaleString();
             const contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
 
+            let postContentMarkup = contentHtml;
+            if (post.content && post.content.length > 300) {
+                const truncatedText = escapeHtml(post.content.slice(0, 280)).replace(/\n/g, '<br>') + '...';
+                postContentMarkup = `
+                    <span class="post-content-short">${truncatedText}</span>
+                    <span class="post-content-full" style="display: none;">${contentHtml}</span>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="read-more-btn" style="background: none; border: 2px solid white; color: white; padding: 4px 10px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; width: auto; margin: 0 auto;">Читать далее</button>
+                    </div>
+                `;
+            }
+
             // Если поста ещё нет на экране (РЕАЛЬНО НОВЫЙ ПОСТ или ПЕРВЫЙ ЗАПУСК)
             if (!card) {
                 card = document.createElement("div");
@@ -171,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="post-date">${dateStr}</span>
                         ${deletePostBtnHtml}
                     </div>
-                    <div class="post-content">${contentHtml}</div>
+                    <div class="post-content">${postContentMarkup}</div>
                     
                     <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
                         <button class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</button>
@@ -196,6 +212,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     container.appendChild(card);
                 }
+
+                // Добавляем обработчик для "Читать далее"
+                const readMoreBtn = card.querySelector(".read-more-btn");
+                if (readMoreBtn) {
+                    readMoreBtn.addEventListener("click", () => {
+                        card.querySelector(".post-content-short").style.display = "none";
+                        card.querySelector(".post-content-full").style.display = "inline";
+                        readMoreBtn.parentElement.style.display = "none";
+                    });
+                }
             } else {
                 // Если пост уже существует — просто точечно обновляем данные, СТРОГО запрещая любые анимации
                 card.style.animation = "none";
@@ -209,10 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
-                const contentEl = card.querySelector(".post-content");
-                if (contentEl && contentEl.innerHTML !== contentHtml) {
-                    contentEl.innerHTML = contentHtml;
-                }
+                // Убрали принудительное обновление contentEl.innerHTML, чтобы не перезатирать открытый "Читать далее"
 
                 const commentsBtn = card.querySelector(".comments-toggle-btn");
                 if (commentsBtn) {
@@ -234,24 +257,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // На вкладке "Обновления сайта" грузим все посты, но фильтруем только патчи
         const feedParam = currentFeed === 'patches' ? 'global' : currentFeed;
+        const limit = 15 * currentLoadedPage;
 
-        fetch(`/api/users/posts?feed=${feedParam}`, { headers })
+        fetch(`/api/users/posts?feed=${feedParam}&page=1&limit=${limit}`, { headers })
             .then(res => res.json())
-            .then(posts => {
+            .then(data => {
+                const postsList = data.posts || [];
+                const totalPages = data.totalPages || 0;
+
                 if (currentFeed === 'patches') {
                     const patchFeed = document.getElementById("patchFeed");
-                    const patches = posts.filter(p => p.type === 'patch_note');
+                    const patches = postsList.filter(p => p.type === 'patch_note');
                     updateFeedInPlace(patchFeed, patches, "Обновлений пока нет");
                 } else {
                     const newsFeed = document.getElementById("newsFeed");
-                    const news = posts.filter(p => p.type === 'news');
+                    const news = postsList.filter(p => p.type === 'news');
                     updateFeedInPlace(newsFeed, news, "Новостей пока нет");
+                }
+
+                // Управление отображением кнопки "Загрузить ещё"
+                const loadMoreSec = document.getElementById("loadMoreSection");
+                if (loadMoreSec) {
+                    if (totalPages > 1) {
+                        loadMoreSec.style.display = "block";
+                    } else {
+                        loadMoreSec.style.display = "none";
+                    }
                 }
 
                 // СТРОГО ТУТ: как только первая пачка постов отрисовалась — блокируем повторные анимации!
                 isInitialLoadComplete = true;
             })
             .catch(() => { });
+    }
+
+    // Обработчик кнопки "Загрузить еще"
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener("click", () => {
+            currentLoadedPage++;
+            loadPosts();
+        });
     }
 
     // Загрузка онлайн пользователей

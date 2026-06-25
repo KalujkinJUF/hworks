@@ -65,16 +65,40 @@ router.get('/', (req, res) => {
 // Поиск пользователей
 router.get('/search', (req, res) => {
     const q = req.query.q || '';
-    if (!q.trim()) return res.json([]);
+
+
+    const page = parseInt(req.query.page || '1', 10);
+    const limit = parseInt(req.query.limit || '15', 10);
+    const offset = (page - 1) * limit;
+
+    // Считаем количество подходящих под запрос пользователей
     db.query(
-        'SELECT id, username, role, avatar, about FROM users WHERE username LIKE ? LIMIT 20',
+        'SELECT COUNT(*) AS total FROM users WHERE username LIKE ?',
         [`%${q}%`],
-        (err, results) => {
-            if (err) {
-                console.error('Ошибка БД при поиске пользователей:', err);
+        (countErr, countResults) => {
+            if (countErr) {
+                console.error('Ошибка подсчета при поиске пользователей:', countErr);
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
-            res.json(results);
+
+            const totalItems = countResults[0].total;
+            const totalPages = Math.ceil(totalItems / limit);
+
+            db.query(
+                'SELECT id, username, role, avatar, about FROM users WHERE username LIKE ? LIMIT ? OFFSET ?',
+                [`%${q}%`, limit, offset],
+                (err, results) => {
+                    if (err) {
+                        console.error('Ошибка БД при поиске пользователей:', err);
+                        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                    }
+                    res.json({
+                        users: results,
+                        totalPages,
+                        currentPage: page
+                    });
+                }
+            );
         }
     );
 });
@@ -124,7 +148,26 @@ const checkEmailDomain = (email) => {
 
 // Регистрация
 router.post('/register', async (req, res) => {
-    const { username, password, email } = req.body;
+    const { username, password, email, turnstileToken } = req.body;
+    
+    // Проверка Cloudflare Turnstile
+    if (!turnstileToken) {
+        return res.status(400).json({ error: 'Требуется подтверждение, что вы не робот' });
+    }
+    try {
+        const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `secret=${encodeURIComponent(process.env.TURNSTILE_SECRET)}&response=${encodeURIComponent(turnstileToken)}&remoteip=${encodeURIComponent(req.ip || '')}`
+        });
+        const verifyData = await verifyResponse.json();
+        if (!verifyData.success) {
+            return res.status(400).json({ error: 'Проверка капчи не пройдена' });
+        }
+    } catch (err) {
+        console.error('Ошибка проверки Turnstile:', err);
+        return res.status(500).json({ error: 'Ошибка проверки капчи на сервере' });
+    }
     
     // Валидация Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -390,6 +433,9 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), (r
 router.get('/posts', (req, res) => {
     const type = req.query.type || null;
     const feed = req.query.feed || 'global';
+    const page = parseInt(req.query.page || '1', 10);
+    const limit = parseInt(req.query.limit || '15', 10);
+    const offset = (page - 1) * limit;
     
     // Попытка получить ID залогиненного пользователя из токена (если передан)
     let requesterId = 0;
@@ -402,41 +448,62 @@ router.get('/posts', (req, res) => {
         } catch (e) {}
     }
 
-    let query = `
-        SELECT posts.*, users.username, users.role, users.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) AS likes_count,
-               (SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = posts.id) AS is_liked,
-               (SELECT COUNT(*) FROM comments WHERE target_id = posts.id AND target_type = 'post') AS comments_count
-        FROM posts 
-        JOIN users ON posts.user_id = users.id
-    `;
-    
-    const params = [requesterId];
     const whereClauses = [];
+    const whereParams = [];
 
     if (type === 'news' || type === 'patch_note') {
         whereClauses.push('posts.type = ?');
-        params.push(type);
+        whereParams.push(type);
     }
 
     if (feed === 'subscriptions' && requesterId > 0) {
         whereClauses.push('(posts.user_id = ? OR posts.user_id IN (SELECT following_id FROM subscriptions WHERE follower_id = ?))');
-        params.push(requesterId, requesterId);
+        whereParams.push(requesterId, requesterId);
     }
 
+    // Запрос на подсчет общего количества
+    let countQuery = 'SELECT COUNT(*) AS total FROM posts';
     if (whereClauses.length > 0) {
-        query += ' WHERE ' + whereClauses.join(' AND ');
+        countQuery += ' WHERE ' + whereClauses.join(' AND ');
     }
 
-    query += ' ORDER BY posts.created_at DESC LIMIT 50';
-
-    db.query(query, params, (err, results) => {
-        if (err) {
-            console.error('Ошибка получения постов:', err);
-            return res.status(500).json({ error: 'Ошибка БД при получении постов' });
+    db.query(countQuery, whereParams, (countErr, countResults) => {
+        if (countErr) {
+            console.error('Ошибка подсчета постов:', countErr);
+            return res.status(500).json({ error: 'Ошибка БД при подсчете постов' });
         }
-        results.forEach(p => p.is_liked = !!p.is_liked);
-        res.json(results);
+        
+        const totalItems = countResults[0].total;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        let query = `
+            SELECT posts.*, users.username, users.role, users.avatar,
+                   (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) AS likes_count,
+                   (SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = posts.id) AS is_liked,
+                   (SELECT COUNT(*) FROM comments WHERE target_id = posts.id AND target_type = 'post') AS comments_count
+            FROM posts 
+            JOIN users ON posts.user_id = users.id
+        `;
+
+        if (whereClauses.length > 0) {
+            query += ' WHERE ' + whereClauses.join(' AND ');
+        }
+
+        query += ' ORDER BY posts.created_at DESC LIMIT ? OFFSET ?';
+        const selectParams = [requesterId, ...whereParams, limit, offset];
+
+        db.query(query, selectParams, (err, results) => {
+            if (err) {
+                console.error('Ошибка получения постов:', err);
+                return res.status(500).json({ error: 'Ошибка БД при получении постов' });
+            }
+            results.forEach(p => p.is_liked = !!p.is_liked);
+            res.json({
+                posts: results,
+                totalPages,
+                currentPage: page
+            });
+        });
     });
 });
 
@@ -703,20 +770,42 @@ router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res
 // Получить все отзывы профиля
 router.get('/comments/profile/:userId', (req, res) => {
     const targetId = parseInt(req.params.userId);
+    const page = parseInt(req.query.page || '1', 10);
+    const limit = parseInt(req.query.limit || '15', 10);
+    const offset = (page - 1) * limit;
 
+    // Считаем общее количество отзывов
     db.query(
-        `SELECT c.id, c.content, c.created_at, u.id AS user_id, u.username, u.avatar, u.role 
-         FROM comments c
-         JOIN users u ON c.user_id = u.id
-         WHERE c.target_id = ? AND c.target_type = 'profile'
-         ORDER BY c.created_at DESC`,
+        `SELECT COUNT(*) AS total FROM comments WHERE target_id = ? AND target_type = 'profile'`,
         [targetId],
-        (err, results) => {
-            if (err) {
-                console.error('Ошибка получения отзывов:', err);
-                return res.status(500).json({ error: 'Ошибка БД при получении отзывов' });
+        (countErr, countResults) => {
+            if (countErr) {
+                console.error('Ошибка подсчета отзывов:', countErr);
+                return res.status(500).json({ error: 'Ошибка БД при подсчете отзывов' });
             }
-            res.json(results);
+
+            const totalItems = countResults[0].total;
+            const totalPages = Math.ceil(totalItems / limit);
+
+            db.query(
+                `SELECT c.id, c.content, c.created_at, u.id AS user_id, u.username, u.avatar, u.role 
+                 FROM comments c
+                 JOIN users u ON c.user_id = u.id
+                 WHERE c.target_id = ? AND c.target_type = 'profile'
+                 ORDER BY c.created_at DESC LIMIT ? OFFSET ?`,
+                [targetId, limit, offset],
+                (err, results) => {
+                    if (err) {
+                        console.error('Ошибка получения отзывов:', err);
+                        return res.status(500).json({ error: 'Ошибка БД при получении отзывов' });
+                    }
+                    res.json({
+                        comments: results,
+                        totalPages,
+                        currentPage: page
+                    });
+                }
+            );
         }
     );
 });

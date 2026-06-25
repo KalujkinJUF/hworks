@@ -7,26 +7,53 @@ const { verifyToken, verifyNotBanned } = require('../middleware/auth');
 router.use(verifyToken);
 router.use(verifyNotBanned);
 
-// Получить список друзей текущего пользователя
+// Получить список друзей текущего пользователя (с пагинацией)
 router.get('/', (req, res) => {
     const userId = req.user.id;
+    const page = parseInt(req.query.page || '1', 10);
+    const limit = parseInt(req.query.limit || '15', 10);
+    const offset = (page - 1) * limit;
+
+    // Считаем общее количество друзей
     db.query(
-        `SELECT u.id, u.username, u.avatar, u.role, 
-                IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status,
-                (SELECT MAX(created_at) FROM messages 
-                 WHERE (sender_id = ? AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = ?)
-                ) AS last_message_time
+        `SELECT COUNT(*) AS total
          FROM users u
          INNER JOIN friends f ON (f.user_id = u.id OR f.friend_id = u.id)
-         WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted' AND u.id != ?
-         ORDER BY COALESCE(last_message_time, '1970-01-01 00:00:00') DESC, u.username ASC`,
-        [userId, userId, userId, userId, userId],
-        (err, results) => {
-            if (err) {
-                console.error('Ошибка БД при получении друзей:', err);
+         WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted' AND u.id != ?`,
+        [userId, userId, userId],
+        (countErr, countResults) => {
+            if (countErr) {
+                console.error('Ошибка БД при подсчете друзей:', countErr);
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
-            res.json(results);
+
+            const totalItems = countResults[0].total;
+            const totalPages = Math.ceil(totalItems / limit);
+
+            db.query(
+                `SELECT u.id, u.username, u.avatar, u.role, 
+                        IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status,
+                        (SELECT MAX(created_at) FROM messages 
+                         WHERE (sender_id = ? AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = ?)
+                        ) AS last_message_time
+                 FROM users u
+                 INNER JOIN friends f ON (f.user_id = u.id OR f.friend_id = u.id)
+                 WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted' AND u.id != ?
+                 ORDER BY COALESCE(last_message_time, '1970-01-01 00:00:00') DESC, u.username ASC
+                 LIMIT ? OFFSET ?`,
+                [userId, userId, userId, userId, userId, limit, offset],
+                (err, results) => {
+                    if (err) {
+                        console.error('Ошибка БД при получении друзей:', err);
+                        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                    }
+                    res.json({
+                        friends: results,
+                        totalPages,
+                        currentPage: page
+                    });
+                }
+            );
         }
     );
 });

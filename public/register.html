@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Регистрация</title>
     <link rel="stylesheet" href="styles.css"> 
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <div class="container">
@@ -33,6 +34,7 @@
                     <div class="input-group">
                         <input type="password" id="password" placeholder="Пароль" required>
                     </div>
+                    <div class="cf-turnstile" data-sitekey="0x4AAAAAADrA8pNzRhRwRbI4" data-theme="dark" style="margin-bottom: 15px; display: flex; justify-content: center;"></div>
                     <button type="submit" class="auth-btn">Зарегистрироваться</button>
                     <div id="message" class="error-message"></div>
                 </form>

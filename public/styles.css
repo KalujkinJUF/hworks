@@ -2182,4 +2182,42 @@ select:focus {
     line-height: inherit;
 }
 
+/* Пагинация */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.pagination-btn {
+    background: black;
+    border: 2px solid white;
+    color: white;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: white;
+    color: black;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-btn.active {
+    background: white;
+    color: black;
+}
+
 

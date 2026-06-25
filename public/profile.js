@@ -619,10 +619,70 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 4000);
     }
 
-    function loadProfileComments(targetId) {
-        fetch(`/api/users/comments/profile/${targetId}`)
+    let currentWallCommentsPage = 1;
+
+    function renderPagination(containerId, currentPage, totalPages, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'pagination-btn';
+        prevBtn.textContent = '<';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.addEventListener('click', () => onPageChange(currentPage - 1));
+        container.appendChild(prevBtn);
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
+                pageBtn.textContent = i;
+                if (i === currentPage) {
+                    pageBtn.disabled = true;
+                } else {
+                    pageBtn.addEventListener('click', () => onPageChange(i));
+                }
+                container.appendChild(pageBtn);
+            } else if (i === 2 && currentPage > 3) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.color = 'white';
+                dots.style.margin = '0 5px';
+                container.appendChild(dots);
+                i = currentPage - 2;
+            } else if (i === currentPage + 2 && currentPage < totalPages - 2) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.color = 'white';
+                dots.style.margin = '0 5px';
+                container.appendChild(dots);
+                i = totalPages - 1;
+            }
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'pagination-btn';
+        nextBtn.textContent = '>';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.addEventListener('click', () => onPageChange(currentPage + 1));
+        container.appendChild(nextBtn);
+    }
+
+    function loadProfileComments(targetId, page = currentWallCommentsPage) {
+        currentWallCommentsPage = page;
+        fetch(`/api/users/comments/profile/${targetId}?page=${page}&limit=15`)
         .then(res => res.json())
-        .then(comments => {
+        .then(data => {
+            const comments = data.comments || [];
+            const totalPages = data.totalPages || 0;
+            const currentPage = data.currentPage || 1;
+
             const list = document.getElementById("commentList");
 
             lastCommentIds.clear();
@@ -632,6 +692,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (comments.length === 0) {
                 list.innerHTML = '<p class="loading-text">Отзывов пока нет</p>';
+                renderPagination('commentsPagination', currentPage, totalPages, (p) => {
+                    loadProfileComments(targetId, p);
+                    const wallHeader = document.getElementById("profileCommentsSection");
+                    if (wallHeader) {
+                        wallHeader.scrollIntoView({ behavior: "smooth" });
+                    }
+                });
             } else {
                 list.innerHTML = comments.map(c => {
                     const color = roleColors[c.role] || '#ffffff';
@@ -641,17 +708,50 @@ document.addEventListener("DOMContentLoaded", () => {
                     const canDeleteComment = isCommentAuthor || isCommentAdmin || isCommentModerator;
                     const deleteBtn = canDeleteComment ? `<button class="delete-btn" style="margin-left: 8px;" onclick="deleteWallComment(${c.id})">Удалить</button>` : '';
 
+                    const contentHtml = escapeHtml(c.content).replace(/\n/g, '<br>');
+                    let commentContentMarkup = contentHtml;
+                    if (c.content && c.content.length > 300) {
+                        const truncatedText = escapeHtml(c.content.slice(0, 280)).replace(/\n/g, '<br>') + '...';
+                        commentContentMarkup = `
+                            <span class="comment-content-short">${truncatedText}</span>
+                            <span class="comment-content-full" style="display: none;">${contentHtml}</span>
+                            <div style="text-align: center; margin-top: 10px;">
+                                <button class="read-more-btn" style="background: none; border: 2px solid white; color: white; padding: 4px 10px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; width: auto; margin: 0 auto;">Читать далее</button>
+                            </div>
+                        `;
+                    }
+
                     return `
-                        <div style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 15px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.01);">
+                        <div class="comment-card" data-comment-id="${c.id}" style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 15px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.01);">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                                 ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid white; object-fit: cover;" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';"><div style="display:none; width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
                                 <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 12px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
                                 <span style="font-size: 10px; color: rgba(255,255,255,0.5); margin-left: auto;">${new Date(c.created_at).toLocaleString()}${deleteBtn}</span>
                             </div>
-                            <div style="font-size: 12px; text-align: left; color: white; word-break: break-word; line-height: 1.5;">${escapeHtml(c.content).replace(/\n/g, '<br>')}</div>
+                            <div class="comment-content" style="font-size: 12px; text-align: left; color: white; word-break: break-word; line-height: 1.5;">${commentContentMarkup}</div>
                         </div>
                     `;
                 }).join('');
+
+                // Навешиваем обработчики клика на кнопки "Читать далее"
+                list.querySelectorAll(".comment-card").forEach(card => {
+                    const readMoreBtn = card.querySelector(".read-more-btn");
+                    if (readMoreBtn) {
+                        readMoreBtn.addEventListener("click", () => {
+                            card.querySelector(".comment-content-short").style.display = "none";
+                            card.querySelector(".comment-content-full").style.display = "inline";
+                            readMoreBtn.parentElement.style.display = "none";
+                        });
+                    }
+                });
+
+                renderPagination('commentsPagination', currentPage, totalPages, (p) => {
+                    loadProfileComments(targetId, p);
+                    const wallHeader = document.getElementById("profileCommentsSection");
+                    if (wallHeader) {
+                        wallHeader.scrollIntoView({ behavior: "smooth" });
+                    }
+                });
             }
         })
         .catch(err => console.error("Error loading comments:", err));

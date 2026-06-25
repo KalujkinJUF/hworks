@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
         newbie: '#888888', premium: '#ffd700', vip: '#9b59b6', banned: '#333333'
     };
 
+    const roleLabels = {
+        newbie: 'NEWBIE', user: 'USER', premium: 'PREMIUM',
+        vip: 'VIP', moderator: 'MOD', admin: 'ADMIN', banned: 'BANNED'
+    };
+
     let allUsers = [];
     let currentUserId = null;
     let currentUserRole = null;
@@ -21,15 +26,15 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch("/api/users/profile", {
                 headers: { "Authorization": `Bearer ${token}` }
             })
-            .then(res => res.json())
-            .then(data => {
-                currentUserId = data.id;
-                currentUserRole = data.role;
-                loadAllUsers();
-            })
-            .catch(() => {
-                loadAllUsers();
-            });
+                .then(res => res.json())
+                .then(data => {
+                    currentUserId = data.id;
+                    currentUserRole = data.role;
+                    loadAllUsers();
+                })
+                .catch(() => {
+                    loadAllUsers();
+                });
         } else {
             loadAllUsers();
         }
@@ -68,22 +73,23 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             resultsDiv.innerHTML = users.map(u => {
                 const color = roleColors[u.role] || '#ffffff';
+                const roleLabel = roleLabels[u.role] || u.role.toUpperCase();
                 const isCurrentUser = token && currentUserId === u.id;
                 const isAlreadyFriend = friendIds.has(u.id);
                 const friendButton = token && currentUserRole !== 'banned' && !isCurrentUser && !isAlreadyFriend
                     ? `<button class="user-btn" style="border-color: ${color}; color: ${color};" onclick="sendFriendRequest(${u.id}, this)">Добавить</button>`
                     : isAlreadyFriend
-                    ? `<button class="user-btn" disabled style="opacity: 0.5;">В друзьях</button>`
-                    : isCurrentUser
-                    ? `<button class="user-btn" disabled style="opacity: 0.5;">Это вы</button>`
-                    : '';
+                        ? `<button class="user-btn" disabled style="opacity: 0.5;">В друзьях</button>`
+                        : isCurrentUser
+                            ? `<button class="user-btn" disabled style="opacity: 0.5;">Это вы</button>`
+                            : '';
                 return `
                     <div class="search-result-card" style="display: flex; justify-content: space-between; align-items: flex-start; cursor: auto;">
-                        <a href="profile.html?username=${encodeURIComponent(u.username)}" style="text-decoration: none; color: inherit; flex: 1; border-bottom: 2px solid transparent; transition: border-color 0.2s;" onmouseover="this.style.borderBottomColor='inherit'" onmouseout="this.style.borderBottomColor='transparent'">
+                        <a href="profile.html?username=${encodeURIComponent(u.username)}" style="text-decoration: none; color: inherit; flex: 1;">
                             <div class="result-header">
-                                ${u.avatar ? `<img src="${escapeHtml(u.avatar)}" class="result-avatar">` : '<div style="width: 30px; height: 30px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: inline-block;"></div>'}
+                                ${u.avatar ? `<img src="${escapeHtml(u.avatar)}" class="result-avatar" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><div style="display:none; width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: inline-block;"></div>'}
                                 <span class="result-username" style="color: ${color};">${escapeHtml(u.username)}</span>
-                                <span class="result-role" style="color: ${color}; border-color: ${color};">[${escapeHtml(u.role.toUpperCase())}]</span>
+                                <span class="result-role" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
                             </div>
                             <p class="result-about">${escapeHtml(u.about) || 'Нет информации'}</p>
                         </a>
@@ -94,9 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    window.sendFriendRequest = function(userId, button) {
+    window.sendFriendRequest = async function (userId, button) {
         if (!token) {
-            alert("Войдите, чтобы добавить друга");
+            await window.showCustomAlert("Войдите, чтобы добавить друга");
             return;
         }
         button.disabled = true;
@@ -105,22 +111,22 @@ document.addEventListener("DOMContentLoaded", () => {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` }
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.message) {
-                button.textContent = "Отправлено";
-                button.style.opacity = "0.5";
-            } else {
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    button.textContent = "Отправлено";
+                    button.style.opacity = "0.5";
+                } else {
+                    button.textContent = "Ошибка";
+                    button.style.color = "#ff4444";
+                    button.disabled = false;
+                }
+            })
+            .catch(err => {
                 button.textContent = "Ошибка";
                 button.style.color = "#ff4444";
                 button.disabled = false;
-            }
-        })
-        .catch(err => {
-            button.textContent = "Ошибка";
-            button.style.color = "#ff4444";
-            button.disabled = false;
-        });
+            });
     };
 
     function doSearch() {

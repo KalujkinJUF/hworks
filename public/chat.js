@@ -1,14 +1,39 @@
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     if (!token) {
-        alert("Пожалуйста, войдите в систему.");
-        window.location.href = "login.html";
+        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+            window.location.href = "login.html";
+        });
         return;
     }
 
     let currentUserId = null;
+    let currentUserRole = null;
     let currentFriendId = null;
     let currentFriendName = null;
+    let currentFriendRole = null;
+
+    window.deleteMessage = async function(messageId, event) {
+        if (event) event.stopPropagation();
+        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить это сообщение?")) return;
+
+        fetch(`/api/messages/${messageId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(async data => {
+            if (data.message) {
+                loadMessages();
+            } else {
+                await window.showCustomAlert(data.error || "Ошибка удаления сообщения");
+            }
+        })
+        .catch(async err => {
+            console.error(err);
+            await window.showCustomAlert("Ошибка сети при удалении сообщения");
+        });
+    };
 
     const roleColors = {
         newbie: '#888888', user: '#00ccff', premium: '#ffd700',
@@ -22,6 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(res => res.json())
     .then(data => {
         currentUserId = data.id;
+        currentUserRole = data.role;
         loadFriendsList();
     })
     .catch(error => {
@@ -82,9 +108,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     item.dataset.username = friend.username;
                     item.dataset.avatar = avatarUrl;
                     item.dataset.status = friend.user_status || 'offline';
+                    item.dataset.role = friend.role || 'user';
 
                     item.innerHTML = `
-                        ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
+                        ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="friend-avatar-placeholder" style="display:none;"></div>` : '<div class="friend-avatar-placeholder"></div>'}
                         <div class="friend-item-info">
                             <span class="friend-item-name" style="color: ${roleColor};">${escapeHtml(friend.username)}</span>
                             <span class="friend-item-status"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
@@ -102,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     }
                 } else {
+                    item.dataset.role = friend.role || 'user';
                     // Обновляем unread статус
                     if (hasUnread) {
                         item.classList.add("has-unread");
@@ -155,9 +183,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Выбор друга для чата
-    window.selectFriend = function(friendId, friendName, friendAvatar, friendStatus) {
+    window.selectFriend = function(friendId, friendName, friendAvatar, friendStatus, friendRole) {
         currentFriendId = friendId;
         currentFriendName = friendName;
+        currentFriendRole = friendRole;
 
         document.getElementById("noChat").style.display = "none";
         document.getElementById("chatInfo").style.display = "block";
@@ -166,22 +195,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Обновляем заголовок чата
         const title = document.getElementById("chatTitle");
-        title.innerHTML = `Чат с <a href="profile.html?username=${encodeURIComponent(friendName)}" style="color: inherit; text-decoration: none; border-bottom: 2px solid transparent;" onmouseover="this.style.borderBottomColor='inherit'" onmouseout="this.style.borderBottomColor='transparent'">${escapeHtml(friendName)}</a>`;
+        title.innerHTML = `<a href="profile.html?username=${encodeURIComponent(friendName)}" style="color: inherit; text-decoration: none; border-bottom: 2px solid transparent;" onmouseover="this.style.borderBottomColor='inherit'" onmouseout="this.style.borderBottomColor='transparent'">${escapeHtml(friendName)}</a>`;
 
-        // Обновляем аватар
-        const avatar = document.getElementById("friendAvatar");
-        if (friendAvatar) {
-            avatar.src = friendAvatar;
-            avatar.style.display = "block";
-        } else {
-            avatar.style.display = "none";
-        }
+        // Скрываем аватарку друга в чате (по запросу оставляем только сбоку)
+        // friendAvatar элемент удален из chat.html
 
         // Скрываем статус в шапке (он уже виден в левой колонке)
         const statusEl = document.getElementById("friendStatus");
         statusEl.style.display = 'none';
 
         loadMessages();
+        if (window.updateNavbarNotifications) {
+            window.updateNavbarNotifications();
+        }
+        loadFriendsList();
     };
 
     // Загрузка сообщений
@@ -194,6 +221,9 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(res => res.json())
         .then(messages => {
             const container = document.getElementById("messagesContainer");
+            if (window.updateNavbarNotifications) {
+                window.updateNavbarNotifications();
+            }
             if (messages.length === 0) {
                 const emptyHTML = '<p class="loading-text">Нет сообщений. Начните диалог!</p>';
                 if (container.innerHTML !== emptyHTML) {
@@ -228,6 +258,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const timeStr = new Date(msg.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                     const contentHtml = escapeHtml(msg.content);
 
+                    const canDelete = isMine || currentUserRole === 'admin' || (currentUserRole === 'moderator' && currentFriendRole !== 'admin');
+                    const deleteBtn = canDelete ? `<button class="delete-btn" style="margin-left: 8px;" onclick="event.stopPropagation(); deleteMessage(${msgId}, event)">Удалить</button>` : '';
+
                     let msgNode = container.querySelector(`.message[data-msg-id="${msgId}"]`);
                     if (!msgNode) {
                         msgNode = document.createElement("div");
@@ -235,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         msgNode.dataset.msgId = msgId;
                         msgNode.innerHTML = `
                             <div class="message-content">${contentHtml}</div>
-                            <div class="message-time">${timeStr}</div>
+                            <div class="message-time">${timeStr}${deleteBtn}</div>
                         `;
                         container.appendChild(msgNode);
                         addedNewMessage = true;
@@ -265,9 +298,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Отправка сообщения
-    document.getElementById("sendBtn").addEventListener("click", () => {
+    document.getElementById("sendBtn").addEventListener("click", async () => {
         if (!currentFriendId) {
-            alert("Выберите друга");
+            await window.showCustomAlert("Выберите друга");
             return;
         }
 
@@ -307,9 +340,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Отправка сообщения по Ctrl+Enter или Shift+Enter
-    document.getElementById("messageInput").addEventListener("keypress", (e) => {
-        if ((e.ctrlKey || e.shiftKey) && e.key === "Enter") {
+    // Отправка сообщения по Enter
+    document.getElementById("messageInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             document.getElementById("sendBtn").click();
         }
@@ -337,7 +370,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const username = item.dataset.username;
                 const avatar = item.dataset.avatar;
                 const status = item.dataset.status;
-                window.selectFriend(id, username, avatar, status);
+                const role = item.dataset.role;
+                window.selectFriend(id, username, avatar, status, role);
             }
         });
     }

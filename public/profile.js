@@ -1,12 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     if (!token) {
-        alert("Пожалуйста, войдите в систему.");
-        window.location.href = "login.html";
+        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+            window.location.href = "login.html";
+        });
         return;
     }
 
     let currentUserId = null;
+    let currentUserRole = null;
+    let viewingProfileId = null;
     let isOwnProfile = true;
     let viewingUsername = null;
 
@@ -15,8 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
         vip: '#9b59b6', moderator: '#ff8c00', admin: '#ff4444', banned: '#333333'
     };
     const roleLabels = {
-        newbie: '[NEWBIE]', user: '[USER]', premium: '[PREMIUM]',
-        vip: '[VIP]', moderator: '[MOD]', admin: '[ADMIN]', banned: '[BANNED]'
+        newbie: 'NEWBIE', user: 'USER', premium: 'PREMIUM',
+        vip: 'VIP', moderator: 'MOD', admin: 'ADMIN', banned: 'BANNED'
     };
 
     // Получить параметр URL
@@ -30,14 +33,16 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(response => response.json())
     .then(myData => {
         currentUserId = myData.id;
+        currentUserRole = myData.role;
 
         if (myData.role === 'banned') {
             const commentForm = document.getElementById("commentForm");
             if (commentForm) commentForm.style.display = 'none';
         }
 
-        // Если нет параметра URL - показываем свой профиль
-        if (!viewingUsername) {
+        // Если нет параметра URL или имя совпадает с нашим - показываем свой профиль
+        if (!viewingUsername || viewingUsername.toLowerCase() === myData.username.toLowerCase()) {
+            isOwnProfile = true;
             loadProfile(myData, true);
         } else {
             // Если есть параметр - загружаем профиль того пользователя
@@ -51,8 +56,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(data => loadProfile(data, false))
                 .catch(() => {
-                    alert('Пользователь не найден');
-                    window.location.href = 'index.html';
+                    window.showCustomAlert('Пользователь не найден').then(() => {
+                        window.location.href = 'index.html';
+                    });
                 });
         }
     })
@@ -63,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function loadProfile(data, isOwn) {
+        viewingProfileId = data.id;
         // Обновляем заголовок профиля
         const profileTitle = document.getElementById("profileTitle");
         if (profileTitle) {
@@ -93,6 +100,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if (avatarImg) {
                 avatarImg.src = data.avatar;
                 avatarImg.style.display = 'block';
+                avatarImg.onerror = function() {
+                    this.onerror = null;
+                    if (avatarCol) avatarCol.style.display = 'none';
+                    if (addAvatarBtn) addAvatarBtn.style.display = (isOwn && data.role !== 'banned') ? 'inline-block' : 'none';
+                };
             }
             if (addAvatarBtn) addAvatarBtn.style.display = 'none';
         } else {
@@ -162,9 +174,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // "Обо мне"
         const aboutMeElem = document.getElementById("aboutMe");
+        const saveBioBtn = document.getElementById("saveBioBtn");
         if (aboutMeElem) {
             if (isOwn) {
                 aboutMeElem.value = data.about || "";
+                if (saveBioBtn) saveBioBtn.style.display = 'block';
             } else {
                 // Для чужого профиля показываем как текст
                 const bioGroup = document.querySelector('.bio-group');
@@ -208,28 +222,109 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("followingCount").innerText = data.following_count || 0;
 
         const subscribeBtn = document.getElementById("subscribeBtn");
-        if (subscribeBtn) {
-            if (!isOwn) {
-                subscribeBtn.style.display = 'inline-block';
-                subscribeBtn.textContent = data.is_subscribed ? 'Отписаться' : 'Подписаться';
-                subscribeBtn.onclick = () => {
-                    fetch(`/api/users/subscribe/${data.id}`, {
-                        method: "POST",
-                        headers: { "Authorization": `Bearer ${token}` }
-                    })
-                    .then(res => res.json())
-                    .then(subRes => {
-                        if (subRes.message) {
-                            data.is_subscribed = subRes.subscribed;
-                            subscribeBtn.textContent = subRes.subscribed ? 'Отписаться' : 'Подписаться';
-                            const currentCount = parseInt(document.getElementById("followersCount").innerText);
-                            document.getElementById("followersCount").innerText = subRes.subscribed ? currentCount + 1 : currentCount - 1;
+        const friendBtn = document.getElementById("friendBtn");
+
+        if (data.role === 'banned') {
+            if (subscribeBtn) subscribeBtn.style.display = 'none';
+            if (friendBtn) friendBtn.style.display = 'none';
+            const commentForm = document.getElementById("commentForm");
+            if (commentForm) commentForm.style.display = 'none';
+        } else {
+            if (subscribeBtn) {
+                if (!isOwn) {
+                    subscribeBtn.style.display = 'inline-block';
+                    subscribeBtn.textContent = data.is_subscribed ? 'Отписаться' : 'Подписаться';
+                    subscribeBtn.onclick = () => {
+                        fetch(`/api/users/subscribe/${data.id}`, {
+                            method: "POST",
+                            headers: { "Authorization": `Bearer ${token}` }
+                        })
+                        .then(res => res.json())
+                        .then(subRes => {
+                            if (subRes.message) {
+                                data.is_subscribed = subRes.subscribed;
+                                subscribeBtn.textContent = subRes.subscribed ? 'Отписаться' : 'Подписаться';
+                                const currentCount = parseInt(document.getElementById("followersCount").innerText);
+                                document.getElementById("followersCount").innerText = subRes.subscribed ? currentCount + 1 : currentCount - 1;
+                            }
+                        })
+                        .catch(err => console.error(err));
+                    };
+                } else {
+                    subscribeBtn.style.display = 'none';
+                }
+            }
+
+            if (friendBtn) {
+                if (!isOwn) {
+                    friendBtn.style.display = 'inline-block';
+                    if (data.friend_status === null) {
+                        friendBtn.textContent = "Добавить в друзья";
+                        friendBtn.style.borderColor = "#00ff00";
+                        friendBtn.style.color = "#00ff00";
+                        friendBtn.onclick = () => {
+                            fetch(`/api/friends/request/${data.id}`, {
+                                method: "POST",
+                                headers: { "Authorization": `Bearer ${token}` }
+                            })
+                            .then(res => res.json())
+                            .then(resData => {
+                                if (resData.message) {
+                                    window.location.reload();
+                                } else {
+                                    window.showCustomAlert(resData.error || "Ошибка отправки запроса");
+                                }
+                            });
+                        };
+                    } else if (data.friend_status === 'pending') {
+                        if (data.friend_request_sender === currentUserId) {
+                            friendBtn.textContent = "Отменить запрос";
+                            friendBtn.style.borderColor = "#ffcc00";
+                            friendBtn.style.color = "#ffcc00";
+                            friendBtn.onclick = () => {
+                                fetch(`/api/friends/reject-user/${data.id}`, {
+                                    method: "POST",
+                                    headers: { "Authorization": `Bearer ${token}` }
+                                })
+                                .then(res => res.json())
+                                .then(() => {
+                                    window.location.reload();
+                                });
+                            };
+                        } else {
+                            friendBtn.textContent = "Принять запрос";
+                            friendBtn.style.borderColor = "#00ff00";
+                            friendBtn.style.color = "#00ff00";
+                            friendBtn.onclick = () => {
+                                fetch(`/api/friends/accept-user/${data.id}`, {
+                                    method: "POST",
+                                    headers: { "Authorization": `Bearer ${token}` }
+                                })
+                                .then(res => res.json())
+                                .then(() => {
+                                    window.location.reload();
+                                });
+                            };
                         }
-                    })
-                    .catch(err => console.error(err));
-                };
-            } else {
-                subscribeBtn.style.display = 'none';
+                    } else if (data.friend_status === 'accepted') {
+                        friendBtn.textContent = "Удалить друга";
+                        friendBtn.style.borderColor = "#ff4444";
+                        friendBtn.style.color = "#ff4444";
+                        friendBtn.onclick = async () => {
+                            if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этого пользователя из друзей?")) return;
+                            fetch(`/api/friends/${data.id}`, {
+                                method: "DELETE",
+                                headers: { "Authorization": `Bearer ${token}` }
+                            })
+                            .then(res => res.json())
+                            .then(() => {
+                                window.location.reload();
+                            });
+                        };
+                    }
+                } else {
+                    friendBtn.style.display = 'none';
+                }
             }
         }
 
@@ -242,6 +337,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Загрузка стены отзывов
         loadProfileComments(data.id);
+        if (!isPollingStarted) {
+            isPollingStarted = true;
+            setInterval(() => {
+                loadProfileComments(data.id);
+            }, 5000);
+        }
 
         // Настройка формы отправки отзывов
         const commentForm = document.getElementById("commentForm");
@@ -261,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         document.getElementById("commentContent").value = "";
                         loadProfileComments(data.id);
                     } else if (commentRes.error) {
-                        alert(commentRes.error);
+                        window.showCustomAlert(commentRes.error);
                     }
                 })
                 .catch(err => console.error(err));
@@ -312,7 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (addAvatarBtn) addAvatarBtn.style.display = 'none';
                 }
             })
-            .catch(() => alert("Ошибка загрузки аватарки"));
+            .catch(async () => await window.showCustomAlert("Ошибка загрузки аватарки"));
         });
     }
 
@@ -468,7 +569,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     return `
                         <a href="profile.html?username=${encodeURIComponent(f.username)}" style="text-decoration: none; color: inherit;">
                             <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
-                                ${f.avatar ? `<img src="${escapeHtml(f.avatar)}" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;">` : '<div style="width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                ${f.avatar ? `<img src="${escapeHtml(f.avatar)}" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';"><div style="display:none; width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
                                 <span style="font-size: 8px; margin-top: 5px; color: ${color}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center;">${escapeHtml(f.username)}</span>
                             </div>
                         </a>
@@ -479,24 +580,75 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(err => console.error("Error loading mutual friends:", err));
     }
 
+    let lastCommentIds = new Set();
+    let initialLoadDone = false;
+    let isPollingStarted = false;
+
+    function showToastNotification(message) {
+        let toastContainer = document.getElementById("toast-container");
+        if (!toastContainer) {
+            toastContainer = document.createElement("div");
+            toastContainer.id = "toast-container";
+            toastContainer.style.position = "fixed";
+            toastContainer.style.top = "20px";
+            toastContainer.style.right = "20px";
+            toastContainer.style.zIndex = "9999";
+            toastContainer.style.display = "flex";
+            toastContainer.style.flexDirection = "column";
+            toastContainer.style.gap = "10px";
+            document.body.appendChild(toastContainer);
+        }
+
+        const toast = document.createElement("div");
+        toast.style.background = "black";
+        toast.style.color = "yellow";
+        toast.style.border = "2px solid #00ff00";
+        toast.style.padding = "15px 25px";
+        toast.style.fontFamily = "inherit";
+        toast.style.fontSize = "11px";
+        toast.style.boxShadow = "0 0 15px rgba(0, 255, 0, 0.4)";
+        toast.style.animation = "fadeInUp 0.3s ease-out";
+        toast.innerHTML = `<span style="color: #00ff00; font-weight: bold;">[ОПОВЕЩЕНИЕ]</span> ${escapeHtml(message)}`;
+
+        toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.transition = "opacity 0.5s ease-out";
+            setTimeout(() => toast.remove(), 500);
+        }, 4000);
+    }
+
     function loadProfileComments(targetId) {
         fetch(`/api/users/comments/profile/${targetId}`)
         .then(res => res.json())
         .then(comments => {
             const list = document.getElementById("commentList");
+
+            lastCommentIds.clear();
+            comments.forEach(c => lastCommentIds.add(c.id));
+
+            initialLoadDone = true;
+
             if (comments.length === 0) {
                 list.innerHTML = '<p class="loading-text">Отзывов пока нет</p>';
             } else {
                 list.innerHTML = comments.map(c => {
                     const color = roleColors[c.role] || '#ffffff';
+                    const isCommentAuthor = currentUserId && parseInt(c.user_id) === parseInt(currentUserId);
+                    const isCommentAdmin = currentUserRole === 'admin';
+                    const isCommentModerator = currentUserRole === 'moderator' && c.role !== 'admin';
+                    const canDeleteComment = isCommentAuthor || isCommentAdmin || isCommentModerator;
+                    const deleteBtn = canDeleteComment ? `<button class="delete-btn" style="margin-left: 8px;" onclick="deleteWallComment(${c.id})">Удалить</button>` : '';
+
                     return `
-                        <div style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 10px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.01);">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid white; object-fit: cover;">` : '<div style="width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
-                                <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 11px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
-                                <span style="font-size: 8px; color: rgba(255,255,255,0.5); margin-left: auto;">${new Date(c.created_at).toLocaleString()}</span>
+                        <div style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 15px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.01);">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid white; object-fit: cover;" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';"><div style="display:none; width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 12px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
+                                <span style="font-size: 10px; color: rgba(255,255,255,0.5); margin-left: auto;">${new Date(c.created_at).toLocaleString()}${deleteBtn}</span>
                             </div>
-                            <div style="font-size: 11px; text-align: left; color: white; word-break: break-word; line-height: 1.4;">${escapeHtml(c.content).replace(/\n/g, '<br>')}</div>
+                            <div style="font-size: 12px; text-align: left; color: white; word-break: break-word; line-height: 1.5;">${escapeHtml(c.content).replace(/\n/g, '<br>')}</div>
                         </div>
                     `;
                 }).join('');
@@ -504,6 +656,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch(err => console.error("Error loading comments:", err));
     }
+
+    window.loadProfileComments = loadProfileComments;
 
     // Функция для экранирования HTML
     function escapeHtml(text) {
@@ -514,6 +668,205 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    window.deleteWallComment = async function(commentId) {
+        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот отзыв?")) return;
+        fetch(`/api/users/comments/${commentId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(async data => {
+            if (data.message) {
+                loadProfileComments(viewingProfileId);
+            } else {
+                await window.showCustomAlert(data.error || "Ошибка удаления отзыва");
+            }
+        })
+        .catch(async err => {
+            console.error(err);
+            await window.showCustomAlert("Ошибка сети при удалении отзыва");
+        });
+    };
+
+    const saveBioBtn = document.getElementById("saveBioBtn");
+    if (saveBioBtn) {
+        saveBioBtn.addEventListener("click", () => {
+            if (!isOwnProfile || !viewingProfileId) return;
+            const about = document.getElementById("aboutMe").value;
+            const bioMessage = document.getElementById("bioMessage");
+            if (bioMessage) bioMessage.textContent = "";
+
+            fetch(`/api/users/${viewingProfileId}/bio`, {
+                method: "PUT",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ about })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    if (bioMessage) {
+                        bioMessage.style.color = "#00ff00";
+                        bioMessage.textContent = "Сохранено!";
+                        setTimeout(() => { bioMessage.textContent = ""; }, 2000);
+                    }
+                } else {
+                    if (bioMessage) {
+                        bioMessage.style.color = "#ff4444";
+                        bioMessage.textContent = data.error || "Ошибка сохранения";
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (bioMessage) {
+                    bioMessage.style.color = "#ff4444";
+                    bioMessage.textContent = "Ошибка сети";
+                }
+            });
+        });
+    }
+
+    const changeEmailBtn = document.getElementById("changeEmailBtn");
+    if (changeEmailBtn) {
+        changeEmailBtn.addEventListener("click", () => {
+            if (!isOwnProfile) return;
+            const email = document.getElementById("newEmailInput").value.trim();
+            const changeEmailMessage = document.getElementById("changeEmailMessage");
+            if (!email) {
+                if (changeEmailMessage) {
+                    changeEmailMessage.style.color = "#ff4444";
+                    changeEmailMessage.textContent = "Введите email";
+                }
+                return;
+            }
+            if (changeEmailMessage) changeEmailMessage.textContent = "";
+
+            fetch("/api/users/change-unverified-email", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    if (changeEmailMessage) {
+                        changeEmailMessage.style.color = "#00ff00";
+                        changeEmailMessage.textContent = data.message;
+                    }
+                    const emailSpan = document.getElementById("email");
+                    if (emailSpan) emailSpan.textContent = email;
+                    document.getElementById("newEmailInput").value = "";
+                } else {
+                    if (changeEmailMessage) {
+                        changeEmailMessage.style.color = "#ff4444";
+                        changeEmailMessage.textContent = data.error || "Ошибка смены email";
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (changeEmailMessage) {
+                    changeEmailMessage.style.color = "#ff4444";
+                    changeEmailMessage.textContent = "Ошибка сети";
+                }
+            });
+        });
+    }
+
+    const requestDeleteBtn = document.getElementById("requestDeleteBtn");
+    if (requestDeleteBtn) {
+        requestDeleteBtn.addEventListener("click", () => {
+            if (!isOwnProfile) return;
+            const deleteMessage = document.getElementById("deleteMessage");
+            if (deleteMessage) deleteMessage.textContent = "";
+
+            fetch("/api/users/delete-account/request", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    if (deleteMessage) {
+                        deleteMessage.style.color = "#00ff00";
+                        deleteMessage.textContent = data.message;
+                    }
+                    document.getElementById("deleteStep1").style.display = "none";
+                    document.getElementById("deleteStep2").style.display = "block";
+                } else {
+                    if (deleteMessage) {
+                        deleteMessage.style.color = "#ff4444";
+                        deleteMessage.textContent = data.error || "Ошибка запроса";
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (deleteMessage) {
+                    deleteMessage.style.color = "#ff4444";
+                    deleteMessage.textContent = "Ошибка сети";
+                }
+            });
+        });
+    }
+
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", () => {
+            if (!isOwnProfile) return;
+            const code = document.getElementById("deleteConfirmCode").value.trim();
+            const deleteMessage = document.getElementById("deleteMessage");
+            if (!code) {
+                if (deleteMessage) {
+                    deleteMessage.style.color = "#ff4444";
+                    deleteMessage.textContent = "Введите код";
+                }
+                return;
+            }
+            if (deleteMessage) deleteMessage.textContent = "";
+
+            fetch("/api/users/delete-account/confirm", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ code })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    if (deleteMessage) {
+                        deleteMessage.style.color = "#00ff00";
+                        deleteMessage.textContent = data.message;
+                    }
+                    localStorage.removeItem("token");
+                    setTimeout(() => {
+                        window.location.href = "register.html";
+                    }, 1500);
+                } else {
+                    if (deleteMessage) {
+                        deleteMessage.style.color = "#ff4444";
+                        deleteMessage.textContent = data.error || "Ошибка подтверждения";
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (deleteMessage) {
+                    deleteMessage.style.color = "#ff4444";
+                    deleteMessage.textContent = "Ошибка сети";
+                }
+            });
+        });
     }
 
     window.switchProfileTab = function(tabName) {

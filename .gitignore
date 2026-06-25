@@ -4,3 +4,5 @@ xampp/
 .env
 *.exe
 public/uploads/
+.agents/
+db-error.log

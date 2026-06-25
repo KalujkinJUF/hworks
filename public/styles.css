@@ -36,6 +36,10 @@ body {
     /* Предотвращаем горизонтальную прокрутку на всем сайте */
 }
 
+button, input, select, textarea {
+    font-family: inherit;
+}
+
 /* Общая рамка для всех страниц */
 .container {
     border: 2px solid white;
@@ -120,8 +124,7 @@ nav a#nav-search,
 nav a#nav-friends,
 nav a#nav-chat,
 nav a#nav-register,
-nav a#nav-login,
-nav a#nav-admin {
+nav a#nav-login {
     color: inherit;
     border-color: inherit;
 }
@@ -131,10 +134,24 @@ nav a#nav-search:hover,
 nav a#nav-friends:hover,
 nav a#nav-chat:hover,
 nav a#nav-register:hover,
-nav a#nav-login:hover,
-nav a#nav-admin:hover {
+nav a#nav-login:hover {
     background-color: rgba(255, 255, 0, 0.1);
     box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+}
+
+@keyframes rainbowGlow {
+    0% { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+    14% { border-color: #ff7f00; color: #ff7f00; box-shadow: 0 0 10px rgba(255, 127, 0, 0.5); }
+    28% { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 10px rgba(255, 255, 0, 0.5); }
+    42% { border-color: #00ff00; color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+    57% { border-color: #0000ff; color: #0000ff; box-shadow: 0 0 10px rgba(0, 0, 255, 0.5); }
+    71% { border-color: #4b0082; color: #4b0082; box-shadow: 0 0 10px rgba(75, 0, 130, 0.5); }
+    85% { border-color: #9400d3; color: #9400d3; box-shadow: 0 0 10px rgba(148, 0, 211, 0.5); }
+    100% { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+}
+
+nav a#nav-admin {
+    animation: rainbowGlow 5s linear infinite !important;
 }
 
 /* --- ОСНОВНОЙ КОНТЕНТ И ПОДВАЛ --- */
@@ -713,8 +730,7 @@ textarea#aboutMe:focus {
 }
 
 .sidebar-column {
-    width: auto;
-    min-width: 220px;
+    width: 330px;
     flex-shrink: 0;
 }
 
@@ -773,16 +789,16 @@ textarea#aboutMe:focus {
 }
 
 .post-avatar {
-    width: 36px;
-    height: 36px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     border: 2px solid white;
     object-fit: cover;
 }
 
 .post-avatar-placeholder {
-    width: 36px;
-    height: 36px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.3);
     background: #000;
@@ -816,18 +832,67 @@ textarea#aboutMe:focus {
 
 /* Онлайн бокс */
 .online-box {
-    border: 2px solid white;
-    padding: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 18px 15px;
     position: sticky;
     top: 10px;
     background-color: black;
+    box-sizing: border-box;
+}
+
+/* Закреп от админа */
+.admin-pin-column {
+    width: 330px;
+    flex-shrink: 0;
+}
+
+.admin-pin-box {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 18px 15px;
+    position: sticky;
+    top: 10px;
+    background-color: black;
+    box-sizing: border-box;
+}
+
+.admin-pin-box h3 {
+    color: #ff4444; /* Сочный красный для привлечения внимания */
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.admin-pin-content {
+    font-size: 10px;
+    line-height: 1.4;
+    word-break: break-word;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.admin-pin-box textarea {
+    width: 100%;
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 8px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 10px;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.admin-pin-box textarea:focus {
+    border-color: yellow;
+    color: yellow;
 }
 
 .online-box h3 {
     color: #00ff00;
     text-transform: uppercase;
-    font-size: 14px;
-    margin-bottom: 15px;
+    font-size: 11px;
+    margin-bottom: 10px;
     text-align: center;
 }
 
@@ -846,6 +911,7 @@ textarea#aboutMe:focus {
     border-radius: 50%;
     background: #00ff00;
     box-shadow: 0 0 6px #00ff00;
+    flex-shrink: 0;
 }
 
 /* Поиск */
@@ -915,8 +981,8 @@ textarea#aboutMe:focus {
 }
 
 .result-avatar {
-    width: 30px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 2px solid white;
     object-fit: cover;
@@ -983,6 +1049,13 @@ textarea#aboutMe:focus {
         align-items: center !important;
         overflow-y: auto;
         min-height: 400px;
+    }
+
+    .admin-pin-column,
+    .sidebar-column {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin-bottom: 20px;
     }
 
     /* Текст на главной странице */
@@ -1359,8 +1432,8 @@ textarea#aboutMe:focus {
 }
 
 .friend-chat-avatar {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 2px solid white;
     object-fit: cover;
@@ -1795,3 +1868,284 @@ select:focus {
         border-color: white;
     }
 }
+
+/* Пульсация индикаторов DND и Away */
+@keyframes pulseYellow {
+    0% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ffcc00;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulseRed {
+    0% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ff3333;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+}
+
+.online-dot.status-online {
+    background: #00ff00;
+    box-shadow: 0 0 6px #00ff00;
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+.online-dot.status-away,
+.friend-status-icon.status-away {
+    background: #ffcc00;
+    box-shadow: 0 0 6px #ffcc00;
+    animation: pulseYellow 2s infinite ease-in-out;
+}
+
+.online-dot.status-dnd,
+.friend-status-icon.status-dnd {
+    background: #ff3333;
+    box-shadow: 0 0 6px #ff3333;
+    animation: pulseRed 2s infinite ease-in-out;
+}
+
+/* Анимация раскрытия комментариев */
+@keyframes expandComments {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+}
+
+/* Анимация скрытия комментариев */
+@keyframes collapseComments {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+}
+
+.comments-wrapper {
+    animation: collapseComments 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.comments-wrapper.open {
+    animation: expandComments 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Анимация появления формы нового поста */
+.post-form-section {
+    animation: fadeInDown 0.4s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимации для админ-панели */
+@keyframes adminPanelOpen {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) rotate(-1deg);
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 204, 255, 0.3);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.admin-panel {
+    animation: adminPanelOpen 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+@keyframes slideDownContainer {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 2000px;
+        overflow: visible;
+    }
+}
+
+.users-container.open {
+    display: block !important;
+    animation: slideDownContainer 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* ==========================================================================
+   8. CUSTOM DOS MODAL OVERLAYS & DELETE BUTTONS
+   ========================================================================== */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.custom-modal-box {
+    background-color: black;
+    border: 3px double white;
+    padding: 20px;
+    width: 90%;
+    max-width: 450px;
+    box-sizing: border-box;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.custom-modal-header {
+    font-size: 14px;
+    color: red;
+    border-bottom: 2px solid white;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.custom-modal-content {
+    font-size: 12px;
+    color: yellow;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    word-break: break-word;
+}
+
+.custom-modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.custom-modal-btn {
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 12px;
+    padding: 8px 20px;
+    background-color: black;
+    border: 2px solid white;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.custom-modal-btn.btn-yes {
+    color: #00ff00;
+    border-color: #00ff00;
+}
+
+.custom-modal-btn.btn-yes:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.custom-modal-btn.btn-no {
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+.custom-modal-btn.btn-no:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+}
+
+.custom-modal-btn.btn-ok {
+    color: yellow;
+    border-color: yellow;
+}
+
+.custom-modal-btn.btn-ok:hover {
+    background-color: rgba(255, 255, 0, 0.1);
+    box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+}
+
+.delete-btn {
+    background: transparent;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+    transition: all 0.2s ease-in-out;
+}
+
+.delete-btn:hover {
+    background-color: rgba(255, 68, 68, 0.15);
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+}
+
+.chat-friend-item .friend-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+}
+
+.like-btn, .comments-toggle-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    line-height: inherit;
+}
+
+

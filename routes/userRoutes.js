@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
-const { verifyToken, verifyNotBanned } = require('../middleware/auth');
+const { verifyToken, verifyNotBanned, verifyAdmin } = require('../middleware/auth');
 const router = express.Router();
 const db = require('../config/db');
 const { sendVerificationCode } = require('../config/mailer');
@@ -82,7 +82,7 @@ router.get('/search', (req, res) => {
 // Онлайн пользователи (активны последние 5 минут)
 router.get('/online', (req, res) => {
     db.query(
-        "SELECT id, username, role, avatar FROM users WHERE last_active >= NOW() - INTERVAL 5 MINUTE AND role != 'banned' AND user_status != 'offline'",
+        "SELECT id, username, role, avatar, user_status FROM users WHERE last_active >= NOW() - INTERVAL 5 MINUTE AND role != 'banned' AND user_status != 'offline'",
         (err, results) => {
             if (err) {
                 console.error('Ошибка БД при получении онлайн-пользователей:', err);
@@ -93,6 +93,35 @@ router.get('/online', (req, res) => {
     );
 });
 
+const dns = require('dns');
+
+const checkEmailDomain = (email) => {
+    return new Promise((resolve) => {
+        const domain = email.split('@')[1];
+        if (!domain) return resolve(false);
+        
+        dns.resolveMx(domain, (err, addresses) => {
+            if (err || !addresses || addresses.length === 0) {
+                dns.resolve4(domain, (err2, addresses2) => {
+                    if (err2 || !addresses2 || addresses2.length === 0) {
+                        dns.lookup(domain, (err3, address) => {
+                            if (err3 || !address) {
+                                resolve(false);
+                            } else {
+                                resolve(true);
+                            }
+                        });
+                    } else {
+                        resolve(true);
+                    }
+                });
+            } else {
+                resolve(true);
+            }
+        });
+    });
+};
+
 // Регистрация
 router.post('/register', async (req, res) => {
     const { username, password, email } = req.body;
@@ -101,6 +130,11 @@ router.post('/register', async (req, res) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email.trim())) {
         return res.status(400).json({ error: 'Некорректный формат Email' });
+    }
+
+    const isDomainReal = await checkEmailDomain(email.trim());
+    if (!isDomainReal) {
+        return res.status(400).json({ error: 'Указан несуществующий или некорректный почтовый домен' });
     }
 
     // Валидация имени пользователя
@@ -167,6 +201,59 @@ router.post('/verify-email', verifyToken, (req, res) => {
         });
 });
 
+// Смена email у неверифицированных пользователей
+router.post('/change-unverified-email', verifyToken, async (req, res) => {
+    const userId = req.user.id;
+    const { email } = req.body;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Некорректный формат Email' });
+    }
+
+    const cleanEmail = email.trim();
+
+    // Проверяем, что пользователь не верифицирован
+    db.query('SELECT role, verified FROM users WHERE id = ?', [userId], async (err, results) => {
+        if (err || results.length === 0) return res.status(404).json({ error: 'Пользователь не найден' });
+        const user = results[0];
+
+        if (user.verified || user.role !== 'newbie') {
+            return res.status(400).json({ error: 'Изменение email доступно только для неверифицированных аккаунтов' });
+        }
+
+        // Проверяем, свободен ли email
+        db.query('SELECT id FROM users WHERE email = ? AND id != ?', [cleanEmail, userId], async (err2, emailResults) => {
+            if (err2) return res.status(500).json({ error: 'Ошибка БД' });
+            if (emailResults.length > 0) {
+                return res.status(409).json({ error: 'Пользователь с таким email уже существует' });
+            }
+
+            // DNS валидация
+            const isDomainReal = await checkEmailDomain(cleanEmail);
+            if (!isDomainReal) {
+                return res.status(400).json({ error: 'Указан несуществующий или некорректный почтовый домен' });
+            }
+
+            const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            db.query(
+                'UPDATE users SET email = ?, email_code = ? WHERE id = ?',
+                [cleanEmail, emailCode, userId],
+                (err3) => {
+                    if (err3) return res.status(500).json({ error: 'Ошибка при обновлении email' });
+
+                    sendVerificationCode(cleanEmail, emailCode)
+                        .then(() => console.log(`Новый код отправлен на ${cleanEmail}: ${emailCode}`))
+                        .catch(err => console.error('Ошибка отправки письма:', err));
+
+                    res.json({ message: 'Email успешно изменен. Новый код отправлен на почту.' });
+                }
+            );
+        });
+    });
+});
+
 // Логин
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
@@ -181,8 +268,8 @@ router.post('/login', (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).json({ error: 'Неверные учетные данные' });
 
-        // Обновляем last_active при входе
-        db.query('UPDATE users SET last_active = NOW() WHERE id = ?', [user.id]);
+        // Обновляем last_active и статус при входе
+        db.query('UPDATE users SET last_active = NOW(), user_status = "online" WHERE id = ?', [user.id]);
 
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
         res.json({ token });
@@ -199,6 +286,7 @@ router.get('/profile', verifyToken, async (req, res) => {
                 if (err || results.length === 0) return res.status(404).send('User not found');
                 const user = results[0];
                 updateLastActive(req.user.id);
+                db.query('UPDATE users SET last_viewed_wall = NOW() WHERE id = ?', [req.user.id]);
                 res.json({
                     id: user.id,
                     username: user.username,
@@ -216,6 +304,25 @@ router.get('/profile', verifyToken, async (req, res) => {
         res.status(500).send('Error fetching user profile');
     }
 });
+
+// Получить количество новых комментариев на своей стене
+router.get('/unread-wall-count', verifyToken, (req, res) => {
+    const userId = req.user.id;
+    db.query('SELECT last_viewed_wall FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err || results.length === 0) return res.status(500).json({ error: 'Ошибка БД' });
+        const lastViewed = results[0].last_viewed_wall;
+        
+        db.query(
+            "SELECT COUNT(*) AS count FROM comments WHERE target_type = 'profile' AND target_id = ? AND created_at > ?",
+            [userId, lastViewed],
+            (err2, countRes) => {
+                if (err2) return res.status(500).json({ error: 'Ошибка БД' });
+                res.json({ count: countRes[0].count });
+            }
+        );
+    });
+});
+
 
 // Профиль другого пользователя (публичный)
 router.get('/profile/:username', (req, res) => {
@@ -237,14 +344,20 @@ router.get('/profile/:username', (req, res) => {
                IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status,
                (SELECT COUNT(*) FROM subscriptions WHERE following_id = u.id) AS followers_count,
                (SELECT COUNT(*) FROM subscriptions WHERE follower_id = u.id) AS following_count,
-               (SELECT COUNT(*) FROM subscriptions WHERE follower_id = ? AND following_id = u.id) AS is_subscribed
+               (SELECT COUNT(*) FROM subscriptions WHERE follower_id = ? AND following_id = u.id) AS is_subscribed,
+               (SELECT status FROM friends 
+                WHERE (user_id = ? AND friend_id = u.id) OR (user_id = u.id AND friend_id = ?)
+               ) AS friend_status,
+               (SELECT user_id FROM friends 
+                WHERE (user_id = ? AND friend_id = u.id) OR (user_id = u.id AND friend_id = ?)
+               ) AS friend_request_sender
         FROM users u 
         WHERE u.username = ?
     `;
 
     db.query(
         query,
-        [requesterId, username],
+        [requesterId, requesterId, requesterId, requesterId, requesterId, username],
         (err, results) => {
             if (err || results.length === 0) return res.status(404).json({ error: 'User not found' });
             const profile = results[0];
@@ -286,7 +399,8 @@ router.get('/posts', (req, res) => {
     let query = `
         SELECT posts.*, users.username, users.role, users.avatar,
                (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) AS likes_count,
-               (SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = posts.id) AS is_liked
+               (SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = posts.id) AS is_liked,
+               (SELECT COUNT(*) FROM comments WHERE target_id = posts.id AND target_type = 'post') AS comments_count
         FROM posts 
         JOIN users ON posts.user_id = users.id
     `;
@@ -426,17 +540,9 @@ router.put('/:id', verifyToken, async (req, res) => {
     }
 });
 
-// Удаление пользователя
+// Удаление пользователя (заменено на двухфакторное подтверждение)
 router.delete('/:id', verifyToken, (req, res) => {
-    const userId = req.params.id;
-    if (parseInt(req.user.id) !== parseInt(userId)) {
-        return res.status(403).json({ error: 'Доступ запрещен: нельзя удалить чужой профиль' });
-    }
-    db.query('DELETE FROM users WHERE id = ?', [userId], (err, result) => {
-        if (err) return res.status(500).json({ error: 'Ошибка при удалении пользователя' });
-        if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });
-        res.json({ message: 'Пользователь успешно удален' });
-    });
+    return res.status(400).json({ error: 'Для удаления аккаунта используйте безопасное удаление с подтверждением по коду' });
 });
 
 // Обновить статус пользователя
@@ -451,7 +557,7 @@ router.post('/status/:status', verifyToken, verifyNotBanned, (req, res) => {
 
     db.query('UPDATE users SET user_status = ? WHERE id = ?', [status, userId], (err) => {
         if (err) return res.status(500).json({ error: 'Ошибка обновления статуса' });
-        res.json({ message: 'Статус обновлен' });
+        res.json({ message: 'Статус обновлен', status });
     });
 });
 
@@ -464,32 +570,41 @@ router.post('/subscribe/:id', verifyToken, verifyNotBanned, (req, res) => {
         return res.status(400).json({ error: 'Нельзя подписаться на самого себя' });
     }
 
-    db.query(
-        'SELECT id FROM subscriptions WHERE follower_id = ? AND following_id = ?',
-        [followerId, followingId],
-        (err, results) => {
-            if (err) return res.status(500).json({ error: 'Ошибка БД' });
-            if (results.length > 0) {
-                db.query(
-                    'DELETE FROM subscriptions WHERE follower_id = ? AND following_id = ?',
-                    [followerId, followingId],
-                    (err) => {
-                        if (err) return res.status(500).json({ error: 'Ошибка БД при отписке' });
-                        res.json({ message: 'Вы отписались', subscribed: false });
-                    }
-                );
-            } else {
-                db.query(
-                    'INSERT INTO subscriptions (follower_id, following_id) VALUES (?, ?)',
-                    [followerId, followingId],
-                    (err) => {
-                        if (err) return res.status(500).json({ error: 'Ошибка БД при подписке' });
-                        res.json({ message: 'Вы подписались', subscribed: true });
-                    }
-                );
-            }
+    db.query('SELECT role FROM users WHERE id = ?', [followingId], (err, targetUserRes) => {
+        if (err || targetUserRes.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
         }
-    );
+        if (targetUserRes[0].role === 'banned') {
+            return res.status(403).json({ error: 'Нельзя подписаться на заблокированного пользователя' });
+        }
+
+        db.query(
+            'SELECT id FROM subscriptions WHERE follower_id = ? AND following_id = ?',
+            [followerId, followingId],
+            (err, results) => {
+                if (err) return res.status(500).json({ error: 'Ошибка БД' });
+                if (results.length > 0) {
+                    db.query(
+                        'DELETE FROM subscriptions WHERE follower_id = ? AND following_id = ?',
+                        [followerId, followingId],
+                        (err) => {
+                            if (err) return res.status(500).json({ error: 'Ошибка БД при отписке' });
+                            res.json({ message: 'Вы отписались', subscribed: false });
+                        }
+                    );
+                } else {
+                    db.query(
+                        'INSERT INTO subscriptions (follower_id, following_id) VALUES (?, ?)',
+                        [followerId, followingId],
+                        (err) => {
+                            if (err) return res.status(500).json({ error: 'Ошибка БД при подписке' });
+                            res.json({ message: 'Вы подписались', subscribed: true });
+                        }
+                    );
+                }
+            }
+        );
+    });
 });
 
 // Написать отзыв в профиле
@@ -502,17 +617,49 @@ router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res
         return res.status(400).json({ error: 'Комментарий не может быть пустым' });
     }
 
-    db.query(
-        "INSERT INTO comments (user_id, target_id, target_type, content) VALUES (?, ?, 'profile', ?)",
-        [userId, targetId, content.trim()],
-        (err, result) => {
-            if (err) {
-                console.error('Ошибка создания отзыва:', err);
-                return res.status(500).json({ error: 'Ошибка БД при создании отзыва' });
-            }
-            res.status(201).json({ message: 'Отзыв добавлен', commentId: result.insertId });
+    db.query('SELECT role FROM users WHERE id = ?', [targetId], (err, targetUserRes) => {
+        if (err || targetUserRes.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
         }
-    );
+        if (targetUserRes[0].role === 'banned') {
+            return res.status(403).json({ error: 'Нельзя писать на стену заблокированного пользователя' });
+        }
+
+        db.query(
+            'SELECT created_at FROM comments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+            [userId],
+            (err, commentResults) => {
+                if (err) {
+                    console.error('Ошибка БД при проверке КД комментария:', err);
+                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                }
+
+                if (commentResults.length > 0) {
+                    const lastCommentTime = new Date(commentResults[0].created_at).getTime();
+                    const now = Date.now();
+                    const diffSeconds = (now - lastCommentTime) / 1000;
+                    if (diffSeconds < 10) {
+                        const remainingSeconds = Math.ceil(10 - diffSeconds);
+                        return res.status(429).json({
+                            error: `Вы не можете оставлять комментарии так часто. Подождите еще ${remainingSeconds} сек.`
+                        });
+                    }
+                }
+
+                db.query(
+                    "INSERT INTO comments (user_id, target_id, target_type, content) VALUES (?, ?, 'profile', ?)",
+                    [userId, targetId, content.trim()],
+                    (err, result) => {
+                        if (err) {
+                            console.error('Ошибка создания отзыва:', err);
+                            return res.status(500).json({ error: 'Ошибка БД при создании отзыва' });
+                        }
+                        res.status(201).json({ message: 'Отзыв добавлен', commentId: result.insertId });
+                    }
+                );
+            }
+        );
+    });
 });
 
 // Получить все отзывы профиля
@@ -580,14 +727,37 @@ router.post('/posts/:id/comments', verifyToken, verifyNotBanned, (req, res) => {
     }
 
     db.query(
-        "INSERT INTO comments (user_id, target_id, target_type, content, parent_id) VALUES (?, ?, 'post', ?, ?)",
-        [userId, postId, content.trim(), parent_id || null],
-        (err, result) => {
+        'SELECT created_at FROM comments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+        [userId],
+        (err, commentResults) => {
             if (err) {
-                console.error('Ошибка добавления комментария:', err);
-                return res.status(500).json({ error: 'Ошибка БД при добавлении комментария' });
+                console.error('Ошибка БД при проверке КД комментария:', err);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
-            res.status(201).json({ message: 'Комментарий добавлен', commentId: result.insertId });
+
+            if (commentResults.length > 0) {
+                const lastCommentTime = new Date(commentResults[0].created_at).getTime();
+                const now = Date.now();
+                const diffSeconds = (now - lastCommentTime) / 1000;
+                if (diffSeconds < 10) {
+                    const remainingSeconds = Math.ceil(10 - diffSeconds);
+                    return res.status(429).json({
+                        error: `Вы не можете оставлять комментарии так часто. Подождите еще ${remainingSeconds} сек.`
+                    });
+                }
+            }
+
+            db.query(
+                "INSERT INTO comments (user_id, target_id, target_type, content, parent_id) VALUES (?, ?, 'post', ?, ?)",
+                [userId, postId, content.trim(), parent_id || null],
+                (err, result) => {
+                    if (err) {
+                        console.error('Ошибка добавления комментария:', err);
+                        return res.status(500).json({ error: 'Ошибка БД при добавлении комментария' });
+                    }
+                    res.status(201).json({ message: 'Комментарий добавлен', commentId: result.insertId });
+                }
+            );
         }
     );
 });
@@ -611,6 +781,173 @@ router.get('/posts/:id/comments', (req, res) => {
             res.json(results);
         }
     );
+});
+
+// Получить закрепленное сообщение админа
+router.get('/admin-pin', (req, res) => {
+    db.query('SELECT content, updated_at FROM admin_pin ORDER BY id DESC LIMIT 1', (err, results) => {
+        if (err) {
+            console.error('Ошибка БД при получении закрепленного сообщения:', err);
+            return res.status(500).json({ error: 'Ошибка БД' });
+        }
+        const pin = results[0] || { content: 'Привет! Это закрепленный пост от админа.' };
+        res.json(pin);
+    });
+});
+
+// Обновить закрепленное сообщение админа
+router.post('/admin-pin', verifyToken, verifyAdmin, (req, res) => {
+    const { content } = req.body;
+    if (!content || content.trim() === '') {
+        return res.status(400).json({ error: 'Текст закрепа не может быть пустым' });
+    }
+
+    db.query(
+        'INSERT INTO admin_pin (id, content) VALUES (1, ?) ON DUPLICATE KEY UPDATE content = ?',
+        [content.trim(), content.trim()],
+        (err) => {
+            if (err) {
+                console.error('Ошибка БД при обновлении закрепленного сообщения:', err);
+                return res.status(500).json({ error: 'Ошибка БД' });
+            }
+            res.json({ message: 'Закреплённое сообщение обновлено' });
+        }
+    );
+});
+
+// Обновить только "Обо мне"
+router.put('/:id/bio', verifyToken, verifyNotBanned, (req, res) => {
+    const userId = req.params.id;
+    if (parseInt(req.user.id) !== parseInt(userId)) {
+        return res.status(403).json({ error: 'Доступ запрещен: нельзя редактировать чужой профиль' });
+    }
+    const { about } = req.body;
+    db.query('UPDATE users SET about = ? WHERE id = ?', [about, userId], (err) => {
+        if (err) return res.status(500).json({ error: 'Ошибка обновления биографии' });
+        updateLastActive(userId);
+        res.json({ message: 'Биография обновлена' });
+    });
+});
+
+// Удаление поста с проверкой иерархии прав
+router.delete('/posts/:id', verifyToken, verifyNotBanned, (req, res) => {
+    const postId = req.params.id;
+    const requesterId = req.user.id;
+
+    db.query(
+        'SELECT p.user_id, u.role FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?',
+        [postId],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'Ошибка БД' });
+            if (results.length === 0) return res.status(404).json({ error: 'Пост не найден' });
+
+            const authorId = results[0].user_id;
+            const authorRole = results[0].role;
+
+            db.query('SELECT role FROM users WHERE id = ?', [requesterId], (err2, reqResults) => {
+                if (err2) return res.status(500).json({ error: 'Ошибка БД' });
+                const requesterRole = reqResults[0].role;
+
+                const isAuthor = parseInt(authorId) === parseInt(requesterId);
+                const isAdmin = requesterRole === 'admin';
+                const isModerator = requesterRole === 'moderator' && authorRole !== 'admin';
+
+                if (isAuthor || isAdmin || isModerator) {
+                    db.query('DELETE FROM posts WHERE id = ?', [postId], (err3) => {
+                        if (err3) return res.status(500).json({ error: 'Ошибка при удалении поста' });
+                        res.json({ message: 'Пост успешно удален' });
+                    });
+                } else {
+                    res.status(403).json({ error: 'Недостаточно прав для удаления этого поста' });
+                }
+            });
+        }
+    );
+});
+
+// Удаление комментария с проверкой иерархии прав
+router.delete('/comments/:id', verifyToken, verifyNotBanned, (req, res) => {
+    const commentId = req.params.id;
+    const requesterId = req.user.id;
+
+    db.query(
+        'SELECT c.user_id, u.role FROM comments c JOIN users u ON c.user_id = u.id WHERE c.id = ?',
+        [commentId],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'Ошибка БД' });
+            if (results.length === 0) return res.status(404).json({ error: 'Комментарий не найден' });
+
+            const authorId = results[0].user_id;
+            const authorRole = results[0].role;
+
+            db.query('SELECT role FROM users WHERE id = ?', [requesterId], (err2, reqResults) => {
+                if (err2) return res.status(500).json({ error: 'Ошибка БД' });
+                const requesterRole = reqResults[0].role;
+
+                const isAuthor = parseInt(authorId) === parseInt(requesterId);
+                const isAdmin = requesterRole === 'admin';
+                const isModerator = requesterRole === 'moderator' && authorRole !== 'admin';
+
+                if (isAuthor || isAdmin || isModerator) {
+                    db.query('DELETE FROM comments WHERE id = ?', [commentId], (err3) => {
+                        if (err3) return res.status(500).json({ error: 'Ошибка при удалении комментария' });
+                        res.json({ message: 'Комментарий успешно удален' });
+                    });
+                } else {
+                    res.status(403).json({ error: 'Недостаточно прав для удаления этого комментария' });
+                }
+            });
+        }
+    );
+});
+
+// Запрос на удаление аккаунта (генерация и отправка кода)
+router.post('/delete-account/request', verifyToken, verifyNotBanned, (req, res) => {
+    const userId = req.user.id;
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    db.query('SELECT email FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err || results.length === 0) return res.status(404).json({ error: 'Пользователь не найден' });
+        const email = results[0].email;
+
+        db.query('UPDATE users SET delete_code = ? WHERE id = ?', [code, userId], (err2) => {
+            if (err2) return res.status(500).json({ error: 'Ошибка БД при сохранении кода' });
+
+            sendVerificationCode(email, code)
+                .then(() => {
+                    console.log(`Код для удаления аккаунта ${userId} отправлен на ${email}: ${code}`);
+                    res.json({ message: 'Код подтверждения отправлен на почту' });
+                })
+                .catch(err => {
+                    console.error('Ошибка отправки письма для удаления:', err);
+                    res.status(500).json({ error: 'Не удалось отправить код подтверждения' });
+                });
+        });
+    });
+});
+
+// Подтверждение удаления аккаунта
+router.post('/delete-account/confirm', verifyToken, verifyNotBanned, (req, res) => {
+    const userId = req.user.id;
+    const { code } = req.body;
+
+    if (!code || code.trim() === '') {
+        return res.status(400).json({ error: 'Введите код подтверждения' });
+    }
+
+    db.query('SELECT delete_code FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err || results.length === 0) return res.status(404).json({ error: 'Пользователь не найден' });
+
+        const storedCode = results[0].delete_code;
+        if (!storedCode || storedCode !== code.trim()) {
+            return res.status(400).json({ error: 'Неверный код подтверждения' });
+        }
+
+        db.query('DELETE FROM users WHERE id = ?', [userId], (err2) => {
+            if (err2) return res.status(500).json({ error: 'Ошибка при удалении аккаунта' });
+            res.json({ message: 'Аккаунт успешно удален' });
+        });
+    });
 });
 
 module.exports = router;

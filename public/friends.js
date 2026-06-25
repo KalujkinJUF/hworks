@@ -39,18 +39,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         dnd: 'DND'
                     }[friend.user_status || 'offline'];
                     return `
-                    <div class="friend-card">
-                        <div class="friend-info">
-                            ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
-                            <div class="friend-details">
-                                <a href="profile.html?username=${encodeURIComponent(friend.username)}" class="friend-name" style="color: ${roleColors[friend.role] || '#fff'};">${escapeHtml(friend.username)}</a>
-                                <div style="display: flex; gap: 10px;">
-                                    <span class="friend-role" style="color: ${roleColors[friend.role] || '#fff'};">${escapeHtml(friend.role.toUpperCase())}</span>
-                                    <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                    <div class="friend-card" style="padding: 0;">
+                        <a href="profile.html?username=${encodeURIComponent(friend.username)}" style="text-decoration: none; color: inherit; display: flex; flex: 1; padding: 15px; min-width: 0;">
+                            <div class="friend-info" style="cursor: pointer; width: 100%;">
+                                ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
+                                <div class="friend-details">
+                                    <span class="friend-name" style="color: ${roleColors[friend.role] || '#fff'}; font-weight: bold;">${escapeHtml(friend.username)}</span>
+                                    <div style="display: flex; gap: 10px;">
+                                        <span class="friend-role" style="color: ${roleColors[friend.role] || '#fff'};">${escapeHtml(friend.role.toUpperCase())}</span>
+                                        <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="friend-actions">
+                        </a>
+                        <div class="friend-actions" style="padding: 15px;">
                             <button class="user-btn delete-btn" onclick="deleteFriend(${friend.id})">Удалить</button>
                         </div>
                     </div>
@@ -89,20 +91,22 @@ document.addEventListener("DOMContentLoaded", () => {
                         dnd: 'DND'
                     }[req.user_status || 'offline'];
                     return `
-                    <div class="friend-card">
-                        <div class="friend-info">
-                            ${req.avatar ? `<img src="${escapeHtml(req.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
-                            <div class="friend-details">
-                                <a href="profile.html?username=${encodeURIComponent(req.username)}" class="friend-name" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.username)}</a>
-                                <div style="display: flex; gap: 10px;">
-                                    <span class="friend-role" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.role.toUpperCase())}</span>
-                                    <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                    <div class="friend-card" style="padding: 0;">
+                        <a href="profile.html?username=${encodeURIComponent(req.username)}" style="text-decoration: none; color: inherit; display: flex; flex: 1; padding: 15px; min-width: 0;">
+                            <div class="friend-info" style="cursor: pointer; width: 100%;">
+                                ${req.avatar ? `<img src="${escapeHtml(req.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
+                                <div class="friend-details">
+                                    <span class="friend-name" style="color: ${roleColors[req.role] || '#fff'}; font-weight: bold;">${escapeHtml(req.username)}</span>
+                                    <div style="display: flex; gap: 10px;">
+                                        <span class="friend-role" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.role.toUpperCase())}</span>
+                                        <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="friend-actions">
-                            <button class="auth-btn" onclick="acceptRequest(${req.request_id})">Принять</button>
-                            <button class="user-btn" onclick="rejectRequest(${req.request_id})">Отклонить</button>
+                        </a>
+                        <div class="friend-actions" style="padding: 15px; display: flex; gap: 8px;">
+                            <button class="auth-btn" style="margin: 0; width: auto;" onclick="acceptRequest(${req.request_id})">Принять</button>
+                            <button class="user-btn" style="margin: 0; width: auto;" onclick="rejectRequest(${req.request_id})">Отклонить</button>
                         </div>
                     </div>
                     `;
@@ -132,18 +136,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         dnd: 'DND'
                     }[req.user_status || 'offline'];
                     return `
-                    <div class="friend-card">
-                        <div class="friend-info">
-                            ${req.avatar ? `<img src="${escapeHtml(req.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
-                            <div class="friend-details">
-                                <a href="profile.html?username=${encodeURIComponent(req.username)}" class="friend-name" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.username)}</a>
-                                <div style="display: flex; gap: 10px;">
-                                    <span class="friend-role" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.role.toUpperCase())}</span>
-                                    <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                    <div class="friend-card" style="padding: 0;">
+                        <a href="profile.html?username=${encodeURIComponent(req.username)}" style="text-decoration: none; color: inherit; display: flex; flex: 1; padding: 15px; min-width: 0;">
+                            <div class="friend-info" style="cursor: pointer; width: 100%;">
+                                ${req.avatar ? `<img src="${escapeHtml(req.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
+                                <div class="friend-details">
+                                    <span class="friend-name" style="color: ${roleColors[req.role] || '#fff'}; font-weight: bold;">${escapeHtml(req.username)}</span>
+                                    <div style="display: flex; gap: 10px;">
+                                        <span class="friend-role" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.role.toUpperCase())}</span>
+                                        <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="friend-actions">
+                        </a>
+                        <div class="friend-actions" style="padding: 15px;">
                             <span class="pending-status">Ожидание</span>
                         </div>
                     </div>

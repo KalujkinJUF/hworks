@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
 
+    let currentUserId = null;
+    let currentUserRole = null;
+
     // Определение роли для показа формы поста
     if (token) {
         fetch("/api/users/profile", {
@@ -8,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })
             .then(res => res.json())
             .then(data => {
+                currentUserId = data.id;
+                currentUserRole = data.role;
                 if (data.role !== 'banned') {
                     document.getElementById("postFormSection").style.display = 'block';
                     // Скрыть кнопку "Обновления" для обычных пользователей
@@ -15,11 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         document.getElementById("postPatchBtn").style.display = 'none';
                     }
                 }
-                // Устанавливаем статус пользователя как онлайн
-                fetch("/api/users/status/online", {
-                    method: "POST",
-                    headers: { "Authorization": `Bearer ${token}` }
-                }).catch(() => { });
+                if (data.role === 'admin') {
+                    const editBtn = document.getElementById("editAdminPinBtn");
+                    if (editBtn) editBtn.style.display = 'block';
+                }
             })
             .catch(() => { });
     }
@@ -62,9 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (currentFeed === 'patches') {
             newsFeed.style.display = 'none';
-            patchFeed.style.display = 'block';
+            patchFeed.style.display = 'flex';
         } else {
-            newsFeed.style.display = 'block';
+            newsFeed.style.display = 'flex';
             patchFeed.style.display = 'none';
         }
     }
@@ -132,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const color = roleColors[post.role] || '#ffffff';
             const avatar = post.avatar ? post.avatar : '';
-            const likeText = post.is_liked ? '♥ В любимом' : '♡ Мне нравится';
+            const likeText = post.is_liked ? '♥ Понравилось' : '♡ Мне нравится';
             const likeColor = post.is_liked ? '#ff3333' : '#fff';
             const dateStr = new Date(post.created_at).toLocaleString();
             const contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
@@ -154,21 +158,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     // (ничего не отключаем)
                 }
 
+                const isPostAuthor = currentUserId && parseInt(post.user_id) === parseInt(currentUserId);
+                const isPostAdmin = currentUserRole === 'admin';
+                const isPostModerator = currentUserRole === 'moderator' && post.role !== 'admin';
+                const canDeletePost = isPostAuthor || isPostAdmin || isPostModerator;
+                const deletePostBtnHtml = canDeletePost ? `<button class="delete-btn" style="margin-left: 15px;" onclick="deletePost(${post.id})">Удалить</button>` : '';
+
                 card.innerHTML = `
                     <div class="post-header">
-                        ${avatar ? `<img src="${avatar}" class="post-avatar">` : '<div class="post-avatar-placeholder"></div>'}
+                        ${avatar ? `<img src="${avatar}" class="post-avatar" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><div class="post-avatar-placeholder" style="display:none;"></div>` : '<div class="post-avatar-placeholder"></div>'}
                         <a href="profile.html?username=${encodeURIComponent(post.username)}" style="color: ${color}; text-decoration: none; font-weight: bold;" class="post-author">${escapeHtml(post.username)}</a>
                         <span class="post-date">${dateStr}</span>
+                        ${deletePostBtnHtml}
                     </div>
                     <div class="post-content">${contentHtml}</div>
                     
                     <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
-                        <span class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</span>
-                        <span class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold;" onclick="toggleCommentsSection(${post.id})">💬 Комментарии</span>
+                        <button class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</button>
+                        <button class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="toggleCommentsSection(${post.id})">💬 Комментарии (${post.comments_count || 0})</button>
                     </div>
                     
-                    <div id="commentsWrapper-${post.id}" class="comments-wrapper" style="display: none; margin-top: 12px; border: 2px solid white; padding: 10px; background: rgba(255,255,255,0.02);">
-                        <div id="commentsList-${post.id}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                    <div id="commentsWrapper-${post.id}" class="comments-wrapper" style="display: none; margin-top: 15px; border: 2px solid white; padding: 15px; background: rgba(255,255,255,0.02);">
+                        <div id="commentsList-${post.id}" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
                             <p class="loading-text" style="font-size: 10px;">Загрузка комментариев...</p>
                         </div>
                         <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; gap: 8px;">
@@ -201,6 +212,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const contentEl = card.querySelector(".post-content");
                 if (contentEl && contentEl.innerHTML !== contentHtml) {
                     contentEl.innerHTML = contentHtml;
+                }
+
+                const commentsBtn = card.querySelector(".comments-toggle-btn");
+                if (commentsBtn) {
+                    const newCommentsStr = `💬 Комментарии (${post.comments_count || 0})`;
+                    if (commentsBtn.textContent !== newCommentsStr) {
+                        commentsBtn.textContent = newCommentsStr;
+                    }
                 }
             }
         });
@@ -270,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         userEl.style.color = "inherit";
                         userEl.innerHTML = `
                             <div class="online-user">
-                                <span class="online-dot"></span>
+                                <span class="online-dot status-${u.user_status || 'online'}"></span>
                                 <span style="color: ${roleColors[u.role] || '#fff'};">${escapeHtml(u.username)}</span>
                             </div>
                         `;
@@ -286,6 +305,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (nameSpan) {
                             nameSpan.style.color = roleColors[u.role] || '#fff';
                         }
+                        const dotSpan = userEl.querySelector(".online-dot");
+                        if (dotSpan) {
+                            dotSpan.className = `online-dot status-${u.user_status || 'online'}`;
+                        }
                     }
                 });
             })
@@ -295,8 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    window.togglePostLike = function (postId) {
-        if (!token) { alert("Войдите в систему, чтобы ставить лайки"); return; }
+    window.togglePostLike = async function (postId) {
+        if (!token) { await window.showCustomAlert("Войдите в систему, чтобы ставить лайки"); return; }
         fetch(`/api/users/posts/${postId}/like`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` }
@@ -313,13 +336,65 @@ document.addEventListener("DOMContentLoaded", () => {
     window.toggleCommentsSection = function (postId) {
         const wrapper = document.getElementById(`commentsWrapper-${postId}`);
         if (wrapper) {
-            if (wrapper.style.display === 'none') {
-                wrapper.style.display = 'block';
-                loadPostComments(postId);
+            if (wrapper.classList.contains('open')) {
+                wrapper.classList.remove('open');
+                setTimeout(() => {
+                    if (!wrapper.classList.contains('open')) {
+                        wrapper.style.display = 'none';
+                    }
+                }, 300);
             } else {
-                wrapper.style.display = 'none';
+                wrapper.style.display = 'block';
+                setTimeout(() => {
+                    wrapper.classList.add('open');
+                }, 10);
+                loadPostComments(postId);
             }
         }
+    };
+
+    window.deletePost = async function(postId) {
+        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот пост?")) return;
+        
+        fetch(`/api/users/posts/${postId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(async data => {
+            if (data.message) {
+                const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+                if (card) card.remove();
+            } else {
+                await window.showCustomAlert(data.error || "Ошибка удаления поста");
+            }
+        })
+        .catch(async err => {
+            console.error("Ошибка при удалении поста:", err);
+            await window.showCustomAlert("Ошибка сети");
+        });
+    };
+
+    window.deleteComment = async function(postId, commentId) {
+        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот комментарий?")) return;
+        
+        fetch(`/api/users/comments/${commentId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(async data => {
+            if (data.message) {
+                loadPostComments(postId);
+                loadPosts(); // to update comment counts
+            } else {
+                await window.showCustomAlert(data.error || "Ошибка удаления комментария");
+            }
+        })
+        .catch(async err => {
+            console.error("Ошибка при удалении комментария:", err);
+            await window.showCustomAlert("Ошибка сети");
+        });
     };
 
     window.loadPostComments = function (postId) {
@@ -353,14 +428,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         const borderLeft = depth > 0 ? '2px solid rgba(255,255,255,0.2)' : 'none';
                         const repliesHTML = comment.replies.map(r => renderCommentNode(r, depth + 1)).join('');
 
+                        const isCommentAuthor = currentUserId && parseInt(comment.user_id) === parseInt(currentUserId);
+                        const isCommentAdmin = currentUserRole === 'admin';
+                        const isCommentModerator = currentUserRole === 'moderator' && comment.role !== 'admin';
+                        const canDeleteComment = isCommentAuthor || isCommentAdmin || isCommentModerator;
+                        const deleteCommentBtnHtml = canDeleteComment ? `<button class="delete-btn" style="margin-left: 8px;" onclick="deleteComment(${postId}, ${comment.id})">Удалить</button>` : '';
+
                         return `
-                        <div style="padding-left: 8px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 4px; padding-bottom: 4px; text-align: left;">
-                            <div style="display: flex; align-items: center; gap: 6px; font-size: 10px;">
+                        <div style="padding-left: 12px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 8px; padding-bottom: 8px; margin-bottom: 8px; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
                                 <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
-                                <span style="font-size: 8px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
-                                ${token ? `<span style="color: yellow; cursor: pointer; font-size: 8px; font-weight: bold; margin-left: 5px;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</span>` : ''}
+                                <span style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
+                                ${token ? `<button style="color: yellow; cursor: pointer; font-size: 10px; font-weight: bold; margin-left: 8px; background: none; border: none;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}
+                                ${deleteCommentBtnHtml}
                             </div>
-                            <div style="font-size: 10px; color: #eee; margin-top: 2px; word-break: break-word;">${escapeHtml(comment.content)}</div>
+                            <div style="font-size: 12px; color: #eee; margin-top: 4px; word-break: break-word; line-height: 1.4;">${escapeHtml(comment.content)}</div>
                             ${repliesHTML}
                         </div>
                     `;
@@ -381,9 +463,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    window.submitPostComment = function (event, postId) {
+    window.submitPostComment = async function (event, postId) {
         event.preventDefault();
-        if (!token) { alert("Войдите в систему, чтобы комментировать"); return; }
+        if (!token) { await window.showCustomAlert("Войдите в систему, чтобы комментировать"); return; }
 
         const input = document.getElementById(`commentInput-${postId}`);
         if (!input) return;
@@ -398,17 +480,91 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify({ content, parent_id: parentId })
         })
             .then(res => res.json())
-            .then(data => {
+            .then(async data => {
                 if (data.commentId) {
                     input.value = "";
                     delete input.dataset.parentId;
                     loadPostComments(postId);
                 } else if (data.error) {
-                    alert(data.error);
+                    await window.showCustomAlert(data.error);
                 }
             })
             .catch(err => console.error(err));
     };
+
+    // Загрузка закрепа от админа
+    function loadAdminPin() {
+        fetch("/api/users/admin-pin")
+            .then(res => res.json())
+            .then(data => {
+                const pinContent = document.getElementById("adminPinContent");
+                if (pinContent) {
+                    pinContent.innerHTML = escapeHtml(data.content).replace(/\n/g, '<br>');
+                }
+                const pinInput = document.getElementById("adminPinInput");
+                if (pinInput) {
+                    pinInput.value = data.content;
+                }
+            })
+            .catch(() => {
+                const pinContent = document.getElementById("adminPinContent");
+                if (pinContent) {
+                    pinContent.textContent = "Не удалось загрузить закреп.";
+                }
+            });
+    }
+
+    loadAdminPin();
+
+    const editAdminPinBtn = document.getElementById("editAdminPinBtn");
+    const saveAdminPinBtn = document.getElementById("saveAdminPinBtn");
+    const adminPinEditArea = document.getElementById("adminPinEditArea");
+    const adminPinContent = document.getElementById("adminPinContent");
+
+    if (editAdminPinBtn) {
+        editAdminPinBtn.addEventListener("click", () => {
+            if (adminPinEditArea.style.display === "none") {
+                adminPinEditArea.style.display = "block";
+                adminPinContent.style.display = "none";
+                editAdminPinBtn.textContent = "Отмена";
+            } else {
+                adminPinEditArea.style.display = "none";
+                adminPinContent.style.display = "block";
+                editAdminPinBtn.textContent = "Редактировать";
+            }
+        });
+    }
+
+    if (saveAdminPinBtn) {
+        saveAdminPinBtn.addEventListener("click", async () => {
+            const content = document.getElementById("adminPinInput").value.trim();
+            if (!content) {
+                await window.showCustomAlert("Текст закрепа не может быть пустым");
+                return;
+            }
+
+            fetch("/api/users/admin-pin", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ content })
+            })
+            .then(res => res.json())
+            .then(async data => {
+                if (data.message) {
+                    adminPinEditArea.style.display = "none";
+                    adminPinContent.style.display = "block";
+                    editAdminPinBtn.textContent = "Редактировать";
+                    loadAdminPin();
+                } else {
+                    await window.showCustomAlert(data.error || "Ошибка сохранения");
+                }
+            })
+            .catch(async () => await window.showCustomAlert("Ошибка сети"));
+        });
+    }
 
     loadPosts();
     loadOnline();
@@ -423,8 +579,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 10000);
 
-    function createPost(type) {
-        if (!token) { alert("Войдите в систему"); return; }
+    async function createPost(type) {
+        if (!token) { await window.showCustomAlert("Войдите в систему"); return; }
         const content = document.getElementById("postContent").value.trim();
         if (!content) { document.getElementById("postMessage").textContent = "Напишите text"; return; }
 

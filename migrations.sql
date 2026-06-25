@@ -97,4 +97,21 @@ ALTER TABLE users MODIFY COLUMN about TEXT DEFAULT NULL;
 -- Добавление колонки прочтения для личных сообщений
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read TINYINT(1) DEFAULT 0;
 
+-- Новые колонки для отзывов на стене и удаления аккаунта
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_viewed_wall TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS delete_code VARCHAR(255) DEFAULT NULL;
+
+-- Таблица закрепа от админа
+CREATE TABLE IF NOT EXISTS admin_pin (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    content TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Начальная вставка закрепа
+INSERT INTO admin_pin (id, content) 
+SELECT 1, 'Привет! Это закрепленный пост от админа.' 
+WHERE NOT EXISTS (SELECT 1 FROM admin_pin WHERE id = 1);
+
+
 

@@ -10,36 +10,64 @@ router.use(verifyNotBanned);
 // Получить общее количество непрочитанных сообщений
 router.get('/unread/count', (req, res) => {
     const userId = req.user.id;
-    db.query(
-        'SELECT COUNT(*) AS count FROM messages WHERE receiver_id = ? AND is_read = 0',
-        [userId],
-        (err, results) => {
-            if (err) {
-                console.error('Ошибка БД при получении непрочитанных сообщений:', err);
-                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-            }
-            res.json({ count: results[0].count });
+    db.query('SELECT user_status FROM users WHERE id = ?', [userId], (err, statusRes) => {
+        if (err || statusRes.length === 0) {
+            return res.status(500).json({ error: 'Ошибка БД' });
         }
-    );
+        if (statusRes[0].user_status === 'dnd') {
+            return res.json({ count: 0 });
+        }
+
+        db.query(
+            `SELECT COUNT(m.id) AS count 
+             FROM messages m
+             JOIN friends f ON (
+                 (f.user_id = m.sender_id AND f.friend_id = m.receiver_id) OR
+                 (f.user_id = m.receiver_id AND f.friend_id = m.sender_id)
+             )
+             WHERE m.receiver_id = ? AND m.is_read = 0 AND f.status = 'accepted'`,
+            [userId],
+            (err, results) => {
+                if (err) {
+                    console.error('Ошибка БД при получении непрочитанных сообщений:', err);
+                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                }
+                res.json({ count: results[0].count });
+            }
+        );
+    });
 });
 
 // Получить список отправителей непрочитанных сообщений с их количеством
 router.get('/unread/friends', (req, res) => {
     const userId = req.user.id;
-    db.query(
-        `SELECT sender_id, COUNT(*) AS count
-         FROM messages
-         WHERE receiver_id = ? AND is_read = 0
-         GROUP BY sender_id`,
-        [userId],
-        (err, results) => {
-            if (err) {
-                console.error('Ошибка БД при получении непрочитанных от друзей:', err);
-                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-            }
-            res.json(results);
+    db.query('SELECT user_status FROM users WHERE id = ?', [userId], (err, statusRes) => {
+        if (err || statusRes.length === 0) {
+            return res.status(500).json({ error: 'Ошибка БД' });
         }
-    );
+        if (statusRes[0].user_status === 'dnd') {
+            return res.json([]);
+        }
+
+        db.query(
+            `SELECT m.sender_id, COUNT(m.id) AS count
+             FROM messages m
+             JOIN friends f ON (
+                 (f.user_id = m.sender_id AND f.friend_id = m.receiver_id) OR
+                 (f.user_id = m.receiver_id AND f.friend_id = m.sender_id)
+             )
+             WHERE m.receiver_id = ? AND m.is_read = 0 AND f.status = 'accepted'
+             GROUP BY m.sender_id`,
+            [userId],
+            (err, results) => {
+                if (err) {
+                    console.error('Ошибка БД при получении непрочитанных от друзей:', err);
+                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                }
+                res.json(results);
+            }
+        );
+    });
 });
 
 // Получить сообщения с конкретным пользователем
@@ -117,6 +145,42 @@ router.post('/', (req, res) => {
                     });
                 }
             );
+        }
+    );
+});
+
+// Удаление сообщения в чате с проверкой иерархии прав
+router.delete('/:id', (req, res) => {
+    const messageId = req.params.id;
+    const requesterId = req.user.id;
+
+    db.query(
+        'SELECT m.sender_id, u.role FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = ?',
+        [messageId],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'Ошибка БД' });
+            if (results.length === 0) return res.status(404).json({ error: 'Сообщение не найдено' });
+
+            const senderId = results[0].sender_id;
+            const senderRole = results[0].role;
+
+            db.query('SELECT role FROM users WHERE id = ?', [requesterId], (err2, reqResults) => {
+                if (err2) return res.status(500).json({ error: 'Ошибка БД' });
+                const requesterRole = reqResults[0].role;
+
+                const isSender = parseInt(senderId) === parseInt(requesterId);
+                const isAdmin = requesterRole === 'admin';
+                const isModerator = requesterRole === 'moderator' && senderRole !== 'admin';
+
+                if (isSender || isAdmin || isModerator) {
+                    db.query('DELETE FROM messages WHERE id = ?', [messageId], (err3) => {
+                        if (err3) return res.status(500).json({ error: 'Ошибка при удалении сообщения' });
+                        res.json({ message: 'Сообщение успешно удалено' });
+                    });
+                } else {
+                    res.status(403).json({ error: 'Недостаточно прав для удаления этого сообщения' });
+                }
+            });
         }
     );
 });

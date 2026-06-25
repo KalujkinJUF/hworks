@@ -11,10 +11,16 @@ router.use(verifyNotBanned);
 router.get('/', (req, res) => {
     const userId = req.user.id;
     db.query(
-        `SELECT u.id, u.username, u.avatar, u.role, IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status FROM users u
+        `SELECT u.id, u.username, u.avatar, u.role, 
+                IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status,
+                (SELECT MAX(created_at) FROM messages 
+                 WHERE (sender_id = ? AND receiver_id = u.id) OR (sender_id = u.id AND receiver_id = ?)
+                ) AS last_message_time
+         FROM users u
          INNER JOIN friends f ON (f.user_id = u.id OR f.friend_id = u.id)
-         WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted' AND u.id != ?`,
-        [userId, userId, userId],
+         WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted' AND u.id != ?
+         ORDER BY COALESCE(last_message_time, '1970-01-01 00:00:00') DESC, u.username ASC`,
+        [userId, userId, userId, userId, userId],
         (err, results) => {
             if (err) {
                 console.error('Ошибка БД при получении друзей:', err);
@@ -197,6 +203,46 @@ router.get('/mutual/:userId', (req, res) => {
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
             res.json(results);
+        }
+    );
+});
+
+// Принять запрос в друзья по ID отправителя
+router.post('/accept-user/:senderId', (req, res) => {
+    const userId = req.user.id;
+    const senderId = parseInt(req.params.senderId);
+    db.query(
+        `UPDATE friends SET status = 'accepted'
+         WHERE user_id = ? AND friend_id = ? AND status = 'pending'`,
+        [senderId, userId],
+        (err, result) => {
+            if (err) {
+                console.error('Ошибка БД при принятии запроса по ID отправителя:', err);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Запрос не найден' });
+            }
+            res.json({ message: 'Запрос принят' });
+        }
+    );
+});
+
+// Отклонить или отменить запрос в друзья по ID пользователя
+router.post('/reject-user/:targetUserId', (req, res) => {
+    const userId = req.user.id;
+    const targetUserId = parseInt(req.params.targetUserId);
+    db.query(
+        `DELETE FROM friends
+         WHERE status = 'pending'
+         AND ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))`,
+        [userId, targetUserId, targetUserId, userId],
+        (err, result) => {
+            if (err) {
+                console.error('Ошибка БД при отклонении/отмене запроса по ID пользователя:', err);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
+            res.json({ message: 'Запрос отклонен или отменен' });
         }
     );
 });

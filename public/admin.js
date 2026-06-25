@@ -1,8 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     if (!token) {
-        alert("Пожалуйста, войдите в систему.");
-        window.location.href = "login.html";
+        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+            window.location.href = "login.html";
+        });
         return;
     }
 
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const adminMessage = document.getElementById("adminMessage");
     let usersData = [];
     let currentRole = null; // запомним роль текущего админа/модератора
+    let currentUserId = null; // запомним ID текущего админа/модератора
 
     // Проверка роли через профиль
     fetch("/api/users/profile", {
@@ -23,10 +25,12 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then(data => {
         if (data.role !== 'admin' && data.role !== 'moderator') {
-            alert("Доступ запрещён!");
-            window.location.href = "index.html";
+            window.showCustomAlert("Доступ запрещён!").then(() => {
+                window.location.href = "index.html";
+            });
         }
         currentRole = data.role;
+        currentUserId = data.id;
     })
     .catch(() => {
         localStorage.removeItem("token");
@@ -45,13 +49,13 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const roleLabels = {
-        newbie: '[NEWBIE]',
-        user: '[USER]',
-        premium: '[PREMIUM]',
-        vip: '[VIP]',
-        moderator: '[MOD]',
-        admin: '[ADMIN]',
-        banned: '[BANNED]'
+        newbie: 'NEWBIE',
+        user: 'USER',
+        premium: 'PREMIUM',
+        vip: 'VIP',
+        moderator: 'MOD',
+        admin: 'ADMIN',
+        banned: 'BANNED'
     };
 
     function loadUsers() {
@@ -82,7 +86,11 @@ document.addEventListener("DOMContentLoaded", () => {
             card.dataset.id = user.id;
 
             const color = roleColors[user.role] || '#ffffff';
-            const label = roleLabels[user.role] || `[${user.role.toUpperCase()}]`;
+            const label = roleLabels[user.role] || user.role.toUpperCase();
+
+            const isTargetAdminOrMod = user.role === 'admin' || user.role === 'moderator';
+            const isSelf = parseInt(user.id) === parseInt(currentUserId);
+            const canEdit = isAdmin || (!isTargetAdminOrMod && !isSelf);
 
             card.innerHTML = `
                 <div class="user-card-header">
@@ -92,8 +100,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="user-card-body">
                     <div class="user-field">
                         <label>Логин:</label>
+                        ${canEdit ? `
                         <input type="text" class="edit-username" value="${escapeHtml(user.username)}" placeholder="Новый логин">
                         <button class="user-btn btn-save-username" data-id="${user.id}">✎</button>
+                        ` : `
+                        <span class="user-field-value">${escapeHtml(user.username)}</span>
+                        `}
                     </div>
                     ${isAdmin ? `
                     <div class="user-field">
@@ -117,8 +129,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     `}
                     <div class="user-field">
                         <label>Обо мне:</label>
+                        ${canEdit ? `
                         <textarea class="edit-about" rows="2">${escapeHtml(user.about || '')}</textarea>
                         <button class="user-btn btn-save-about" data-id="${user.id}">✎</button>
+                        ` : `
+                        <span class="user-field-value">${escapeHtml(user.about || 'Нет описания')}</span>
+                        `}
                     </div>
                     <div class="user-field">
                         <label>Дата рег.:</label>
@@ -126,14 +142,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="user-field">
                         <label>Email:</label>
+                        ${canEdit ? `
                         <input type="email" class="edit-email" value="${escapeHtml(user.email || '')}" placeholder="Новый email">
                         <button class="user-btn btn-save-email" data-id="${user.id}">✎</button>
+                        ` : `
+                        <span class="user-field-value">${escapeHtml(user.email || 'Не указан')}</span>
+                        `}
                     </div>
+                    ${canEdit ? `
                     <div class="user-field">
                         <label>Пароль:</label>
                         <input type="text" class="edit-password" placeholder="Новый пароль">
                         <button class="user-btn btn-save-password" data-id="${user.id}">✎</button>
                     </div>
+                    ` : ''}
                     ${isAdmin ? `
                     <div class="user-card-actions">
                         <button class="user-btn btn-delete" data-id="${user.id}">🗑 Удалить</button>
@@ -261,9 +283,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Удаление — только админ
         if (isAdmin) {
             document.querySelectorAll(".btn-delete").forEach(btn => {
-                btn.addEventListener("click", () => {
+                btn.addEventListener("click", async () => {
                     const id = btn.dataset.id;
-                    if (!confirm("Вы уверены, что хотите удалить этого пользователя?")) return;
+                    if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этого пользователя?")) return;
                     fetch(`/api/admin/user/${id}`, {
                         method: "DELETE",
                         headers: { "Authorization": `Bearer ${token}` }

@@ -23,7 +23,20 @@
         </header>
 
         <main class="main-layout">
-            <!-- Левая колонка: лента -->
+            <!-- Левая колонка: закреп от админа -->
+            <aside class="admin-pin-column">
+                <div class="admin-pin-box">
+                    <h3>Закреп от админа</h3>
+                    <div id="adminPinContent" class="admin-pin-content">Загрузка...</div>
+                    <div id="adminPinEditArea" style="display: none; margin-top: 10px;">
+                        <textarea id="adminPinInput" rows="4"></textarea>
+                        <button id="saveAdminPinBtn" class="auth-btn" style="margin-top: 8px; padding: 6px 12px; font-size: 10px; width: 100%; cursor: pointer;">Сохранить</button>
+                    </div>
+                    <button id="editAdminPinBtn" class="user-btn" style="display: none; margin-top: 10px; width: 100%; border-color: yellow; color: yellow;">Редактировать</button>
+                </div>
+            </aside>
+
+            <!-- Средняя колонка: лента -->
             <div class="feed-column">
                 <div class="feed-wrapper">
                 <section class="main-content-wrapper">
@@ -71,7 +84,7 @@
         </main>
 
         <footer style="font-size: 10px; padding: 5px 0;">
-            <p>&copy; hworks</p>
+            <p><a href="about.html" style="color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255, 255, 255, 0.4);" onmouseover="this.style.color='yellow'" onmouseout="this.style.color='inherit'">&copy; hworks</a></p>
         </footer>
     </div>
     <script src="index.js"></script>

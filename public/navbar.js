@@ -1,3 +1,84 @@
+// Вспомогательная функция для экранирования HTML в модалях
+function escapeHtmlModal(str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+window.showCustomAlert = function(message) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "custom-modal-overlay";
+        
+        overlay.innerHTML = `
+            <div class="custom-modal-box">
+                <div class="custom-modal-header">ВНИМАНИЕ</div>
+                <div class="custom-modal-content">${escapeHtmlModal(message)}</div>
+                <div class="custom-modal-buttons">
+                    <button class="custom-modal-btn btn-ok" id="customAlertOkBtn">OK</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        const okBtn = overlay.querySelector("#customAlertOkBtn");
+        if (okBtn) okBtn.focus();
+        
+        okBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setTimeout(() => {
+                overlay.remove();
+            }, 50);
+            resolve();
+        });
+    });
+};
+
+window.showCustomConfirm = function(message) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "custom-modal-overlay";
+        
+        overlay.innerHTML = `
+            <div class="custom-modal-box">
+                <div class="custom-modal-header">ПОДТВЕРЖДЕНИЕ</div>
+                <div class="custom-modal-content">${escapeHtmlModal(message)}</div>
+                <div class="custom-modal-buttons">
+                    <button class="custom-modal-btn btn-yes" id="customConfirmYesBtn">ДА</button>
+                    <button class="custom-modal-btn btn-no" id="customConfirmNoBtn">НЕТ</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        const yesBtn = overlay.querySelector("#customConfirmYesBtn");
+        const noBtn = overlay.querySelector("#customConfirmNoBtn");
+        if (noBtn) noBtn.focus();
+        
+        yesBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setTimeout(() => {
+                overlay.remove();
+            }, 50);
+            resolve(true);
+        });
+        
+        noBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setTimeout(() => {
+                overlay.remove();
+            }, 50);
+            resolve(false);
+        });
+    });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
 
@@ -21,10 +102,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnAdmin = document.getElementById("nav-admin");
     const btnLogout = document.getElementById("nav-logout");
 
+    const params = new URLSearchParams(window.location.search);
+    const viewingUsername = params.get('username');
+    const isViewingSomeoneElse = (currentPage === 'profile.html' && viewingUsername);
+
     // Сначала скрываем текущую страницу (для всех случаев)
     if (btnRegister && currentPage === 'register.html') btnRegister.style.display = "none";
     if (btnLogin && currentPage === 'login.html') btnLogin.style.display = "none";
-    if (btnProfile && currentPage === 'profile.html') btnProfile.style.display = "none";
+    if (btnProfile && currentPage === 'profile.html' && !isViewingSomeoneElse) btnProfile.style.display = "none";
     if (btnSearch && currentPage === 'search.html') btnSearch.style.display = "none";
     if (btnFriends && currentPage === 'friends.html') btnFriends.style.display = "none";
     if (btnChat && currentPage === 'chat.html') btnChat.style.display = "none";
@@ -60,13 +145,29 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         })
         .catch(err => console.error("Ошибка при получении запросов в друзья:", err));
+
+        // Получаем количество непрочитанных отзывов на стене
+        fetch("/api/users/unread-wall-count", {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const count = data.count || 0;
+            const btnProfile = document.getElementById("nav-profile");
+            if (btnProfile) {
+                btnProfile.textContent = count > 0 ? `Профиль (+${count})` : "Профиль";
+            }
+        })
+        .catch(err => console.error("Ошибка при получении непрочитанных отзывов на стене:", err));
     }
+
+    window.updateNavbarNotifications = updateNavbarNotifications;
 
     if (token) {
         // Если пользователь ЗАЛОГИНИЛСЯ:
         if (btnRegister) btnRegister.style.display = "none";
         if (btnLogin) btnLogin.style.display = "none";
-        if (btnProfile && currentPage !== 'profile.html') btnProfile.style.display = "inline-block";
+        if (btnProfile && (currentPage !== 'profile.html' || isViewingSomeoneElse)) btnProfile.style.display = "inline-block";
         if (btnFriends && currentPage !== 'friends.html') btnFriends.style.display = "inline-block";
         if (btnChat && currentPage !== 'chat.html') btnChat.style.display = "inline-block";
         if (btnSearch && currentPage !== 'search.html' && currentPage !== 'profile.html') btnSearch.style.display = "inline-block";
@@ -80,14 +181,14 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: { "Authorization": `Bearer ${token}` }
         })
         .then(res => res.json())
-        .then(data => {
+        .then(async data => {
             if (data.role === 'banned') {
                 if (btnFriends) btnFriends.style.display = "none";
                 if (btnChat) btnChat.style.display = "none";
                 
                 // Перенаправление забаненных пользователей
                 if (currentPage === 'friends.html' || currentPage === 'chat.html') {
-                    alert("Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.");
+                    await window.showCustomAlert("Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.");
                     window.location.href = "profile.html";
                 }
             }

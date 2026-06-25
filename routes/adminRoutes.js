@@ -49,8 +49,13 @@ const verifyHierarchy = (req, res, next) => {
 
         const targetLevel = roleHierarchy[targetRole] || 0;
 
-        if (actorRole === 'moderator' && targetLevel >= 5) {
-            return res.status(403).json({ error: 'Недостаточно прав: модератор не может изменять администраторов и других модераторов' });
+        if (actorRole === 'moderator') {
+            if (parseInt(targetId) === parseInt(req.user.id)) {
+                return res.status(403).json({ error: 'Недостаточно прав: модератор не может изменять свои собственные данные' });
+            }
+            if (targetLevel >= 5) {
+                return res.status(403).json({ error: 'Недостаточно прав: модератор не может изменять администраторов и других модераторов' });
+            }
         }
         next();
     });

@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 // Проверка обязательных переменных окружения
-const requiredEnv = ['DB_PASSWORD', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS', 'TURNSTILE_SECRET'];
+const requiredEnv = ['DB_PASSWORD', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS', 'TURNSTILE_SECRET', 'CLIENT_URL'];
 const missingEnv = requiredEnv.filter(key => !process.env[key]);
 if (missingEnv.length > 0) {
     console.error(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствуют обязательные переменные окружения: ${missingEnv.join(', ')}`);
@@ -23,9 +23,16 @@ const messageRoutes = require('./routes/messageRoutes');
 const db = require('./config/db');
 const port = process.env.PORT || 3000;
 const adminRoutes = require('./routes/adminRoutes');
+const { setCsrfToken, verifyCsrfToken, getCsrfToken } = require('./middleware/csrf');
 
 // Cookie parser для чтения JWT из httpOnly cookie
 app.use(cookieParser());
+
+// CSRF защита: устанавливаем токен в cookie для всех запросов
+app.use(setCsrfToken);
+
+// Endpoint для получения CSRF токена
+app.get('/api/csrf-token', getCsrfToken);
 
 // Защитные HTTP-заголовки (Helmet) с CSP
 app.use(helmet({
@@ -35,7 +42,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://challenges.cloudflare.com"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             imgSrc: ["'self'", "data:", "blob:"],
-            connectSrc: ["'self'", process.env.CLIENT_URL || 'http://34.51.214.5'],
+        connectSrc: ["'self'", process.env.CLIENT_URL],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             frameSrc: ["https://challenges.cloudflare.com"],
             objectSrc: ["'none'"]
@@ -54,23 +61,23 @@ app.use((req, res, next) => {
 
 // CORS — разрешаем только наш клиент
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://34.51.214.5',
+    origin: process.env.CLIENT_URL,
     credentials: true
 }));
 
 app.use(express.json({ limit: '1mb' }));
 app.use(bodyParser.json({ limit: '1mb' }));
 
-// Подключаем маршруты (после middleware)
-app.use('/api/admin', adminRoutes);
+// Подключаем маршруты (после middleware) с CSRF защитой для state-changing методов
+app.use('/api/admin', verifyCsrfToken, adminRoutes);
 
 const path = require('path');
-// Подключаем маршруты пользователей
-app.use('/api/users', userRoutes);
-// Подключаем маршруты друзей
-app.use('/api/friends', friendRoutes);
-// Подключаем маршруты сообщений
-app.use('/api/messages', messageRoutes);
+// Подключаем маршруты пользователей с CSRF защитой
+app.use('/api/users', verifyCsrfToken, userRoutes);
+// Подключаем маршруты друзей с CSRF защитой
+app.use('/api/friends', verifyCsrfToken, friendRoutes);
+// Подключаем маршруты сообщений с CSRF защитой
+app.use('/api/messages', verifyCsrfToken, messageRoutes);
 // Эндпоинт проверки работоспособности (для клиента)
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });

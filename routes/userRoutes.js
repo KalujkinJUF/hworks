@@ -254,8 +254,7 @@ router.post('/register', authLimiter, async (req, res) => {
             });
 
             res.status(201).json({
-                message: 'Пользователь зарегистрирован. На почту отправлен код подтверждения.',
-                token
+                message: 'Пользователь зарегистрирован. На почту отправлен код подтверждения.'
             });
         }
     );
@@ -358,7 +357,7 @@ router.post('/login', authLimiter, (req, res) => {
             maxAge: 60 * 60 * 1000 // 1 час
         });
 
-        res.json({ token });
+        res.json({ message: 'Вход выполнен успешно' });
     });
 });
 
@@ -479,13 +478,30 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), as
         return res.status(400).json({ error: 'Файл не является допустимым изображением' });
     }
 
-    const avatarUrl = `/uploads/${req.file.filename}`;
-    db.query('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, req.user.id], (err) => {
+    // Получаем старый аватар перед обновлением
+    db.query('SELECT avatar FROM users WHERE id = ?', [req.user.id], (err, results) => {
         if (err) {
-            console.error('Ошибка БД при обновлении аватара:', err);
-            return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            console.error('Ошибка БД при получении старого аватара:', err);
+            // Продолжаем, даже если не удалось получить старый аватар
+        } else if (results.length > 0 && results[0].avatar) {
+            const oldAvatar = results[0].avatar;
+            // Удаляем старый файл аватара (если это не дефолтный аватар)
+            if (oldAvatar.startsWith('/uploads/')) {
+                const oldAvatarPath = path.join(process.cwd(), 'public', oldAvatar);
+                fs.unlink(oldAvatarPath, (unlinkErr) => {
+                    if (unlinkErr) console.error('Ошибка удаления старого аватара:', unlinkErr);
+                });
+            }
         }
-        res.json({ avatar: avatarUrl, message: 'Аватарка обновлена' });
+
+        const avatarUrl = `/uploads/${req.file.filename}`;
+        db.query('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, req.user.id], (updateErr) => {
+            if (updateErr) {
+                console.error('Ошибка БД при обновлении аватара:', updateErr);
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            }
+            res.json({ avatar: avatarUrl, message: 'Аватарка обновлена' });
+        });
     });
 });
 

@@ -73,7 +73,7 @@ fn test_connection(url: &str) -> Result<(), String> {
 
 #[tauri::command]
 fn get_version() -> String {
-    "a0.2.3".to_string()
+    "a0.2.4".to_string()
 }
 
 #[tauri::command]
@@ -262,7 +262,7 @@ pub fn run() {
                     }
                 }
             } else {
-                let default_cloud = "http://34.51.214.5:3000".to_string();
+                let default_cloud = "https://hworks.space".to_string();
                 if test_connection(&default_cloud).is_ok() {
                     if let Some(window) = handle.get_webview_window("main") {
                         let target_url_str = if version_changed {

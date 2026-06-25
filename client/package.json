@@ -1,6 +1,6 @@
 {
   "name": "voidtree-client",
-  "version": "a0.2.3",
+  "version": "a0.2.4",
   "description": "Client application for Voidtree",
   "scripts": {
     "start": "tauri dev",

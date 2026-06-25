@@ -1,3 +1,18 @@
+// Обработка clear_session от Tauri-клиента (при обновлении версии)
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('clear_session') === 'true') {
+        // Вызываем серверный logout (удаляет httpOnly cookie)
+        fetch('/api/users/logout', {
+            method: 'POST',
+            credentials: 'include'
+        }).finally(() => {
+            window.location.href = 'login.html';
+        });
+        return;
+    }
+})();
+
 // Воспроизведение мягкого 8-битного ретро-звука уведомления (chiptune blip)
 function playRetroNotificationSound() {
     try {

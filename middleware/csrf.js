@@ -14,7 +14,7 @@ const setCsrfToken = (req, res, next) => {
             httpOnly: false, // Фронт должен уметь прочитать этот cookie
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000 // 24 часа
+            maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней — совпадает с JWT
         });
     }
     next();
@@ -50,7 +50,7 @@ const rotateCsrfToken = (req, res, next) => {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней — совпадает с JWT
     });
     next();
 };
@@ -65,7 +65,7 @@ const getCsrfToken = (req, res) => {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней — совпадает с JWT
         });
     }
     

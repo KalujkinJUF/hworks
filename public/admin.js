@@ -323,4 +323,4 @@ function initializeAdmin(myData) {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
-});
+}

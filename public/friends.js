@@ -11,8 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
         initializeFriends(data);
     })
     .catch(() => {
-        alert("Пожалуйста, войдите в систему.");
-        window.location.href = "login.html";
+        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+            window.location.href = "login.html";
+        });
     });
 });
 
@@ -265,8 +266,8 @@ function initializeFriends(myData) {
     };
 
     // Удалить друга
-    window.deleteFriend = function(friendId) {
-        if (!confirm('Вы уверены?')) return;
+    window.deleteFriend = async function(friendId) {
+        if (!await window.showCustomConfirm('Вы уверены?')) return;
         fetch(`/api/friends/${friendId}`, {
             method: "DELETE",
             credentials: 'include'
@@ -306,4 +307,3 @@ function initializeFriends(myData) {
             .replace(/'/g, '&#039;');
     }
 }
-});

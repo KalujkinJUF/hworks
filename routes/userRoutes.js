@@ -260,18 +260,18 @@ router.post('/register', authLimiter, async (req, res) => {
                 return res.status(500).json({ error: 'Ошибка при создании пользователя' });
             }
             const newUserId = result.insertId;
-            const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET, { expiresIn: '365d' });
 
             // Отправляем код (без логирования кода в консоль)
             sendVerificationCode(email, emailCode)
                 .catch(err => logger.error('Ошибка отправки письма'));
 
-            // Устанавливаем httpOnly cookie с JWT
+            // Устанавливаем httpOnly cookie с JWT (365 дней — выход только при обновлении клиента)
             res.cookie('token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 60 * 60 * 1000 // 1 час
+                maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней
             });
 
             // Ротируем CSRF токен после регистрации
@@ -366,14 +366,14 @@ router.post('/login', authLimiter, (req, res) => {
         // Обновляем last_active и статус при входе
         db.query('UPDATE users SET last_active = NOW(), user_status = custom_status WHERE id = ?', [user.id]);
 
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '365d' });
 
-        // Устанавливаем httpOnly cookie с JWT
+        // Устанавливаем httpOnly cookie с JWT (365 дней — выход только при обновлении клиента)
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 1000 // 1 час
+            maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней
         });
 
         // Ротируем CSRF токен после login
@@ -1189,4 +1189,19 @@ router.post('/delete-account/confirm', codeLimiter, verifyToken, verifyNotBanned
     });
 });
 
-module.exports = router;
+// Выход из аккаунта
+router.post('/logout', (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+    res.clearCookie('csrfToken', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+    res.json({ message: 'Вы вышли из аккаунта' });
+});
+
+module.exports = router;

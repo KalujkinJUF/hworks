@@ -1,10 +1,22 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db'); // Твое подключение к базе данных
 
+// Helper для получения токена: сначала из Authorization header, потом из cookie
+const getToken = (req) => {
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.split(' ')[1]) {
+        return authHeader.split(' ')[1];
+    }
+    // Fallback: читаем из httpOnly cookie
+    if (req.cookies && req.cookies.token) {
+        return req.cookies.token;
+    }
+    return null;
+};
+
 // Базовая проверка авторизации
 const verifyToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = getToken(req);
 
     if (!token) return res.status(401).send('Access Denied: No Token Provided');
 

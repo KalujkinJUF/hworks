@@ -70,7 +70,7 @@ const verifyEmail = (userId, code) => {
 // Функция для поиска пользователя
 const findUser = (username) => {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT * FROM users WHERE username = ?';
+        const query = 'SELECT id, username, role, avatar, about, created_at FROM users WHERE username = ?';
         db.query(query, [username], (error, results) => {
             if (error) return reject(error);
             resolve(results[0]); // Возвращаем первого найденного пользователя

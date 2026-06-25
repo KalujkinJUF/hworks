@@ -17,8 +17,6 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         return;
     }
 
-    console.log('Отправка запроса на регистрацию:', { username, email, password });
-
     try {
         // Используем относительный путь, чтобы код не зависел от смены IP-адреса в локалке
         const response = await fetch('/api/users/register', {
@@ -26,11 +24,11 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ username, email, password, turnstileToken })
         });
 
         const data = await response.json();
-        console.log('Ответ от сервера (регистрация):', data);
 
         const messageDiv = document.getElementById('message');
 
@@ -41,10 +39,12 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
                 messageDiv.textContent = 'Успешно! Входим в профиль...';
             }
 
-            // 1. Сохраняем токен, который нам теперь присылает обновлённый бэкенд
-            localStorage.setItem('token', data.token);
+            // Сохраняем токен, который нам теперь присылает бэкенд
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
             
-            // 2. Делаем небольшую задержку в 1.5 секунды, чтобы юзер успел увидеть надпись об успехе, и перекидываем
+            // Делаем небольшую задержку в 1.5 секунды, чтобы юзер успел увидеть надпись об успехе, и перекидываем
             setTimeout(() => {
                 window.location.href = 'profile.html';
             }, 1500);

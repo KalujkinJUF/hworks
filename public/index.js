@@ -1,10 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
 
     let currentUserId = null;
     let currentUserRole = null;
 
-    // Определение роли для показа формы поста
+    // ÐžÐ¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½Ð¸Ðµ Ñ€Ð¾Ð»Ð¸ Ð´Ð»Ñ Ð¿Ð¾ÐºÐ°Ð·Ð° Ñ„Ð¾Ñ€Ð¼Ñ‹ Ð¿Ð¾ÑÑ‚Ð°
     if (token) {
         fetch("/api/users/profile", {
             headers: { "Authorization": `Bearer ${token}` }
@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 currentUserRole = data.role;
                 if (data.role !== 'banned') {
                     document.getElementById("postFormSection").style.display = 'block';
-                    // Скрыть кнопку "Обновления" для обычных пользователей
+                    // Ð¡ÐºÑ€Ñ‹Ñ‚ÑŒ ÐºÐ½Ð¾Ð¿ÐºÑƒ "ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ" Ð´Ð»Ñ Ð¾Ð±Ñ‹Ñ‡Ð½Ñ‹Ñ… Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹
                     if (data.role !== 'admin' && data.role !== 'moderator') {
                         document.getElementById("postPatchBtn").style.display = 'none';
                     }
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const feedSubsBtn = document.getElementById("feedSubsBtn");
     const feedPatchBtn = document.getElementById("feedPatchBtn");
 
-    // Утилита для переключения вкладок
+    // Ð£Ñ‚Ð¸Ð»Ð¸Ñ‚Ð° Ð´Ð»Ñ Ð¿ÐµÑ€ÐµÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ñ Ð²ÐºÐ»Ð°Ð´Ð¾Ðº
     function switchFeedTab(activeBtn) {
         [feedGlobalBtn, feedSubsBtn, feedPatchBtn].forEach(btn => {
             if (btn) btn.classList.remove("active");
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentFeed = 'global';
             currentLoadedPage = 1;
             switchFeedTab(feedGlobalBtn);
-            document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
+            document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°...</p>';
             isInitialLoadComplete = false;
             loadPosts();
         });
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentFeed = 'subscriptions';
             currentLoadedPage = 1;
             switchFeedTab(feedSubsBtn);
-            document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
+            document.getElementById("newsFeed").innerHTML = '<p class="loading-text">Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°...</p>';
             isInitialLoadComplete = false;
             loadPosts();
         });
@@ -98,17 +98,17 @@ document.addEventListener("DOMContentLoaded", () => {
             currentFeed = 'patches';
             currentLoadedPage = 1;
             switchFeedTab(feedPatchBtn);
-            document.getElementById("patchFeed").innerHTML = '<p class="loading-text">Загрузка...</p>';
+            document.getElementById("patchFeed").innerHTML = '<p class="loading-text">Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°...</p>';
             isInitialLoadComplete = false;
             loadPosts();
         });
     }
 
-    // Глобальный флаг для контроля анимаций (добавь его перед функцией)
+    // Ð“Ð»Ð¾Ð±Ð°Ð»ÑŒÐ½Ñ‹Ð¹ Ñ„Ð»Ð°Ð³ Ð´Ð»Ñ ÐºÐ¾Ð½Ñ‚Ñ€Ð¾Ð»Ñ Ð°Ð½Ð¸Ð¼Ð°Ñ†Ð¸Ð¹ (Ð´Ð¾Ð±Ð°Ð²ÑŒ ÐµÐ³Ð¾ Ð¿ÐµÑ€ÐµÐ´ Ñ„ÑƒÐ½ÐºÑ†Ð¸ÐµÐ¹)
     let isInitialLoadComplete = false;
     let currentLoadedPage = 1;
 
-    // Умная загрузка постов БЕЗ перезапуска анимаций
+    // Ð£Ð¼Ð½Ð°Ñ Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¿Ð¾ÑÑ‚Ð¾Ð² Ð‘Ð•Ð— Ð¿ÐµÑ€ÐµÐ·Ð°Ð¿ÑƒÑÐºÐ° Ð°Ð½Ð¸Ð¼Ð°Ñ†Ð¸Ð¹
     function updateFeedInPlace(container, postsList, emptyMsg) {
         const isFirstLoad = container.innerHTML.includes("loading-text") ||
             container.innerHTML.includes(emptyMsg);
@@ -126,21 +126,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const existingIds = new Set(existingCards.map(el => el.dataset.postId));
         const newIds = new Set(postsList.map(p => String(p.id)));
 
-        // 1. Удаляем посты, которых больше нет в базе
+        // 1. Ð£Ð´Ð°Ð»ÑÐµÐ¼ Ð¿Ð¾ÑÑ‚Ñ‹, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ñ… Ð±Ð¾Ð»ÑŒÑˆÐµ Ð½ÐµÑ‚ Ð² Ð±Ð°Ð·Ðµ
         existingCards.forEach(el => {
             if (!newIds.has(el.dataset.postId)) {
                 el.remove();
             }
         });
 
-        // 2. Рендерим новые карточки или обновляем старые динамически
+        // 2. Ð ÐµÐ½Ð´ÐµÑ€Ð¸Ð¼ Ð½Ð¾Ð²Ñ‹Ðµ ÐºÐ°Ñ€Ñ‚Ð¾Ñ‡ÐºÐ¸ Ð¸Ð»Ð¸ Ð¾Ð±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ ÑÑ‚Ð°Ñ€Ñ‹Ðµ Ð´Ð¸Ð½Ð°Ð¼Ð¸Ñ‡ÐµÑÐºÐ¸
         postsList.forEach((post, index) => {
             const postId = String(post.id);
             let card = container.querySelector(`.post-card[data-post-id="${postId}"]`);
 
             const color = roleColors[post.role] || '#ffffff';
             const avatar = post.avatar ? post.avatar : '';
-            const likeText = post.is_liked ? '♥ Понравилось' : '♡ Мне нравится';
+            const likeText = post.is_liked ? 'â™¥ ÐŸÐ¾Ð½Ñ€Ð°Ð²Ð¸Ð»Ð¾ÑÑŒ' : 'â™¡ ÐœÐ½Ðµ Ð½Ñ€Ð°Ð²Ð¸Ñ‚ÑÑ';
             const likeColor = post.is_liked ? '#ff3333' : '#fff';
             const dateStr = new Date(post.created_at).toLocaleString();
             const contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
@@ -152,33 +152,33 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span class="post-content-short">${truncatedText}</span>
                     <span class="post-content-full" style="display: none;">${contentHtml}</span>
                     <div style="text-align: center; margin-top: 10px;">
-                        <button class="read-more-btn" style="background: none; border: 2px solid white; color: white; padding: 4px 10px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; width: auto; margin: 0 auto;">Читать далее</button>
+                        <button class="read-more-btn" style="background: none; border: 2px solid white; color: white; padding: 4px 10px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; width: auto; margin: 0 auto;">Ð§Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð´Ð°Ð»ÐµÐµ</button>
                     </div>
                 `;
             }
 
-            // Если поста ещё нет на экране (РЕАЛЬНО НОВЫЙ ПОСТ или ПЕРВЫЙ ЗАПУСК)
+            // Ð•ÑÐ»Ð¸ Ð¿Ð¾ÑÑ‚Ð° ÐµÑ‰Ñ‘ Ð½ÐµÑ‚ Ð½Ð° ÑÐºÑ€Ð°Ð½Ðµ (Ð Ð•ÐÐ›Ð¬ÐÐž ÐÐžÐ’Ð«Ð™ ÐŸÐžÐ¡Ð¢ Ð¸Ð»Ð¸ ÐŸÐ•Ð Ð’Ð«Ð™ Ð—ÐÐŸÐ£Ð¡Ðš)
             if (!card) {
                 card = document.createElement("div");
                 card.className = "post-card";
                 card.dataset.postId = postId;
 
-                // --- УПРАВЛЕНИЕ АНИМАЦИЯМИ ТУТ ---
+                // --- Ð£ÐŸÐ ÐÐ’Ð›Ð•ÐÐ˜Ð• ÐÐÐ˜ÐœÐÐ¦Ð˜Ð¯ÐœÐ˜ Ð¢Ð£Ð¢ ---
                 if (isInitialLoadComplete) {
-                    // Если страница уже загружена и это фоновый авто-апдейт:
-                    // Отключаем дефолтную анимацию и вешаем класс ТОЛЬКО для нового поста
+                    // Ð•ÑÐ»Ð¸ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ð° ÑƒÐ¶Ðµ Ð·Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½Ð° Ð¸ ÑÑ‚Ð¾ Ñ„Ð¾Ð½Ð¾Ð²Ñ‹Ð¹ Ð°Ð²Ñ‚Ð¾-Ð°Ð¿Ð´ÐµÐ¹Ñ‚:
+                    // ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Ð´ÐµÑ„Ð¾Ð»Ñ‚Ð½ÑƒÑŽ Ð°Ð½Ð¸Ð¼Ð°Ñ†Ð¸ÑŽ Ð¸ Ð²ÐµÑˆÐ°ÐµÐ¼ ÐºÐ»Ð°ÑÑ Ð¢ÐžÐ›Ð¬ÐšÐž Ð´Ð»Ñ Ð½Ð¾Ð²Ð¾Ð³Ð¾ Ð¿Ð¾ÑÑ‚Ð°
                     card.style.animation = "none";
                     card.classList.add("just-created-post");
                 } else {
-                    // При самом первом заходе оставляем твою стандартную красивую анимацию из CSS
-                    // (ничего не отключаем)
+                    // ÐŸÑ€Ð¸ ÑÐ°Ð¼Ð¾Ð¼ Ð¿ÐµÑ€Ð²Ð¾Ð¼ Ð·Ð°Ñ…Ð¾Ð´Ðµ Ð¾ÑÑ‚Ð°Ð²Ð»ÑÐµÐ¼ Ñ‚Ð²Ð¾ÑŽ ÑÑ‚Ð°Ð½Ð´Ð°Ñ€Ñ‚Ð½ÑƒÑŽ ÐºÑ€Ð°ÑÐ¸Ð²ÑƒÑŽ Ð°Ð½Ð¸Ð¼Ð°Ñ†Ð¸ÑŽ Ð¸Ð· CSS
+                    // (Ð½Ð¸Ñ‡ÐµÐ³Ð¾ Ð½Ðµ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼)
                 }
 
                 const isPostAuthor = currentUserId && parseInt(post.user_id) === parseInt(currentUserId);
                 const isPostAdmin = currentUserRole === 'admin';
                 const isPostModerator = currentUserRole === 'moderator' && post.role !== 'admin';
                 const canDeletePost = isPostAuthor || isPostAdmin || isPostModerator;
-                const deletePostBtnHtml = canDeletePost ? `<button class="delete-btn" style="margin-left: 15px;" onclick="deletePost(${post.id})">Удалить</button>` : '';
+                const deletePostBtnHtml = canDeletePost ? `<button class="delete-btn" style="margin-left: 15px;" onclick="deletePost(${post.id})">Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ</button>` : '';
 
                 card.innerHTML = `
                     <div class="post-header">
@@ -191,21 +191,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
                         <button class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</button>
-                        <button class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="toggleCommentsSection(${post.id})">💬 Комментарии (${post.comments_count || 0})</button>
+                        <button class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="toggleCommentsSection(${post.id})">ðŸ’¬ ÐšÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¸ (${post.comments_count || 0})</button>
                     </div>
                     
                     <div id="commentsWrapper-${post.id}" class="comments-wrapper" style="display: none; margin-top: 15px; border: 2px solid white; padding: 15px; background: rgba(255,255,255,0.02);">
                         <div id="commentsList-${post.id}" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
-                            <p class="loading-text" style="font-size: 10px;">Загрузка комментариев...</p>
+                            <p class="loading-text" style="font-size: 10px;">Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸ÐµÐ²...</p>
                         </div>
                         <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; gap: 8px;">
-                            <input type="text" id="commentInput-${post.id}" placeholder="Напишите комментарий..." style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
-                            <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">Отправить</button>
+                            <input type="text" id="commentInput-${post.id}" placeholder="ÐÐ°Ð¿Ð¸ÑˆÐ¸Ñ‚Ðµ ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹..." style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                            <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">ÐžÑ‚Ð¿Ñ€Ð°Ð²Ð¸Ñ‚ÑŒ</button>
                         </form>
                     </div>
                 `;
 
-                // Вставляем на своё порядковое место
+                // Ð’ÑÑ‚Ð°Ð²Ð»ÑÐµÐ¼ Ð½Ð° ÑÐ²Ð¾Ñ‘ Ð¿Ð¾Ñ€ÑÐ´ÐºÐ¾Ð²Ð¾Ðµ Ð¼ÐµÑÑ‚Ð¾
                 const referenceNode = container.children[index];
                 if (referenceNode) {
                     container.insertBefore(card, referenceNode);
@@ -213,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     container.appendChild(card);
                 }
 
-                // Добавляем обработчик для "Читать далее"
+                // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚Ñ‡Ð¸Ðº Ð´Ð»Ñ "Ð§Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð´Ð°Ð»ÐµÐµ"
                 const readMoreBtn = card.querySelector(".read-more-btn");
                 if (readMoreBtn) {
                     readMoreBtn.addEventListener("click", () => {
@@ -223,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
             } else {
-                // Если пост уже существует — просто точечно обновляем данные, СТРОГО запрещая любые анимации
+                // Ð•ÑÐ»Ð¸ Ð¿Ð¾ÑÑ‚ ÑƒÐ¶Ðµ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚ â€” Ð¿Ñ€Ð¾ÑÑ‚Ð¾ Ñ‚Ð¾Ñ‡ÐµÑ‡Ð½Ð¾ Ð¾Ð±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ Ð´Ð°Ð½Ð½Ñ‹Ðµ, Ð¡Ð¢Ð ÐžÐ“Ðž Ð·Ð°Ð¿Ñ€ÐµÑ‰Ð°Ñ Ð»ÑŽÐ±Ñ‹Ðµ Ð°Ð½Ð¸Ð¼Ð°Ñ†Ð¸Ð¸
                 card.style.animation = "none";
 
                 const likeBtn = card.querySelector(".like-btn");
@@ -235,11 +235,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
-                // Убрали принудительное обновление contentEl.innerHTML, чтобы не перезатирать открытый "Читать далее"
+                // Ð£Ð±Ñ€Ð°Ð»Ð¸ Ð¿Ñ€Ð¸Ð½ÑƒÐ´Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ðµ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ contentEl.innerHTML, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð½Ðµ Ð¿ÐµÑ€ÐµÐ·Ð°Ñ‚Ð¸Ñ€Ð°Ñ‚ÑŒ Ð¾Ñ‚ÐºÑ€Ñ‹Ñ‚Ñ‹Ð¹ "Ð§Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð´Ð°Ð»ÐµÐµ"
 
                 const commentsBtn = card.querySelector(".comments-toggle-btn");
                 if (commentsBtn) {
-                    const newCommentsStr = `💬 Комментарии (${post.comments_count || 0})`;
+                    const newCommentsStr = `ðŸ’¬ ÐšÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¸ (${post.comments_count || 0})`;
                     if (commentsBtn.textContent !== newCommentsStr) {
                         commentsBtn.textContent = newCommentsStr;
                     }
@@ -248,14 +248,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Загрузка постов
+    // Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¿Ð¾ÑÑ‚Ð¾Ð²
     function loadPosts() {
         const headers = {};
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
 
-        // На вкладке "Обновления сайта" грузим все посты, но фильтруем только патчи
+        // ÐÐ° Ð²ÐºÐ»Ð°Ð´ÐºÐµ "ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ ÑÐ°Ð¹Ñ‚Ð°" Ð³Ñ€ÑƒÐ·Ð¸Ð¼ Ð²ÑÐµ Ð¿Ð¾ÑÑ‚Ñ‹, Ð½Ð¾ Ñ„Ð¸Ð»ÑŒÑ‚Ñ€ÑƒÐµÐ¼ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ð°Ñ‚Ñ‡Ð¸
         const feedParam = currentFeed === 'patches' ? 'global' : currentFeed;
         const limit = 15 * currentLoadedPage;
 
@@ -268,14 +268,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (currentFeed === 'patches') {
                     const patchFeed = document.getElementById("patchFeed");
                     const patches = postsList.filter(p => p.type === 'patch_note');
-                    updateFeedInPlace(patchFeed, patches, "Обновлений пока нет");
+                    updateFeedInPlace(patchFeed, patches, "ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ð¹ Ð¿Ð¾ÐºÐ° Ð½ÐµÑ‚");
                 } else {
                     const newsFeed = document.getElementById("newsFeed");
                     const news = postsList.filter(p => p.type === 'news');
-                    updateFeedInPlace(newsFeed, news, "Новостей пока нет");
+                    updateFeedInPlace(newsFeed, news, "ÐÐ¾Ð²Ð¾ÑÑ‚ÐµÐ¹ Ð¿Ð¾ÐºÐ° Ð½ÐµÑ‚");
                 }
 
-                // Управление отображением кнопки "Загрузить ещё"
+                // Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸ÐµÐ¼ ÐºÐ½Ð¾Ð¿ÐºÐ¸ "Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ ÐµÑ‰Ñ‘"
                 const loadMoreSec = document.getElementById("loadMoreSection");
                 if (loadMoreSec) {
                     if (totalPages > 1) {
@@ -285,13 +285,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
-                // СТРОГО ТУТ: как только первая пачка постов отрисовалась — блокируем повторные анимации!
+                // Ð¡Ð¢Ð ÐžÐ“Ðž Ð¢Ð£Ð¢: ÐºÐ°Ðº Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¿ÐµÑ€Ð²Ð°Ñ Ð¿Ð°Ñ‡ÐºÐ° Ð¿Ð¾ÑÑ‚Ð¾Ð² Ð¾Ñ‚Ñ€Ð¸ÑÐ¾Ð²Ð°Ð»Ð°ÑÑŒ â€” Ð±Ð»Ð¾ÐºÐ¸Ñ€ÑƒÐµÐ¼ Ð¿Ð¾Ð²Ñ‚Ð¾Ñ€Ð½Ñ‹Ðµ Ð°Ð½Ð¸Ð¼Ð°Ñ†Ð¸Ð¸!
                 isInitialLoadComplete = true;
             })
             .catch(() => { });
     }
 
-    // Обработчик кнопки "Загрузить еще"
+    // ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚Ñ‡Ð¸Ðº ÐºÐ½Ð¾Ð¿ÐºÐ¸ "Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ ÐµÑ‰Ðµ"
     const loadMoreBtn = document.getElementById("loadMoreBtn");
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener("click", () => {
@@ -300,18 +300,18 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Загрузка онлайн пользователей
+    // Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¾Ð½Ð»Ð°Ð¹Ð½ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹
     function loadOnline() {
         fetch("/api/users/online")
             .then(res => res.json())
             .then(users => {
                 const list = document.getElementById("onlineList");
                 if (users.length === 0) {
-                    list.innerHTML = '<p class="loading-text">Никого нет в сети</p>';
+                    list.innerHTML = '<p class="loading-text">ÐÐ¸ÐºÐ¾Ð³Ð¾ Ð½ÐµÑ‚ Ð² ÑÐµÑ‚Ð¸</p>';
                     return;
                 }
 
-                if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("Никого нет в сети")) {
+                if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("ÐÐ¸ÐºÐ¾Ð³Ð¾ Ð½ÐµÑ‚ Ð² ÑÐµÑ‚Ð¸")) {
                     list.innerHTML = '';
                 }
 
@@ -360,12 +360,12 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(() => {
                 const list = document.getElementById("onlineList");
-                list.innerHTML = '<p class="loading-text">Ошибка загрузки</p>';
+                list.innerHTML = '<p class="loading-text">ÐžÑˆÐ¸Ð±ÐºÐ° Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ¸</p>';
             });
     }
 
     window.togglePostLike = async function (postId) {
-        if (!token) { await window.showCustomAlert("Войдите в систему, чтобы ставить лайки"); return; }
+        if (!token) { await window.showCustomAlert("Ð’Ð¾Ð¹Ð´Ð¸Ñ‚Ðµ Ð² ÑÐ¸ÑÑ‚ÐµÐ¼Ñƒ, Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑÑ‚Ð°Ð²Ð¸Ñ‚ÑŒ Ð»Ð°Ð¹ÐºÐ¸"); return; }
         fetch(`/api/users/posts/${postId}/like`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` }
@@ -400,7 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.deletePost = async function(postId) {
-        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот пост?")) return;
+        if (!await window.showCustomConfirm("Ð’Ñ‹ ÑƒÐ²ÐµÑ€ÐµÐ½Ñ‹, Ñ‡Ñ‚Ð¾ Ñ…Ð¾Ñ‚Ð¸Ñ‚Ðµ ÑƒÐ´Ð°Ð»Ð¸Ñ‚ÑŒ ÑÑ‚Ð¾Ñ‚ Ð¿Ð¾ÑÑ‚?")) return;
         
         fetch(`/api/users/posts/${postId}`, {
             method: "DELETE",
@@ -412,17 +412,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
                 if (card) card.remove();
             } else {
-                await window.showCustomAlert(data.error || "Ошибка удаления поста");
+                await window.showCustomAlert(data.error || "ÐžÑˆÐ¸Ð±ÐºÐ° ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ñ Ð¿Ð¾ÑÑ‚Ð°");
             }
         })
         .catch(async err => {
-            console.error("Ошибка при удалении поста:", err);
-            await window.showCustomAlert("Ошибка сети");
+            console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ð¸ Ð¿Ð¾ÑÑ‚Ð°:", err);
+            await window.showCustomAlert("ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐµÑ‚Ð¸");
         });
     };
 
     window.deleteComment = async function(postId, commentId) {
-        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот комментарий?")) return;
+        if (!await window.showCustomConfirm("Ð’Ñ‹ ÑƒÐ²ÐµÑ€ÐµÐ½Ñ‹, Ñ‡Ñ‚Ð¾ Ñ…Ð¾Ñ‚Ð¸Ñ‚Ðµ ÑƒÐ´Ð°Ð»Ð¸Ñ‚ÑŒ ÑÑ‚Ð¾Ñ‚ ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹?")) return;
         
         fetch(`/api/users/comments/${commentId}`, {
             method: "DELETE",
@@ -434,12 +434,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadPostComments(postId);
                 loadPosts(); // to update comment counts
             } else {
-                await window.showCustomAlert(data.error || "Ошибка удаления комментария");
+                await window.showCustomAlert(data.error || "ÐžÑˆÐ¸Ð±ÐºÐ° ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ñ ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ñ");
             }
         })
         .catch(async err => {
-            console.error("Ошибка при удалении комментария:", err);
-            await window.showCustomAlert("Ошибка сети");
+            console.error("ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ð¸ ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ñ:", err);
+            await window.showCustomAlert("ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐµÑ‚Ð¸");
         });
     };
 
@@ -451,7 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!list) return;
 
                 if (comments.length === 0) {
-                    list.innerHTML = '<p class="loading-text" style="font-size: 10px;">Комментариев нет. Будьте первыми!</p>';
+                    list.innerHTML = '<p class="loading-text" style="font-size: 10px;">ÐšÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸ÐµÐ² Ð½ÐµÑ‚. Ð‘ÑƒÐ´ÑŒÑ‚Ðµ Ð¿ÐµÑ€Ð²Ñ‹Ð¼Ð¸!</p>';
                 } else {
                     const commentMap = {};
                     comments.forEach(c => {
@@ -478,14 +478,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         const isCommentAdmin = currentUserRole === 'admin';
                         const isCommentModerator = currentUserRole === 'moderator' && comment.role !== 'admin';
                         const canDeleteComment = isCommentAuthor || isCommentAdmin || isCommentModerator;
-                        const deleteCommentBtnHtml = canDeleteComment ? `<button class="delete-btn" style="margin-left: 8px;" onclick="deleteComment(${postId}, ${comment.id})">Удалить</button>` : '';
+                        const deleteCommentBtnHtml = canDeleteComment ? `<button class="delete-btn" style="margin-left: 8px;" onclick="deleteComment(${postId}, ${comment.id})">Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ</button>` : '';
 
                         return `
                         <div style="padding-left: 12px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 8px; padding-bottom: 8px; margin-bottom: 8px; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
                                 <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
                                 <span style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
-                                ${token ? `<button style="color: yellow; cursor: pointer; font-size: 10px; font-weight: bold; margin-left: 8px; background: none; border: none;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}
+                                ${token ? `<button style="color: yellow; cursor: pointer; font-size: 10px; font-weight: bold; margin-left: 8px; background: none; border: none;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">ÐžÑ‚Ð²ÐµÑ‚Ð¸Ñ‚ÑŒ</button>` : ''}
                                 ${deleteCommentBtnHtml}
                             </div>
                             <div style="font-size: 12px; color: #eee; margin-top: 4px; word-break: break-word; line-height: 1.4;">${escapeHtml(comment.content)}</div>
@@ -511,7 +511,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.submitPostComment = async function (event, postId) {
         event.preventDefault();
-        if (!token) { await window.showCustomAlert("Войдите в систему, чтобы комментировать"); return; }
+        if (!token) { await window.showCustomAlert("Ð’Ð¾Ð¹Ð´Ð¸Ñ‚Ðµ Ð² ÑÐ¸ÑÑ‚ÐµÐ¼Ñƒ, Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ"); return; }
 
         const input = document.getElementById(`commentInput-${postId}`);
         if (!input) return;
@@ -538,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(err => console.error(err));
     };
 
-    // Загрузка закрепа от админа
+    // Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð·Ð°ÐºÑ€ÐµÐ¿Ð° Ð¾Ñ‚ Ð°Ð´Ð¼Ð¸Ð½Ð°
     function loadAdminPin() {
         fetch("/api/users/admin-pin")
             .then(res => res.json())
@@ -555,7 +555,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(() => {
                 const pinContent = document.getElementById("adminPinContent");
                 if (pinContent) {
-                    pinContent.textContent = "Не удалось загрузить закреп.";
+                    pinContent.textContent = "ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ Ð·Ð°ÐºÑ€ÐµÐ¿.";
                 }
             });
     }
@@ -572,11 +572,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if (adminPinEditArea.style.display === "none") {
                 adminPinEditArea.style.display = "block";
                 adminPinContent.style.display = "none";
-                editAdminPinBtn.textContent = "Отмена";
+                editAdminPinBtn.textContent = "ÐžÑ‚Ð¼ÐµÐ½Ð°";
             } else {
                 adminPinEditArea.style.display = "none";
                 adminPinContent.style.display = "block";
-                editAdminPinBtn.textContent = "Редактировать";
+                editAdminPinBtn.textContent = "Ð ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ";
             }
         });
     }
@@ -585,7 +585,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveAdminPinBtn.addEventListener("click", async () => {
             const content = document.getElementById("adminPinInput").value.trim();
             if (!content) {
-                await window.showCustomAlert("Текст закрепа не может быть пустым");
+                await window.showCustomAlert("Ð¢ÐµÐºÑÑ‚ Ð·Ð°ÐºÑ€ÐµÐ¿Ð° Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð¿ÑƒÑÑ‚Ñ‹Ð¼");
                 return;
             }
 
@@ -602,23 +602,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.message) {
                     adminPinEditArea.style.display = "none";
                     adminPinContent.style.display = "block";
-                    editAdminPinBtn.textContent = "Редактировать";
+                    editAdminPinBtn.textContent = "Ð ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ";
                     loadAdminPin();
                 } else {
-                    await window.showCustomAlert(data.error || "Ошибка сохранения");
+                    await window.showCustomAlert(data.error || "ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ñ");
                 }
             })
-            .catch(async () => await window.showCustomAlert("Ошибка сети"));
+            .catch(async () => await window.showCustomAlert("ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐµÑ‚Ð¸"));
         });
     }
 
     loadPosts();
     loadOnline();
+    setInterval(loadOnline, 30000);
 
     async function createPost(type) {
-        if (!token) { await window.showCustomAlert("Войдите в систему"); return; }
+        if (!token) { await window.showCustomAlert("Ð’Ð¾Ð¹Ð´Ð¸Ñ‚Ðµ Ð² ÑÐ¸ÑÑ‚ÐµÐ¼Ñƒ"); return; }
         const content = document.getElementById("postContent").value.trim();
-        if (!content) { document.getElementById("postMessage").textContent = "Напишите text"; return; }
+        if (!content) { document.getElementById("postMessage").textContent = "ÐÐ°Ð¿Ð¸ÑˆÐ¸Ñ‚Ðµ text"; return; }
 
         fetch("/api/users/posts", {
             method: "POST",

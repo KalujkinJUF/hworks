@@ -3,16 +3,34 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const rateLimit = require('express-rate-limit');
+const sanitizeHtml = require('sanitize-html');
 const { verifyToken, verifyNotBanned, verifyAdmin } = require('../middleware/auth');
 const router = express.Router();
 const db = require('../config/db');
 const { sendVerificationCode } = require('../config/mailer');
 const { verifyEmail } = require('../models/user');
 
+// Санитизация HTML для защиты от XSS
+const sanitize = (dirty) => sanitizeHtml(dirty, {
+    allowedTags: [],
+    allowedAttributes: {},
+    disallowedTagsMode: 'discard'
+});
+
+// Rate limiter для логина и регистрации
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 минут
+    max: 10,
+    message: { error: 'Слишком много попыток. Попробуйте через 15 минут.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 // Настройка multer для загрузки аватарок в физический каталог на диске (для поддержки EXE)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const fs = require('fs');
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -36,10 +54,10 @@ const upload = multer({
     }
 });
 
-// Функция для поиска пользователя по ID
+// Функция для поиска пользователя по ID (только нужные поля)
 const findUser = (id) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM users WHERE id = ?', [id], (err, results) => {
+        db.query('SELECT id, username, role, about, email FROM users WHERE id = ?', [id], (err, results) => {
             if (err) return reject(err);
             resolve(results[0]);
         });
@@ -51,9 +69,9 @@ const updateLastActive = (userId) => {
     db.query('UPDATE users SET last_active = NOW() WHERE id = ?', [userId]);
 };
 
-// Получить всех пользователей
+// Получить всех пользователей (только публичные данные)
 router.get('/', (req, res) => {
-    db.query('SELECT * FROM users', (err, results) => {
+    db.query('SELECT id, username, role, avatar, about, created_at FROM users', (err, results) => {
         if (err) {
             console.error('Ошибка БД при получении всех пользователей:', err);
             return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
@@ -65,7 +83,6 @@ router.get('/', (req, res) => {
 // Поиск пользователей
 router.get('/search', (req, res) => {
     const q = req.query.q || '';
-
 
     const page = parseInt(req.query.page || '1', 10);
     const limit = parseInt(req.query.limit || '15', 10);
@@ -146,8 +163,8 @@ const checkEmailDomain = (email) => {
     });
 };
 
-// Регистрация
-router.post('/register', async (req, res) => {
+// Регистрация (с rate limit)
+router.post('/register', authLimiter, async (req, res) => {
     const { username, password, email, turnstileToken } = req.body;
     
     // Проверка Cloudflare Turnstile
@@ -194,9 +211,18 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'Имя пользователя может содержать только буквы, цифры, подчёркивание, точку и дефис' });
     }
 
-    // Валидация пароля
+    // Валидация пароля — строгие требования
     if (!password || password.length < 6) {
         return res.status(400).json({ error: 'Пароль должен быть не менее 6 символов' });
+    }
+    if (password.length < 8) {
+        return res.status(400).json({ error: 'Пароль должен быть не менее 8 символов' });
+    }
+    if (!/[A-Z]/.test(password)) {
+        return res.status(400).json({ error: 'Пароль должен содержать хотя бы одну заглавную букву' });
+    }
+    if (!/[0-9]/.test(password)) {
+        return res.status(400).json({ error: 'Пароль должен содержать хотя бы одну цифру' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -215,9 +241,17 @@ router.post('/register', async (req, res) => {
             const newUserId = result.insertId;
             const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+            // Отправляем код (без логирования кода в консоль)
             sendVerificationCode(email, emailCode)
-                .then(() => console.log(`Код отправлен на ${email}: ${emailCode}`))
                 .catch(err => console.error('Ошибка отправки письма:', err));
+
+            // Устанавливаем httpOnly cookie с JWT
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 60 * 60 * 1000 // 1 час
+            });
 
             res.status(201).json({
                 message: 'Пользователь зарегистрирован. На почту отправлен код подтверждения.',
@@ -286,8 +320,8 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
                 (err3) => {
                     if (err3) return res.status(500).json({ error: 'Ошибка при обновлении email' });
 
+                    // Отправляем код (без логирования в консоль)
                     sendVerificationCode(cleanEmail, emailCode)
-                        .then(() => console.log(`Новый код отправлен на ${cleanEmail}: ${emailCode}`))
                         .catch(err => console.error('Ошибка отправки письма:', err));
 
                     res.json({ message: 'Email успешно изменен. Новый код отправлен на почту.' });
@@ -297,10 +331,10 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
     });
 });
 
-// Логин
-router.post('/login', (req, res) => {
+// Логин (с rate limit)
+router.post('/login', authLimiter, (req, res) => {
     const { username, password } = req.body;
-    db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+    db.query('SELECT id, username, password, role, email, custom_status FROM users WHERE username = ?', [username], async (err, results) => {
         if (err || results.length === 0) {
             return res.status(401).json({ error: 'Неверные учетные данные' });
         }
@@ -315,6 +349,15 @@ router.post('/login', (req, res) => {
         db.query('UPDATE users SET last_active = NOW(), user_status = custom_status WHERE id = ?', [user.id]);
 
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Устанавливаем httpOnly cookie с JWT
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 60 * 60 * 1000 // 1 час
+        });
+
         res.json({ token });
     });
 });
@@ -372,7 +415,6 @@ router.get('/unread-wall-count', verifyToken, (req, res) => {
     });
 });
 
-
 // Профиль другого пользователя (публичный)
 router.get('/profile/:username', (req, res) => {
     const { username } = req.params;
@@ -380,7 +422,7 @@ router.get('/profile/:username', (req, res) => {
     // Попытка получить ID залогиненного пользователя из токена (если передан)
     let requesterId = 0;
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = (authHeader && authHeader.split(' ')[1]) || (req.cookies && req.cookies.token);
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -416,9 +458,27 @@ router.get('/profile/:username', (req, res) => {
     );
 });
 
+// Проверка реального типа файла по magic bytes
+const checkRealFileType = async (filePath) => {
+    const { fileTypeFromFile } = await import('file-type');
+    const type = await fileTypeFromFile(filePath);
+    if (!type) return false;
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    return allowedMimes.includes(type.mime);
+};
+
 // Загрузка аватарки
-router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), (req, res) => {
+router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
+
+    // Проверяем реальное содержимое файла (magic bytes)
+    const isValidImage = await checkRealFileType(req.file.path);
+    if (!isValidImage) {
+        // Удаляем файл, если он не является изображением
+        fs.unlink(req.file.path, () => {});
+        return res.status(400).json({ error: 'Файл не является допустимым изображением' });
+    }
+
     const avatarUrl = `/uploads/${req.file.filename}`;
     db.query('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, req.user.id], (err) => {
         if (err) {
@@ -440,7 +500,7 @@ router.get('/posts', (req, res) => {
     // Попытка получить ID залогиненного пользователя из токена (если передан)
     let requesterId = 0;
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = (authHeader && authHeader.split(' ')[1]) || (req.cookies && req.cookies.token);
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -552,9 +612,12 @@ router.post('/posts', verifyToken, verifyNotBanned, (req, res) => {
                     }
                 }
 
+                // Санитизация контента поста от XSS
+                const sanitizedContent = sanitize(content.trim());
+
                 db.query(
                     'INSERT INTO posts (user_id, content, type) VALUES (?, ?, ?)',
-                    [userId, content, postType],
+                    [userId, sanitizedContent, postType],
                     (err, result) => {
                         if (err) {
                             console.error('Ошибка БД при создании поста:', err);
@@ -751,9 +814,12 @@ router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res
                     }
                 }
 
+                // Санитизация комментария от XSS
+                const sanitizedComment = sanitize(content.trim());
+
                 db.query(
                     "INSERT INTO comments (user_id, target_id, target_type, content) VALUES (?, ?, 'profile', ?)",
-                    [userId, targetId, content.trim()],
+                    [userId, targetId, sanitizedComment],
                     (err, result) => {
                         if (err) {
                             console.error('Ошибка создания отзыва:', err);
@@ -874,9 +940,12 @@ router.post('/posts/:id/comments', verifyToken, verifyNotBanned, (req, res) => {
                 }
             }
 
+            // Санитизация комментария от XSS
+            const sanitizedComment = sanitize(content.trim());
+
             db.query(
                 "INSERT INTO comments (user_id, target_id, target_type, content, parent_id) VALUES (?, ?, 'post', ?, ?)",
-                [userId, postId, content.trim(), parent_id || null],
+                [userId, postId, sanitizedComment, parent_id || null],
                 (err, result) => {
                     if (err) {
                         console.error('Ошибка добавления комментария:', err);
@@ -1040,9 +1109,9 @@ router.post('/delete-account/request', verifyToken, verifyNotBanned, (req, res) 
         db.query('UPDATE users SET delete_code = ? WHERE id = ?', [code, userId], (err2) => {
             if (err2) return res.status(500).json({ error: 'Ошибка БД при сохранении кода' });
 
+            // Отправляем код (без логирования в консоль)
             sendVerificationCode(email, code)
                 .then(() => {
-                    console.log(`Код для удаления аккаунта ${userId} отправлен на ${email}: ${code}`);
                     res.json({ message: 'Код подтверждения отправлен на почту' });
                 })
                 .catch(err => {

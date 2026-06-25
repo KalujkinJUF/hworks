@@ -9,22 +9,57 @@ if (missingEnv.length > 0) {
     process.exit(1);
 }
 
-const express = require('express'); // Импортируем библиотеку Express
-const bodyParser = require('body-parser'); // Импортируем middleware для обработки тела запросов
-const cors = require('cors'); // Импортируем middleware для CORS
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const app = express();
-const jwt = require('jsonwebtoken'); // Импортируем библиотеку для работы с JWT
-const mysql = require('mysql'); // Импортируем библиотеку для работы с MySQL
-const userRoutes = require('./routes/userRoutes'); // Путь к файлу маршрутов пользователей
-const friendRoutes = require('./routes/friendRoutes'); // Маршруты для друзей
-const messageRoutes = require('./routes/messageRoutes'); // Маршруты для сообщений
+const jwt = require('jsonwebtoken');
+const mysql = require('mysql');
+const userRoutes = require('./routes/userRoutes');
+const friendRoutes = require('./routes/friendRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 const db = require('./config/db');
-const port = process.env.PORT || 3000; // Указываем порт, на котором будет работать сервер
+const port = process.env.PORT || 3000;
 const adminRoutes = require('./routes/adminRoutes');
 
-app.use(cors());
-app.use(express.json()); // Middleware для обработки JSON
-app.use(bodyParser.json()); 
+// Cookie parser для чтения JWT из httpOnly cookie
+app.use(cookieParser());
+
+// Защитные HTTP-заголовки (Helmet) с CSP
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://challenges.cloudflare.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            connectSrc: ["'self'", process.env.CLIENT_URL || 'http://34.51.214.5'],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            frameSrc: ["https://challenges.cloudflare.com"],
+            objectSrc: ["'none'"]
+        }
+    },
+    crossOriginEmbedderPolicy: false
+}));
+
+// Принудительный HTTPS (если заголовок X-Forwarded-Proto есть)
+app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    next();
+});
+
+// CORS — разрешаем только наш клиент
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://34.51.214.5',
+    credentials: true
+}));
+
+app.use(express.json({ limit: '1mb' }));
+app.use(bodyParser.json({ limit: '1mb' }));
 
 // Подключаем маршруты (после middleware)
 app.use('/api/admin', adminRoutes);

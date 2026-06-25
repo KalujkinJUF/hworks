@@ -7,14 +7,16 @@ const generateCsrfToken = () => {
 
 // Middleware: установка CSRF токена в cookie (не httpOnly, чтобы фронт мог его прочитать)
 const setCsrfToken = (req, res, next) => {
-    // Ротируем токен при каждом запросе для дополнительной безопасности
-    const token = generateCsrfToken();
-    res.cookie('csrfToken', token, {
-        httpOnly: false, // Фронт должен уметь прочитать этот cookie
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000 // 24 часа
-    });
+    // Устанавливаем токен только если его нет (без ротации при каждом запросе)
+    if (!req.cookies || !req.cookies.csrfToken) {
+        const token = generateCsrfToken();
+        res.cookie('csrfToken', token, {
+            httpOnly: false, // Фронт должен уметь прочитать этот cookie
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000 // 24 часа
+        });
+    }
     next();
 };
 
@@ -35,7 +37,14 @@ const verifyCsrfToken = (req, res, next) => {
         return res.status(403).json({ error: 'CSRF токен недействителен или отсутствует' });
     }
 
-    // Ротируем токен после успешной проверки
+    // НЕ ротируем токен при каждом запросе - это вызывает race conditions
+    // Ротация происходит только при login и других sensitive actions
+
+    next();
+};
+
+// Middleware для ротации CSRF токена (используется при login/register)
+const rotateCsrfToken = (req, res, next) => {
     const newToken = generateCsrfToken();
     res.cookie('csrfToken', newToken, {
         httpOnly: false,
@@ -43,7 +52,6 @@ const verifyCsrfToken = (req, res, next) => {
         sameSite: 'strict',
         maxAge: 24 * 60 * 60 * 1000
     });
-
     next();
 };
 
@@ -67,5 +75,6 @@ const getCsrfToken = (req, res) => {
 module.exports = {
     setCsrfToken,
     verifyCsrfToken,
-    getCsrfToken
+    getCsrfToken,
+    rotateCsrfToken
 };

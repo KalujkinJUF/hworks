@@ -28,50 +28,34 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-// Новый Middleware: проверка на то, что пользователь не забанен
-const verifyNotBanned = (req, res, next) => {
-    const userId = req.user ? req.user.id : null;
-
-    if (!userId) {
-        return res.status(401).send('Unauthorized');
-    }
-
-    db.query('SELECT role FROM users WHERE id = ?', [userId], (error, results) => {
-        if (error || results.length === 0) {
-            return res.status(500).send('Error checking user status');
+// Middleware: проверка на то, что пользователь не забанен
+const verifyNotBanned = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const userRole = results[0].role;
-
-        if (userRole === 'banned') {
+        const role = await getUserRoleFromDB(userId);
+        if (role === 'banned') {
             return res.status(403).json({ error: 'Ваш аккаунт заблокирован' });
-        } else {
-            next();
         }
-    });
-};
-
-// Новый Middleware: проверка на админа
-const verifyAdmin = (req, res, next) => {
-    const userId = req.user ? req.user.id : null;
-
-    if (!userId) {
-        return res.status(401).send('Unauthorized');
+        next();
+    } catch (error) {
+        logger.error('Error checking user status:', error);
+        res.status(500).json({ error: 'Error checking user status' });
     }
+};
 
-    db.query('SELECT role FROM users WHERE id = ?', [userId], (error, results) => {
-        if (error || results.length === 0) {
-            return res.status(500).send('Error checking user role');
-        }
-
-        const userRole = results[0].role;
-
-        if (userRole === 'admin') {
-            next();
-        } else {
-            res.status(403).send('Access Denied: Admins Only');
-        }
+// Вспомогательная функция для получения роли из БД
+const getUserRoleFromDB = (userId) => {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT role FROM users WHERE id = ?', [userId], (error, results) => {
+            if (error) return reject(error);
+            if (results.length === 0) return reject(new Error('User not found'));
+            resolve(results[0].role);
+        });
     });
 };
 
-module.exports = { verifyToken, verifyAdmin, verifyNotBanned };
+module.exports = { verifyToken, verifyNotBanned };

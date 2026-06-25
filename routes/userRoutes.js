@@ -6,7 +6,9 @@ const path = require('path');
 const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
-const { verifyToken, verifyNotBanned, verifyAdmin } = require('../middleware/auth');
+const { verifyToken, verifyNotBanned } = require('../middleware/auth');
+const { requireRole, requireAdminOrModerator } = require('../middleware/rbac');
+const { processUploadedImage } = require('../middleware/fileUpload');
 const router = express.Router();
 const db = require('../config/db');
 const { sendVerificationCode } = require('../config/mailer');
@@ -25,6 +27,33 @@ const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 минут
     max: 10,
     message: { error: 'Слишком много попыток. Попробуйте через 15 минут.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// Rate limiter для обновления профиля
+const profileUpdateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 минут
+    max: 10,
+    message: { error: 'Слишком много обновлений профиля. Попробуйте через 15 минут.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// Rate limiter для загрузки аватара
+const avatarUploadLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 час
+    max: 5,
+    message: { error: 'Слишком много загрузок аватара. Попробуйте через час.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// Rate limiter для поиска
+const searchLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 минут
+    max: 30,
+    message: { error: 'Слишком много поисковых запросов. Попробуйте через 5 минут.' },
     standardHeaders: true,
     legacyHeaders: false
 });
@@ -81,8 +110,8 @@ router.get('/', (req, res) => {
     });
 });
 
-// Поиск пользователей
-router.get('/search', (req, res) => {
+// Поиск пользователей (с rate limit)
+router.get('/search', searchLimiter, (req, res) => {
     const q = req.query.q || '';
 
     const page = parseInt(req.query.page || '1', 10);
@@ -135,34 +164,9 @@ router.get('/online', (req, res) => {
     );
 });
 
-const dns = require('dns');
-
-const checkEmailDomain = (email) => {
-    return new Promise((resolve) => {
-        const domain = email.split('@')[1];
-        if (!domain) return resolve(false);
-        
-        dns.resolveMx(domain, (err, addresses) => {
-            if (err || !addresses || addresses.length === 0) {
-                dns.resolve4(domain, (err2, addresses2) => {
-                    if (err2 || !addresses2 || addresses2.length === 0) {
-                        dns.lookup(domain, (err3, address) => {
-                            if (err3 || !address) {
-                                resolve(false);
-                            } else {
-                                resolve(true);
-                            }
-                        });
-                    } else {
-                        resolve(true);
-                    }
-                });
-            } else {
-                resolve(true);
-            }
-        });
-    });
-};
+// Убираем DNS валидацию - она вызывает задержки и может быть причиной DoS
+// Вместо этого используем только базовую валидацию формата email
+// Реальная доставка проверяется при отправке письма
 
 // Регистрация (с rate limit)
 router.post('/register', authLimiter, async (req, res) => {
@@ -193,11 +197,6 @@ router.post('/register', authLimiter, async (req, res) => {
         return res.status(400).json({ error: 'Некорректный формат Email' });
     }
 
-    const isDomainReal = await checkEmailDomain(email.trim());
-    if (!isDomainReal) {
-        return res.status(400).json({ error: 'Указан несуществующий или некорректный почтовый домен' });
-    }
-
     // Валидация имени пользователя
     if (!username || username.trim() === '') {
         return res.status(400).json({ error: 'Имя пользователя обязательно' });
@@ -213,17 +212,23 @@ router.post('/register', authLimiter, async (req, res) => {
     }
 
     // Валидация пароля — строгие требования
-    if (!password || password.length < 6) {
-        return res.status(400).json({ error: 'Пароль должен быть не менее 6 символов' });
-    }
-    if (password.length < 8) {
+    if (!password || password.length < 8) {
         return res.status(400).json({ error: 'Пароль должен быть не менее 8 символов' });
+    }
+    if (password.length > 128) {
+        return res.status(400).json({ error: 'Пароль не должен превышать 128 символов' });
     }
     if (!/[A-Z]/.test(password)) {
         return res.status(400).json({ error: 'Пароль должен содержать хотя бы одну заглавную букву' });
     }
+    if (!/[a-z]/.test(password)) {
+        return res.status(400).json({ error: 'Пароль должен содержать хотя бы одну строчную букву' });
+    }
     if (!/[0-9]/.test(password)) {
         return res.status(400).json({ error: 'Пароль должен содержать хотя бы одну цифру' });
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        return res.status(400).json({ error: 'Пароль должен содержать хотя бы один специальный символ (!@#$%^&* и т.д.)' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -254,8 +259,12 @@ router.post('/register', authLimiter, async (req, res) => {
                 maxAge: 60 * 60 * 1000 // 1 час
             });
 
-            res.status(201).json({
-                message: 'Пользователь зарегистрирован. На почту отправлен код подтверждения.'
+            // Ротируем CSRF токен после регистрации
+            const { rotateCsrfToken } = require('../middleware/csrf');
+            rotateCsrfToken(req, res, () => {
+                res.status(201).json({
+                    message: 'Пользователь зарегистрирован. На почту отправлен код подтверждения.'
+                });
             });
         }
     );
@@ -306,12 +315,6 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
                 return res.status(409).json({ error: 'Пользователь с таким email уже существует' });
             }
 
-            // DNS валидация
-            const isDomainReal = await checkEmailDomain(cleanEmail);
-            if (!isDomainReal) {
-                return res.status(400).json({ error: 'Указан несуществующий или некорректный почтовый домен' });
-            }
-
             const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
 
             db.query(
@@ -358,7 +361,11 @@ router.post('/login', authLimiter, (req, res) => {
             maxAge: 60 * 60 * 1000 // 1 час
         });
 
-        res.json({ message: 'Вход выполнен успешно' });
+        // Ротируем CSRF токен после login
+        const { rotateCsrfToken } = require('../middleware/csrf');
+        rotateCsrfToken(req, res, () => {
+            res.json({ message: 'Вход выполнен успешно' });
+        });
     });
 });
 
@@ -456,8 +463,8 @@ const checkRealFileType = async (filePath) => {
     return allowedMimes.includes(type.mime);
 };
 
-// Загрузка аватарки
-router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), async (req, res) => {
+// Загрузка аватарки (с rate limit)
+router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, upload.single('avatar'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
 
     // Проверяем реальное содержимое файла (magic bytes)
@@ -466,6 +473,12 @@ router.post('/avatar', verifyToken, verifyNotBanned, upload.single('avatar'), as
         // Удаляем файл, если он не является изображением
         fs.unlink(req.file.path, () => {});
         return res.status(400).json({ error: 'Файл не является допустимым изображением' });
+    }
+
+    // Re-encoding изображения для удаления metadata и EXIF
+    const processed = await processUploadedImage(req.file.path);
+    if (!processed) {
+        return res.status(500).json({ error: 'Ошибка обработки изображения' });
     }
 
     // Получаем старый аватар перед обновлением
@@ -565,73 +578,66 @@ router.get('/posts', verifyToken, (req, res) => {
 });
 
 // Посты — создать (только admin и moderator)
-router.post('/posts', verifyToken, verifyNotBanned, (req, res) => {
+router.post('/posts', verifyToken, verifyNotBanned, requireAdminOrModerator, (req, res) => {
     const userId = req.user.id;
-    db.query('SELECT role FROM users WHERE id = ?', [userId], (err, results) => {
-        if (err || results.length === 0) return res.status(500).json({ error: 'Database error' });
-        const role = results[0].role;
+    const userRole = req.user.role;
+    const { content, type } = req.body;
+    
+    if (!content || content.trim() === '') {
+        return res.status(400).json({ error: 'Контент не может быть пустым' });
+    }
 
-        if (role === 'banned') {
-            return res.status(403).json({ error: 'Ваш аккаунт заблокирован' });
+    let postType = 'news';
+    if (type === 'patch_note') {
+        if (userRole !== 'admin' && userRole !== 'moderator') {
+            return res.status(403).json({ error: 'Только админ или модератор может писать обновления' });
         }
+        postType = 'patch_note';
+    }
 
-        const { content, type } = req.body;
-        if (!content || content.trim() === '') {
-            return res.status(400).json({ error: 'Контент не может быть пустым' });
-        }
-
-        let postType = 'news';
-        if (type === 'patch_note') {
-            if (role !== 'admin' && role !== 'moderator') {
-                return res.status(403).json({ error: 'Только админ или модератор может писать обновления' });
+    db.query(
+        'SELECT created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+        [userId],
+        (err, postResults) => {
+            if (err) {
+                logger.error('Ошибка БД при проверке КД поста');
+                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
-            postType = 'patch_note';
-        }
 
-        db.query(
-            'SELECT created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-            [userId],
-            (err, postResults) => {
-                if (err) {
-                    logger.error('Ошибка БД при проверке КД поста');
-                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            if (postResults.length > 0 && userRole !== 'admin' && userRole !== 'moderator') {
+                const lastPostTime = new Date(postResults[0].created_at).getTime();
+                const now = Date.now();
+                const diffMinutes = (now - lastPostTime) / (1000 * 60);
+                if (diffMinutes < 5) {
+                    const remainingSeconds = Math.ceil((5 - diffMinutes) * 60);
+                    return res.status(429).json({
+                        error: `Вы не можете публиковать посты так часто. Пожалуйста, подождите еще ${remainingSeconds} сек.`
+                    });
                 }
-
-                if (postResults.length > 0 && role !== 'admin' && role !== 'moderator') {
-                    const lastPostTime = new Date(postResults[0].created_at).getTime();
-                    const now = Date.now();
-                    const diffMinutes = (now - lastPostTime) / (1000 * 60);
-                    if (diffMinutes < 5) {
-                        const remainingSeconds = Math.ceil((5 - diffMinutes) * 60);
-                        return res.status(429).json({
-                            error: `Вы не можете публиковать посты так часто. Пожалуйста, подождите еще ${remainingSeconds} сек.`
-                        });
-                    }
-                }
-
-                // Санитизация контента поста от XSS
-                const sanitizedContent = sanitize(content.trim());
-
-                db.query(
-                    'INSERT INTO posts (user_id, content, type) VALUES (?, ?, ?)',
-                    [userId, sanitizedContent, postType],
-                    (err, result) => {
-                        if (err) {
-                            logger.error('Ошибка БД при создании поста');
-                            return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-                        }
-                        res.status(201).json({ message: 'Пост создан', id: result.insertId });
-                    }
-                );
             }
-        );
-    });
+
+            // Санитизация контента поста от XSS
+            const sanitizedContent = sanitize(content.trim());
+
+            db.query(
+                'INSERT INTO posts (user_id, content, type) VALUES (?, ?, ?)',
+                [userId, sanitizedContent, postType],
+                (err, result) => {
+                    if (err) {
+                        logger.error('Ошибка БД при создании поста');
+                        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                    }
+                    res.status(201).json({ message: 'Пост создан', id: result.insertId });
+                }
+            );
+        }
+    );
 });
 
 const { updateUser } = require('../models/user');
 
-// Обновление профиля
-router.put('/:id', verifyToken, verifyNotBanned, async (req, res) => {
+// Обновление профиля (с rate limit)
+router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (req, res) => {
     const userId = req.params.id;
     if (parseInt(req.user.id) !== parseInt(userId)) {
         return res.status(403).json({ error: 'Доступ запрещен: нельзя редактировать чужой профиль' });
@@ -989,7 +995,7 @@ router.get('/admin-pin', (req, res) => {
 });
 
 // Обновить закрепленное сообщение админа
-router.post('/admin-pin', verifyToken, verifyAdmin, (req, res) => {
+router.post('/admin-pin', verifyToken, requireAdmin, (req, res) => {
     const { content } = req.body;
     if (!content || content.trim() === '') {
         return res.status(400).json({ error: 'Текст закрепа не может быть пустым' });

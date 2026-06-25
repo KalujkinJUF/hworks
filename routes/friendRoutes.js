@@ -107,7 +107,7 @@ router.get('/requests/outgoing', (req, res) => {
 });
 
 // Отправить запрос в друзья
-router.post('/request/:userId', (req, res) => {
+router.post('/request/:userId', verifyToken, verifyNotBanned, (req, res) => {
     const senderId = req.user.id;
     const receiverId = parseInt(req.params.userId);
 
@@ -115,37 +115,47 @@ router.post('/request/:userId', (req, res) => {
         return res.status(400).json({ error: 'Нельзя добавить себя в друзья' });
     }
 
-    db.query(
-        'SELECT id, status FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)',
-        [senderId, receiverId, receiverId, senderId],
-        (err, results) => {
-            if (err) {
-                logger.error('Ошибка БД при проверке дружбы');
-                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-            }
-
-            if (results.length > 0) {
-                const friendship = results[0];
-                if (friendship.status === 'accepted') {
-                    return res.status(400).json({ error: 'Уже в друзьях' });
-                } else if (friendship.status === 'pending') {
-                    return res.status(400).json({ error: 'Запрос уже отправлен' });
-                }
-            }
-
-            db.query(
-                'INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)',
-                [senderId, receiverId, 'pending'],
-                (err, result) => {
-                    if (err) {
-                        logger.error('Ошибка БД при создании запроса');
-                        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-                    }
-                    res.status(201).json({ message: 'Запрос отправлен' });
-                }
-            );
+    // Проверяем, что получатель существует и не забанен
+    db.query('SELECT role FROM users WHERE id = ?', [receiverId], (err, userResults) => {
+        if (err || userResults.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
         }
-    );
+        if (userResults[0].role === 'banned') {
+            return res.status(403).json({ error: 'Нельзя отправить запрос заблокированному пользователю' });
+        }
+
+        db.query(
+            'SELECT id, status FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)',
+            [senderId, receiverId, receiverId, senderId],
+            (err, results) => {
+                if (err) {
+                    logger.error('Ошибка БД при проверке дружбы');
+                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                }
+
+                if (results.length > 0) {
+                    const friendship = results[0];
+                    if (friendship.status === 'accepted') {
+                        return res.status(400).json({ error: 'Уже в друзьях' });
+                    } else if (friendship.status === 'pending') {
+                        return res.status(400).json({ error: 'Запрос уже отправлен' });
+                    }
+                }
+
+                db.query(
+                    'INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)',
+                    [senderId, receiverId, 'pending'],
+                    (err, result) => {
+                        if (err) {
+                            logger.error('Ошибка БД при создании запроса');
+                            return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                        }
+                        res.status(201).json({ message: 'Запрос отправлен' });
+                    }
+                );
+            }
+        );
+    });
 });
 
 // Принять запрос в друзья
@@ -212,7 +222,7 @@ router.delete('/:friendId', (req, res) => {
 });
 
 // Получить список общих друзей
-router.get('/mutual/:userId', (req, res) => {
+router.get('/mutual/:userId', verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
     const targetUserId = parseInt(req.params.userId);
 
@@ -220,49 +230,76 @@ router.get('/mutual/:userId', (req, res) => {
         return res.json([]);
     }
 
-    const query = `
-        SELECT u.id, u.username, u.avatar, u.role FROM users u
-        WHERE u.id IN (
-            SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END
-            FROM friends 
-            WHERE (user_id = ? OR friend_id = ?) AND status = 'accepted'
-        ) AND u.id IN (
-            SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END
-            FROM friends 
-            WHERE (user_id = ? OR friend_id = ?) AND status = 'accepted'
-        ) AND u.id != ? AND u.id != ?
-    `;
-
-    db.query(
-        query,
-        [userId, userId, userId, targetUserId, targetUserId, targetUserId, userId, targetUserId],
-        (err, results) => {
-            if (err) {
-                logger.error('Ошибка БД при поиске общих друзей');
-                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-            }
-            res.json(results);
+    // Проверяем, что целевой пользователь существует и не забанен
+    db.query('SELECT role FROM users WHERE id = ?', [targetUserId], (err, userResults) => {
+        if (err || userResults.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
         }
-    );
+        if (userResults[0].role === 'banned') {
+            return res.status(403).json({ error: 'Пользователь заблокирован' });
+        }
+
+        const query = `
+            SELECT u.id, u.username, u.avatar, u.role FROM users u
+            WHERE u.id IN (
+                SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END
+                FROM friends 
+                WHERE (user_id = ? OR friend_id = ?) AND status = 'accepted'
+            ) AND u.id IN (
+                SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END
+                FROM friends 
+                WHERE (user_id = ? OR friend_id = ?) AND status = 'accepted'
+            ) AND u.id != ? AND u.id != ?
+        `;
+
+        db.query(
+            query,
+            [userId, userId, userId, targetUserId, targetUserId, targetUserId, userId, targetUserId],
+            (err, results) => {
+                if (err) {
+                    logger.error('Ошибка БД при поиске общих друзей');
+                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                }
+                res.json(results);
+            }
+        );
+    });
 });
 
 // Принять запрос в друзья по ID отправителя
-router.post('/accept-user/:senderId', (req, res) => {
+router.post('/accept-user/:senderId', verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
     const senderId = parseInt(req.params.senderId);
+    
+    // Проверяем, что запрос существует и адресован текущему пользователю
     db.query(
-        `UPDATE friends SET status = 'accepted'
+        `SELECT id FROM friends 
          WHERE user_id = ? AND friend_id = ? AND status = 'pending'`,
         [senderId, userId],
-        (err, result) => {
+        (err, results) => {
             if (err) {
-                logger.error('Ошибка БД при принятии запроса по ID отправителя');
+                logger.error('Ошибка БД при проверке запроса');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ error: 'Запрос не найден' });
+            if (results.length === 0) {
+                return res.status(404).json({ error: 'Запрос не найден или вы не можете его принять' });
             }
-            res.json({ message: 'Запрос принят' });
+
+            db.query(
+                `UPDATE friends SET status = 'accepted'
+                 WHERE user_id = ? AND friend_id = ? AND status = 'pending'`,
+                [senderId, userId],
+                (updateErr, result) => {
+                    if (updateErr) {
+                        logger.error('Ошибка БД при принятии запроса по ID отправителя');
+                        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                    }
+                    if (result.affectedRows === 0) {
+                        return res.status(404).json({ error: 'Запрос не найден' });
+                    }
+                    res.json({ message: 'Запрос принят' });
+                }
+            );
         }
     );
 });

@@ -40,10 +40,10 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://challenges.cloudflare.com"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            scriptSrc: ["'self'", "https://challenges.cloudflare.com"],
+            styleSrc: ["'self'", "https://fonts.googleapis.com"],
             imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", process.env.CLIENT_URL],
+            connectSrc: ["'self'", process.env.CLIENT_URL, "https://challenges.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             frameSrc: ["https://challenges.cloudflare.com"],
             objectSrc: ["'none'"],

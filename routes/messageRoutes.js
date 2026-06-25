@@ -3,6 +3,7 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
 const { verifyToken, verifyNotBanned } = require('../middleware/auth');
+const { requireRole } = require('../middleware/rbac');
 const logger = require('../config/logger');
 
 // Rate limiter для сообщений
@@ -82,34 +83,51 @@ router.get('/unread/friends', (req, res) => {
     });
 });
 
-// Получить сообщения с конкретным пользователем
-router.get('/:friendId', (req, res) => {
+// Получить сообщения с конкретным пользователем (с проверкой дружбы)
+router.get('/:friendId', verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
     const friendId = parseInt(req.params.friendId);
 
-    // Помечаем входящие сообщения как прочитанные
+    // Проверяем, что пользователи являются друзьями
     db.query(
-        `UPDATE messages SET is_read = 1
-         WHERE sender_id = ? AND receiver_id = ? AND is_read = 0`,
-        [friendId, userId],
-        (err) => {
+        `SELECT id FROM friends 
+         WHERE status = 'accepted'
+         AND ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))`,
+        [userId, friendId, friendId, userId],
+        (err, friendResults) => {
             if (err) {
-                logger.error('Ошибка БД при обновлении статуса прочтения сообщений');
-            }
-        }
-    );
-
-    db.query(
-        `SELECT * FROM messages
-         WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-         ORDER BY created_at ASC LIMIT 100`,
-         [userId, friendId, friendId, userId],
-        (err, results) => {
-            if (err) {
-                logger.error('Ошибка БД при получении сообщений');
+                logger.error('Ошибка БД при проверке дружбы');
                 return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
             }
-            res.json(results);
+            if (friendResults.length === 0) {
+                return res.status(403).json({ error: 'Вы не можете просматривать сообщения с не-другом' });
+            }
+
+            // Помечаем входящие сообщения как прочитанные
+            db.query(
+                `UPDATE messages SET is_read = 1
+                 WHERE sender_id = ? AND receiver_id = ? AND is_read = 0`,
+                [friendId, userId],
+                (updateErr) => {
+                    if (updateErr) {
+                        logger.error('Ошибка БД при обновлении статуса прочтения сообщений');
+                    }
+                }
+            );
+
+            db.query(
+                `SELECT * FROM messages
+                 WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+                 ORDER BY created_at ASC LIMIT 100`,
+                 [userId, friendId, friendId, userId],
+                (err, results) => {
+                    if (err) {
+                        logger.error('Ошибка БД при получении сообщений');
+                        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                    }
+                    res.json(results);
+                }
+            );
         }
     );
 });
@@ -162,7 +180,7 @@ router.post('/', (req, res) => {
 });
 
 // Удаление сообщения в чате с проверкой иерархии прав
-router.delete('/:id', (req, res) => {
+router.delete('/:id', verifyToken, verifyNotBanned, (req, res) => {
     const messageId = req.params.id;
     const requesterId = req.user.id;
 

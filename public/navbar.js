@@ -1,3 +1,31 @@
+// Воспроизведение мягкого 8-битного ретро-звука уведомления (chiptune blip)
+function playRetroNotificationSound() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = 'sine'; // Мягкая синусоида
+        osc.frequency.setValueAtTime(440, ctx.currentTime); // Нота А4
+        osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.1); // Слайд к E5
+        
+        // Настройка мягкого затухания
+        gain.gain.setValueAtTime(0.06, ctx.currentTime); // Тихая и мягкая громкость (6%)
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12); // Затухание за 120мс
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+    } catch (e) {
+        console.warn('Аудио недоступно или заблокировано браузером:', e);
+    }
+}
+
 // Вспомогательная функция для экранирования HTML в модалях
 function escapeHtmlModal(str) {
     if (!str) return '';
@@ -118,6 +146,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateNavbarNotifications() {
         if (!token) return;
 
+        // Инициализируем переменные отслеживания звука в контексте окна
+        if (typeof window.prevUnreadChatCount === 'undefined') {
+            window.prevUnreadChatCount = -1;
+            window.lastNotificationSoundTime = 0;
+        }
+
         // Получаем непрочитанные сообщения
         fetch("/api/messages/unread/count", {
             headers: { "Authorization": `Bearer ${token}` }
@@ -129,6 +163,17 @@ document.addEventListener("DOMContentLoaded", () => {
             if (btnChat) {
                 btnChat.textContent = count > 0 ? `Чат (+${count})` : "Чат";
             }
+
+            // Воспроизводим звук при увеличении числа непрочитанных, если пользователь не на странице чата
+            const isChatPage = window.location.pathname.split('/').pop() === 'chat.html';
+            if (!isChatPage && window.prevUnreadChatCount !== -1 && count > window.prevUnreadChatCount) {
+                const now = Date.now();
+                if (now - window.lastNotificationSoundTime > 5000) {
+                    playRetroNotificationSound();
+                    window.lastNotificationSoundTime = now;
+                }
+            }
+            window.prevUnreadChatCount = count;
         })
         .catch(err => console.error("Ошибка при получении непрочитанных сообщений:", err));
 

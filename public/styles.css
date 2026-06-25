@@ -1490,6 +1490,40 @@ textarea#aboutMe:focus {
     /* Заставляем коробку держать структуру */
 }
 
+.date-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 15px 0;
+    color: #888888;
+    font-size: 8px;
+    font-family: 'PublicPixel', monospace;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.date-divider::before,
+.date-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px double #555555;
+}
+
+.date-divider::before {
+    margin-right: 15px;
+}
+
+.date-divider::after {
+    margin-left: 15px;
+}
+
+.date-divider-text {
+    padding: 0 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #aaaaaa;
+}
+
 .message {
     padding: 12px 15px;
     border-radius: 4px;

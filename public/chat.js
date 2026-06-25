@@ -233,57 +233,67 @@ document.addEventListener("DOMContentLoaded", () => {
                 const isCloseToBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
                 const isFirstLoad = container.innerHTML.includes("loading-text") || container.innerHTML.includes("Нет сообщений");
 
-                if (isFirstLoad) {
-                    container.innerHTML = '';
-                }
-
+                // Сравниваем списки сообщений по их ID, чтобы определить необходимость полной перерисовки
                 const existingMessages = Array.from(container.querySelectorAll(".message"));
-                const existingIds = new Set(existingMessages.map(el => el.dataset.msgId));
-                const newIds = new Set(messages.map(msg => String(msg.id)));
+                const existingIds = existingMessages.map(el => el.dataset.msgId);
+                const newIds = messages.map(msg => String(msg.id));
+                
+                const idsChanged = (existingIds.length !== newIds.length) || existingIds.some((id, idx) => id !== newIds[idx]);
 
-                // 1. Удаляем удаленные сообщения
-                existingMessages.forEach(el => {
-                    if (!newIds.has(el.dataset.msgId)) {
-                        el.remove();
+                if (isFirstLoad || idsChanged) {
+                    container.innerHTML = '';
+                    let lastDateStr = null;
+                    
+                    messages.forEach((msg, index) => {
+                         const msgId = String(msg.id);
+                         const isMine = msg.sender_id === currentUserId;
+                         const msgClass = isMine ? 'my-message' : 'friend-message';
+                         
+                         const dateObj = new Date(msg.created_at);
+                         // Формат: "25 июня 2026 г." или "25 июня 2026"
+                         const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                         
+                         if (dateStr !== lastDateStr) {
+                             const divider = document.createElement("div");
+                             divider.className = "date-divider";
+                             divider.innerHTML = `<span class="date-divider-text">${dateStr}</span>`;
+                             container.appendChild(divider);
+                             lastDateStr = dateStr;
+                         }
+
+                         const timeStr = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                         const contentHtml = escapeHtml(msg.content);
+                         
+                         const canDelete = isMine || currentUserRole === 'admin' || (currentUserRole === 'moderator' && currentFriendRole !== 'admin');
+                         const deleteBtn = canDelete ? `<button class="delete-btn" style="margin-left: 8px;" onclick="event.stopPropagation(); deleteMessage(${msgId}, event)">Удалить</button>` : '';
+
+                         const msgNode = document.createElement("div");
+                         const shouldAnimate = !isFirstLoad && (index === messages.length - 1);
+                         msgNode.className = `message ${msgClass}${shouldAnimate ? ' new-message-anim' : ''}`;
+                         msgNode.dataset.msgId = msgId;
+                         msgNode.innerHTML = `
+                             <div class="message-content">${contentHtml}</div>
+                             <div class="message-time">${timeStr}${deleteBtn}</div>
+                         `;
+                         container.appendChild(msgNode);
+                    });
+
+                    if (isFirstLoad || idsChanged) {
+                        container.scrollTop = container.scrollHeight;
                     }
-                });
-
-                let addedNewMessage = false;
-
-                // 2. Добавляем новые сообщения и обновляем старые
-                messages.forEach((msg, index) => {
-                    const msgId = String(msg.id);
-                    const isMine = msg.sender_id === currentUserId;
-                    const msgClass = isMine ? 'my-message' : 'friend-message';
-                    const timeStr = new Date(msg.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                    const contentHtml = escapeHtml(msg.content);
-
-                    const canDelete = isMine || currentUserRole === 'admin' || (currentUserRole === 'moderator' && currentFriendRole !== 'admin');
-                    const deleteBtn = canDelete ? `<button class="delete-btn" style="margin-left: 8px;" onclick="event.stopPropagation(); deleteMessage(${msgId}, event)">Удалить</button>` : '';
-
-                    let msgNode = container.querySelector(`.message[data-msg-id="${msgId}"]`);
-                    if (!msgNode) {
-                        msgNode = document.createElement("div");
-                        msgNode.className = `message ${msgClass}${!isFirstLoad ? ' new-message-anim' : ''}`;
-                        msgNode.dataset.msgId = msgId;
-                        msgNode.innerHTML = `
-                            <div class="message-content">${contentHtml}</div>
-                            <div class="message-time">${timeStr}${deleteBtn}</div>
-                        `;
-                        container.appendChild(msgNode);
-                        addedNewMessage = true;
-                    } else {
-                        // Обновляем контент, если изменился
-                        const contentEl = msgNode.querySelector(".message-content");
-                        if (contentEl && contentEl.innerHTML !== contentHtml) {
-                            contentEl.innerHTML = contentHtml;
+                } else {
+                    // Если состав не изменился, просто обновляем контент (на случай редактирования)
+                    messages.forEach((msg) => {
+                        const msgId = String(msg.id);
+                        const msgNode = container.querySelector(`.message[data-msg-id="${msgId}"]`);
+                        if (msgNode) {
+                            const contentHtml = escapeHtml(msg.content);
+                            const contentEl = msgNode.querySelector(".message-content");
+                            if (contentEl && contentEl.innerHTML !== contentHtml) {
+                                contentEl.innerHTML = contentHtml;
+                            }
                         }
-                    }
-                });
-
-                // Скроллим вниз при первом открытии или при получении новых сообщений, если пользователь был внизу
-                if (isFirstLoad || (addedNewMessage && isCloseToBottom)) {
-                    container.scrollTop = container.scrollHeight;
+                    });
                 }
             }
         })

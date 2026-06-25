@@ -76,6 +76,11 @@ fn get_version() -> String {
 }
 
 #[tauri::command]
+fn close_window(window: tauri::WebviewWindow) {
+    let _ = window.close();
+}
+
+#[tauri::command]
 fn try_connect(app: AppHandle, window: WebviewWindow, url: String) -> Result<String, String> {
     let normalized = normalize_url(&url);
     match test_connection(&normalized) {
@@ -107,7 +112,7 @@ fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
     if response.status() == 200 {
         if let Ok(json) = response.into_json::<serde_json::Value>() {
             if let Some(srv_ver) = json["version"].as_str() {
-                if srv_ver != "a0.2" {
+                if srv_ver != get_version() {
                     let app_clone = app.clone();
                     let _ = app.run_on_main_thread(move || {
                         let _ = tauri::WebviewWindowBuilder::new(
@@ -133,7 +138,22 @@ fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
 fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> {
     let update_url = format!("{}/updates/voidtree.exe", server_url.trim_end_matches('/'));
     let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let temp_exe = current_exe.with_extension("exe.tmp");
+    
+    // Канонизируем путь и убираем UNC-префикс
+    let current_exe = std::fs::canonicalize(&current_exe)
+        .unwrap_or(current_exe);
+    
+    // Надежная чистка UNC-префикса через срез
+    let current_exe_str = {
+        let s = current_exe.to_string_lossy().to_string();
+        if s.starts_with(r"\\?\") {
+            s[4..].to_string()
+        } else {
+            s
+        }
+    };
+    
+    let temp_exe_str = format!("{}.tmp", &current_exe_str);
 
     let agent = ureq::AgentBuilder::new()
         .timeout(std::time::Duration::from_secs(30))
@@ -146,7 +166,7 @@ fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> 
         return Err(format!("Сервер вернул код: {}", response.status()));
     }
     
-    let mut file = std::fs::File::create(&temp_exe)
+    let mut file = std::fs::File::create(&temp_exe_str)
         .map_err(|e| format!("Не удалось создать файл: {}", e.to_string()))?;
         
     std::io::copy(&mut response.into_reader(), &mut file)
@@ -154,26 +174,31 @@ fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> 
         
     drop(file);
 
-    let current_exe_str = current_exe.to_string_lossy().to_string();
-    let clean_current_exe = current_exe_str.replace("\\\\?\\", "");
-
-    let temp_exe_str = temp_exe.to_string_lossy().to_string();
-    let clean_temp_exe = temp_exe_str.replace("\\\\?\\", "");
-
     let pid = std::process::id();
-    let cmd_script = format!(
-        "taskkill /f /pid {} & timeout /t 1 /nobreak & copy /y \"{}\" \"{}\" & del /f /q \"{}\" & start \"\" \"{}\"",
-        pid,
-        clean_temp_exe,
-        clean_current_exe,
-        clean_temp_exe,
-        clean_current_exe
+    
+    // Используем PowerShell с циклом повторных попыток для обхода блокировок файлов и логированием ошибок
+    let ps_script = format!(
+        r#"$pid_to_kill = {pid}; $temp_path = '{temp}'; $exe_path = '{exe}'; $log_path = Join-Path (Split-Path $exe_path) 'update_error.log'; Start-Sleep -Milliseconds 500; Stop-Process -Id $pid_to_kill -Force -ErrorAction SilentlyContinue; $success = $false; $last_err = ''; for ($i = 0; $i -lt 30; $i++) {{ try {{ Copy-Item -Path $temp_path -Destination $exe_path -Force -ErrorAction Stop; $success = $true; break }} catch {{ $last_err = $_.Exception.Message; Start-Sleep -Milliseconds 300 }} }}; if ($success) {{ Remove-Item -Path $temp_path -Force -ErrorAction SilentlyContinue; if (Test-Path $log_path) {{ Remove-Item -Path $log_path -Force -ErrorAction SilentlyContinue }}; Start-Process -FilePath $exe_path }} else {{ $last_err | Out-File -FilePath $log_path; Start-Process -FilePath $exe_path }}"#,
+        pid = pid,
+        temp = temp_exe_str.replace("'", "''"),
+        exe = current_exe_str.replace("'", "''"),
     );
 
-    std::process::Command::new("cmd")
-        .args(&["/c", &cmd_script])
-        .spawn()
-        .map_err(|e| format!("Не удалось запустить обновление: {}", e.to_string()))?;
+    let mut cmd = std::process::Command::new("powershell");
+    
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    cmd.args(&[
+        "-WindowStyle", "Hidden",
+        "-NonInteractive",
+        "-Command", &ps_script,
+    ])
+    .spawn()
+    .map_err(|e| format!("Не удалось запустить обновление: {}", e.to_string()))?;
 
     app.exit(0);
     Ok(())
@@ -230,7 +255,7 @@ pub fn run() {
         });
         Ok(())
     })
-    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update])
+    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

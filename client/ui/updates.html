@@ -50,7 +50,7 @@
         const { invoke } = window.__TAURI__.core;
         
         document.getElementById('later-btn').addEventListener('click', () => {
-            window.close();
+            invoke('close_window');
         });
 
         document.getElementById('update-btn').addEventListener('click', async () => {

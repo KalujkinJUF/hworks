@@ -176,6 +176,63 @@ document.addEventListener("DOMContentLoaded", () => {
         updateNavbarNotifications();
         setInterval(updateNavbarNotifications, 5000);
 
+        // Детекция активности и фоновый пинг присутствия
+        let lastActivityTime = Date.now();
+        let isIdle = false;
+
+        const resetTimer = () => {
+            lastActivityTime = Date.now();
+            if (isIdle) {
+                isIdle = false;
+                sendPresencePing(false);
+            }
+        };
+
+        // Подписываемся на события взаимодействия
+        window.addEventListener('mousemove', resetTimer);
+        window.addEventListener('keydown', resetTimer);
+        window.addEventListener('click', resetTimer);
+        window.addEventListener('scroll', resetTimer);
+
+        function sendPresencePing(idleState) {
+            fetch('/api/users/ping', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ isIdle: idleState })
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Если мы на странице собственного профиля, динамически обновим отображаемый статус (без сброса селекта настроек)
+                if (data.currentStatus) {
+                    const statusText = document.getElementById("userStatusText");
+                    const statusMap = { online: 'Online', offline: 'Offline', away: 'Away', dnd: 'DND' };
+                    const statusColors = { online: '#00ff00', offline: '#888888', away: '#ffcc00', dnd: '#ff3333' };
+                    if (statusText) {
+                        statusText.innerText = statusMap[data.currentStatus] || 'Offline';
+                        statusText.style.color = statusColors[data.currentStatus] || '#888888';
+                    }
+                }
+            })
+            .catch(err => console.error('Ошибка отправки пинга присутствия:', err));
+        }
+
+        // Стартовый пинг при загрузке страницы
+        sendPresencePing(false);
+
+        // Периодический пинг каждые 30 секунд для проверки простоя и обновления last_active
+        setInterval(() => {
+            const idleThreshold = 5 * 60 * 1000; // 5 минут
+            const currentIdleState = (Date.now() - lastActivityTime) > idleThreshold;
+            
+            if (currentIdleState !== isIdle) {
+                isIdle = currentIdleState;
+            }
+            sendPresencePing(isIdle);
+        }, 30000);
+
         // Проверяем роль через профиль, чтобы показать кнопку админки или скрыть функции забаненного
         fetch("/api/users/profile", {
             headers: { "Authorization": `Bearer ${token}` }

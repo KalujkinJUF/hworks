@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (userStatusSelect) {
             if (isOwn) {
                 userStatusSelect.style.display = 'inline-block';
-                userStatusSelect.value = data.user_status || 'online';
+                userStatusSelect.value = data.custom_status || 'online';
             } else {
                 userStatusSelect.style.display = 'none';
             }

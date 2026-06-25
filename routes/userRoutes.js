@@ -269,7 +269,7 @@ router.post('/login', (req, res) => {
         if (!isMatch) return res.status(401).json({ error: 'Неверные учетные данные' });
 
         // Обновляем last_active и статус при входе
-        db.query('UPDATE users SET last_active = NOW(), user_status = "online" WHERE id = ?', [user.id]);
+        db.query('UPDATE users SET last_active = NOW(), user_status = custom_status WHERE id = ?', [user.id]);
 
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
         res.json({ token });
@@ -280,7 +280,7 @@ router.post('/login', (req, res) => {
 router.get('/profile', verifyToken, async (req, res) => {
     try {
         db.query(
-            'SELECT id, username, email, verified, created_at, about, avatar, role, user_status FROM users WHERE id = ?',
+            'SELECT id, username, email, verified, created_at, about, avatar, role, user_status, custom_status FROM users WHERE id = ?',
             [req.user.id],
             (err, results) => {
                 if (err || results.length === 0) return res.status(404).send('User not found');
@@ -296,7 +296,8 @@ router.get('/profile', verifyToken, async (req, res) => {
                     about: user.about,
                     avatar: user.avatar,
                     role: user.role,
-                    user_status: user.user_status
+                    user_status: user.user_status,
+                    custom_status: user.custom_status
                 });
             }
         );
@@ -555,9 +556,41 @@ router.post('/status/:status', verifyToken, verifyNotBanned, (req, res) => {
         return res.status(400).json({ error: 'Неверный статус' });
     }
 
-    db.query('UPDATE users SET user_status = ? WHERE id = ?', [status, userId], (err) => {
+    db.query('UPDATE users SET user_status = ?, custom_status = ? WHERE id = ?', [status, status, userId], (err) => {
         if (err) return res.status(500).json({ error: 'Ошибка обновления статуса' });
         res.json({ message: 'Статус обновлен', status });
+    });
+});
+
+// Пинг / Сердечный ритм для сохранения присутствия и обновления статуса активности
+router.post('/ping', verifyToken, (req, res) => {
+    const userId = req.user.id;
+    const { isIdle } = req.body;
+
+    db.query('SELECT custom_status FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err || results.length === 0) {
+            return res.status(500).json({ error: 'Database error or user not found' });
+        }
+
+        const customStatus = results[0].custom_status;
+
+        // Если кастомный статус 'online', то при простое переводим в 'away', иначе возвращаем 'online'
+        let newStatus = customStatus;
+        if (customStatus === 'online') {
+            newStatus = isIdle ? 'away' : 'online';
+        }
+
+        // Обновляем last_active и user_status в одном запросе
+        db.query(
+            'UPDATE users SET last_active = NOW(), user_status = ? WHERE id = ?',
+            [newStatus, userId],
+            (updateErr) => {
+                if (updateErr) {
+                    return res.status(500).json({ error: 'Failed to update presence' });
+                }
+                res.json({ message: 'Pong', currentStatus: newStatus });
+            }
+        );
     });
 });
 

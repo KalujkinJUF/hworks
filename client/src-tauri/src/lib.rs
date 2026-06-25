@@ -155,18 +155,10 @@ fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> 
     drop(file);
 
     let current_exe_str = current_exe.to_string_lossy().to_string();
-    let clean_current_exe = if current_exe_str.starts_with(r"\\?\") {
-        current_exe_str[4..].to_string()
-    } else {
-        current_exe_str
-    };
+    let clean_current_exe = current_exe_str.replace("\\\\?\\", "");
 
     let temp_exe_str = temp_exe.to_string_lossy().to_string();
-    let clean_temp_exe = if temp_exe_str.starts_with(r"\\?\") {
-        temp_exe_str[4..].to_string()
-    } else {
-        temp_exe_str
-    };
+    let clean_temp_exe = temp_exe_str.replace("\\\\?\\", "");
 
     let pid = std::process::id();
     let cmd_script = format!(

@@ -313,6 +313,15 @@ function downloadAndUpdate(serverUrl) {
                 file.close(() => {
                     try {
                         const zip = new AdmZip(tempZipPath);
+                        
+                        // Проверка на безопасность путей (защита от Zip Slip)
+                        const entries = zip.getEntries();
+                        for (const entry of entries) {
+                            if (entry.entryName.includes('..') || path.isAbsolute(entry.entryName)) {
+                                throw new Error(`Обнаружен некорректный путь в обновлении: ${entry.entryName}`);
+                            }
+                        }
+
                         // Extract to __dirname (which is resources/app in packaged app, or client/ folder in dev)
                         zip.extractAllTo(__dirname, true);
                         

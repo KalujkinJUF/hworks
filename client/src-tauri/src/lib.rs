@@ -40,12 +40,15 @@ fn write_config(app: &AppHandle, config: &AppConfig) {
 fn normalize_url(url: &str) -> String {
     let mut clean = url.trim().to_string();
     if !clean.starts_with("http://") && !clean.starts_with("https://") {
-        clean = format!("http://{}", clean);
+        clean = format!("https://{}", clean);
     }
     if let Ok(parsed) = tauri::Url::parse(&clean) {
         if parsed.port().is_none() {
             let host_str = parsed.host_str().unwrap_or("");
-            if !host_str.contains(':') {
+            let is_local = host_str == "localhost" || host_str == "127.0.0.1";
+            let is_http = clean.starts_with("http://");
+            // Добавляем порт 3000 только для локального HTTP-сервера
+            if is_local && is_http && !host_str.contains(':') {
                 clean = format!("{}:3000", clean.trim_end_matches('/'));
             }
         }
@@ -56,7 +59,8 @@ fn normalize_url(url: &str) -> String {
 fn test_connection(url: &str) -> Result<(), String> {
     let health_url = format!("{}/api/health", url.trim_end_matches('/'));
     let agent = ureq::AgentBuilder::new()
-        .timeout(std::time::Duration::from_secs(3))
+        .timeout(std::time::Duration::from_secs(5))
+        .redirects(5)
         .build();
         
     match agent.get(&health_url).call() {

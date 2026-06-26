@@ -47,8 +47,7 @@ app.use(helmet({
             connectSrc: ["'self'", process.env.CLIENT_URL, "https://challenges.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             frameSrc: ["https://challenges.cloudflare.com"],
-            objectSrc: ["'none'"],
-            upgradeInsecureRequests: []
+            objectSrc: ["'none'"]
         }
     },
     crossOriginEmbedderPolicy: false,

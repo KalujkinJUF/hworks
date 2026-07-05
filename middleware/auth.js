@@ -59,4 +59,20 @@ const getUserRoleFromDB = (userId) => {
     });
 };
 
-module.exports = { verifyToken, verifyNotBanned };
+// Опциональная проверка авторизации (не падает с ошибкой, если токена нет)
+const optionalVerifyToken = (req, res, next) => {
+    const token = getToken(req);
+
+    if (!token) {
+        return next();
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (!err) {
+            req.user = decoded; // Сохраняем id пользователя в запрос
+        }
+        next();
+    });
+};
+
+module.exports = { verifyToken, verifyNotBanned, optionalVerifyToken };

@@ -7,7 +7,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
-const { verifyToken, verifyNotBanned } = require('../middleware/auth');
+const { verifyToken, verifyNotBanned, optionalVerifyToken } = require('../middleware/auth');
 const { requireRole, requireAdmin, requireAdminOrModerator } = require('../middleware/rbac');
 const { processUploadedImage } = require('../middleware/fileUpload');
 const router = express.Router();
@@ -523,15 +523,15 @@ router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, upload
     });
 });
 
-// Посты — получить все с учетом лайков и подписок
-router.get('/posts', verifyToken, (req, res) => {
+// Посты — получить все с учетом лайков и подписок (публично доступно)
+router.get('/posts', optionalVerifyToken, (req, res) => {
     const type = req.query.type || null;
     const feed = req.query.feed || 'global';
     const page = parseInt(req.query.page || '1', 10);
     const limit = parseInt(req.query.limit || '15', 10);
     const offset = (page - 1) * limit;
     
-    const requesterId = req.user.id;
+    const requesterId = req.user?.id || null;
 
     const whereClauses = [];
     const whereParams = [];
@@ -541,9 +541,14 @@ router.get('/posts', verifyToken, (req, res) => {
         whereParams.push(type);
     }
 
-    if (feed === 'subscriptions' && requesterId > 0) {
-        whereClauses.push('(posts.user_id = ? OR posts.user_id IN (SELECT following_id FROM subscriptions WHERE follower_id = ?))');
-        whereParams.push(requesterId, requesterId);
+    if (feed === 'subscriptions') {
+        if (requesterId > 0) {
+            whereClauses.push('(posts.user_id = ? OR posts.user_id IN (SELECT following_id FROM subscriptions WHERE follower_id = ?))');
+            whereParams.push(requesterId, requesterId);
+        } else {
+            // Неавторизованным подписки недоступны — возвращаем пустой результат
+            return res.json({ posts: [], totalPages: 0, currentPage: 1 });
+        }
     }
 
     // Запрос на подсчет общего количества
@@ -1204,4 +1209,4 @@ router.post('/logout', (req, res) => {
     res.json({ message: 'Вы вышли из аккаунта' });
 });
 
-module.exports = router;
+module.exports = router;

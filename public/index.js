@@ -17,7 +17,10 @@
     fetch("/api/users/profile", {
         credentials: 'include'
     })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Not authorized');
+                return res.json();
+            })
             .then(data => {
                 currentUserId = data.id;
                 currentUserRole = data.role;
@@ -32,8 +35,17 @@
                     const editBtn = document.getElementById("editAdminPinBtn");
                     if (editBtn) editBtn.style.display = 'block';
                 }
+                // Показываем кнопку "Мои подписки" только авторизованным
+                const feedSubsBtn = document.getElementById("feedSubsBtn");
+                if (feedSubsBtn) feedSubsBtn.style.display = 'inline-block';
             })
-            .catch(() => { });
+            .catch(() => {
+                // Неавторизованный пользователь: скрываем форму поста и подписки
+                const postFormSection = document.getElementById("postFormSection");
+                if (postFormSection) postFormSection.style.display = 'none';
+                const feedSubsBtn = document.getElementById("feedSubsBtn");
+                if (feedSubsBtn) feedSubsBtn.style.display = 'none';
+            });
 
     let currentFeed = 'global';
     const roleColors = {
@@ -41,8 +53,7 @@
         newbie: '#888888', premium: '#ffd700', vip: '#9b59b6', banned: '#333333'
     };
 
-    const subsBtn = document.getElementById("feedSubsBtn");
-    if (subsBtn) subsBtn.style.display = 'inline-block';
+    // Кнопка "Мои подписки" управляется после проверки авторизации выше
 
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';
@@ -291,7 +302,15 @@
                 // СТРОГО ТУТ: как только первая пачка постов отрисовалась — блокируем повторные анимации!
                 isInitialLoadComplete = true;
             })
-            .catch(() => { });
+            .catch((err) => {
+                console.error('Ошибка загрузки постов:', err);
+                const container = currentFeed === 'patches'
+                    ? document.getElementById("patchFeed")
+                    : document.getElementById("newsFeed");
+                if (container) {
+                    container.innerHTML = '<p class="loading-text">Ошибка загрузки постов</p>';
+                }
+            });
     }
 
     // Обработчик кнопки "Загрузить ещё"
@@ -500,7 +519,7 @@
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
                                 <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
                                 <span style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
-                                ${token ? `<button style="color: yellow; cursor: pointer; font-size: 10px; font-weight: bold; margin-left: 8px; background: none; border: none;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}
+                        ${currentUserId ? `<button style="color: yellow; cursor: pointer; font-size: 10px; font-weight: bold; margin-left: 8px; background: none; border: none;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}
                                 ${deleteCommentBtnHtml}
                             </div>
                             <div style="font-size: 12px; color: #eee; margin-top: 4px; word-break: break-word; line-height: 1.4;">${escapeHtml(comment.content)}</div>

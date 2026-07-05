@@ -95,9 +95,9 @@ function initializeAdmin(myData) {
                 </div>
                 <div class="user-card-body">
                     <div class="user-field">
-                        <label>Логин:</label>
+                        <label>Имя:</label>
                         ${canEdit ? `
-                        <input type="text" class="edit-username" value="${escapeHtml(user.username)}" placeholder="Новый логин">
+                        <input type="text" class="edit-username" value="${escapeHtml(user.username)}" placeholder="Новое имя">
                         <button class="user-btn btn-save-username" data-id="${user.id}">✎</button>
                         ` : `
                         <span class="user-field-value">${escapeHtml(user.username)}</span>
@@ -323,4 +323,4 @@ function initializeAdmin(myData) {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
-}
+}

@@ -12,9 +12,17 @@ document.addEventListener("DOMContentLoaded", () => {
         initializeProfile(data);
     })
     .catch(() => {
-        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
-            window.location.href = "login.html";
-        });
+        const params = new URLSearchParams(window.location.search);
+        const viewingUsername = params.get('username');
+        if (!viewingUsername) {
+            window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+                window.location.href = "login.html";
+            });
+        } else {
+            window.showCustomAlert("Просмотр профиля доступен только авторизованным пользователям.").then(() => {
+                window.location.href = "login.html";
+            });
+        }
     });
 });
 

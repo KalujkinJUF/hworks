@@ -109,7 +109,18 @@ router.put('/user/:id/password', verifyToken, requireAdminOrModerator, requireHi
 
 // Удалить пользователя — ТОЛЬКО админ
 router.delete('/user/:id', verifyToken, requireAdmin, (req, res) => {
-    db.query('DELETE FROM users WHERE id = ?', [req.params.id], (error, result) => {
+    const targetId = parseInt(req.params.id);
+    const requesterId = req.user.id;
+
+    if (targetId === requesterId) {
+        return res.status(400).json({ error: 'Нельзя удалить самого себя' });
+    }
+
+    if (targetId === 1) {
+        return res.status(403).json({ error: 'Нельзя удалить главного администратора' });
+    }
+
+    db.query('DELETE FROM users WHERE id = ?', [targetId], (error, result) => {
         if (error) return res.status(500).json({ error: 'Database error' });
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });
         res.json({ message: 'Пользователь удалён' });

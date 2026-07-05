@@ -242,7 +242,8 @@ function initializeNavbar(myData) {
             const count = requests.length || 0;
             const btnFriends = document.getElementById("nav-friends");
             if (btnFriends) {
-                btnFriends.textContent = count > 0 ? `Друзья (+${count})` : "Друзья";
+                const friendsText = window.t('nav_friends', 'Друзья');
+                btnFriends.textContent = count > 0 ? `${friendsText} (+${count})` : friendsText;
             }
         })
         .catch(err => console.error("Ошибка при получении запросов в друзья:", err));
@@ -256,7 +257,8 @@ function initializeNavbar(myData) {
             const count = data.count || 0;
             const btnProfile = document.getElementById("nav-profile");
             if (btnProfile) {
-                btnProfile.textContent = count > 0 ? `Профиль (+${count})` : "Профиль";
+                const profileText = window.t('nav_profile', 'Профиль');
+                btnProfile.textContent = count > 0 ? `${profileText} (+${count})` : profileText;
             }
         })
         .catch(err => console.error("Ошибка при получении непрочитанных отзывов на стене:", err));

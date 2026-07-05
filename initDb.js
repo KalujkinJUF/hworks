@@ -2,6 +2,7 @@ require('dotenv').config();
 const db = require('./config/db');
 const fs = require('fs');
 const path = require('path');
+const { encrypt, decrypt, hashValue } = require('./config/crypto');
 
 const migrationsSQL = `
 -- Таблица пользователей
@@ -153,13 +154,45 @@ queries.forEach((query) => {
         }
         completed++;
         if (completed === queries.length) {
-            console.log('✓ Все миграции завершены');
-            process.exit(0);
+            console.log('✓ Все SQL-миграции завершены');
+            migrateUserData();
         }
     });
 });
 
-setTimeout(() => {
-    console.log('✓ Инициализация БД завершена');
-    process.exit(0);
-}, 2500);
+function migrateUserData() {
+    console.log('Начало миграции данных пользователей (шифрование и хэширование почты)...');
+    db.query('SELECT id, email, email_hash FROM users', (err, users) => {
+        if (err) {
+            console.error('Ошибка при получении пользователей для миграции:', err);
+            process.exit(1);
+        }
+        
+        if (users.length === 0) {
+            console.log('✓ Нет пользователей для миграции данных');
+            process.exit(0);
+        }
+        
+        let pending = users.length;
+        users.forEach(user => {
+            const rawEmail = decrypt(user.email); // Расшифрует если зашифровано, вернет как есть если нет
+            const encryptedEmail = encrypt(rawEmail);
+            const hashedEmail = hashValue(rawEmail);
+            
+            db.query(
+                'UPDATE users SET email = ?, email_hash = ? WHERE id = ?',
+                [encryptedEmail, hashedEmail, user.id],
+                (updErr) => {
+                    if (updErr) {
+                        console.error(`Ошибка при обновлении пользователя ID ${user.id}:`, updErr);
+                    }
+                    pending--;
+                    if (pending === 0) {
+                        console.log('✓ Миграция данных пользователей успешно завершена');
+                        process.exit(0);
+                    }
+                }
+            );
+        });
+    });
+}

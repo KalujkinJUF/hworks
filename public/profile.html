@@ -3,23 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Профиль пользователя</title>
+    <title data-i18n="nav_profile">Профиль пользователя</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
 </head>
 
 <body>
     <div class="container">
         <header>
             <nav id="main-nav">
-                <a href="index.html" id="nav-home">Главная</a>
-                <a href="search.html" id="nav-search">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-                <a href="login.html" id="nav-login">Логин</a>
-                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+                <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+                <a href="search.html" id="nav-search" data-i18n="nav_search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;" data-i18n="nav_chat">Чат</a>
+                <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+                <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
             </nav>
         </header>
 
@@ -28,14 +29,14 @@
             <section class="profile-section"
                 style="width: 100%; max-width: 1200px; margin: 0 auto; text-align: center;">
                 <h2 id="profileTitle"
-                    style="text-align: center; border-bottom: 2px dashed white; padding-bottom: 10px; margin-bottom: 20px;">
+                    style="text-align: center; border-bottom: 2px dashed white; padding-bottom: 10px; margin-bottom: 20px;" data-i18n="nav_profile">
                     Профиль</h2>
 
                 <!-- Переключатель вкладок -->
                 <div class="profile-tabs"
                     style="display: flex; gap: 10px; margin-bottom: 25px; justify-content: center; width: 100%;">
-                    <button id="tabInfoBtn" class="tab-btn active">Информация</button>
-                    <button id="tabSettingsBtn" class="tab-btn" style="display: none;">Настройки</button>
+                    <button id="tabInfoBtn" class="tab-btn active" data-i18n="tab_info">Информация</button>
+                    <button id="tabSettingsBtn" class="tab-btn" style="display: none;" data-i18n="tab_settings">Настройки</button>
                 </div>
 
                 <!-- Вкладка 1: Информация и отзывы -->
@@ -97,11 +98,11 @@
                             <div class="bio-group" id="bioGroup"
                                 style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 20px; background: rgba(255, 255, 255, 0.01); display: flex; flex-direction: column; text-align: left; box-sizing: border-box; width: 100%;">
                                 <label for="aboutMe"
-                                    style="color: yellow; margin-bottom: 8px; font-size: 11px; text-transform: uppercase;">Обо
+                                    style="color: yellow; margin-bottom: 8px; font-size: 11px; text-transform: uppercase;" data-i18n="profile_about_title">Обо
                                     мне:</label>
                                 <textarea id="aboutMe"></textarea>
                                 <button id="saveBioBtn" class="user-btn"
-                                    style="display: none; padding: 4px 8px; font-size: 9px; cursor: pointer; width: auto; margin-top: 8px; align-self: flex-end;">Сохранить</button>
+                                    style="display: none; padding: 4px 8px; font-size: 9px; cursor: pointer; width: auto; margin-top: 8px; align-self: flex-end;" data-i18n="save">Сохранить</button>
                                 <div id="bioMessage" style="margin-top: 5px; font-size: 11px; text-align: right;"></div>
                             </div>
 
@@ -122,7 +123,7 @@
                             <div id="profileCommentsSection"
                                 style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 20px; background-color: rgba(255, 255, 255, 0.01); margin-top: 0; min-height: 400px; text-align: left; box-sizing: border-box; width: 100%;">
                                 <h3
-                                    style="color: #00ff00; border-bottom: 2px dashed #00ff00; padding-bottom: 10px; font-size: 16px; text-align: center; margin-top: 0; text-transform: uppercase;">
+                                    style="color: #00ff00; border-bottom: 2px dashed #00ff00; padding-bottom: 10px; font-size: 16px; text-align: center; margin-top: 0; text-transform: uppercase;" data-i18n="profile_wall_title">
                                     СТЕНА</h3>
 
                                 <form id="commentForm"
@@ -131,7 +132,7 @@
                                         rows="3"
                                         style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; resize: none; outline: none; margin-bottom: 10px;"></textarea>
                                     <button type="submit" class="auth-btn"
-                                        style="width: auto; padding: 8px 25px; font-size: 11px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;">НАПИСАТЬ</button>
+                                        style="width: auto; padding: 8px 25px; font-size: 11px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;" data-i18n="profile_write_btn">НАПИСАТЬ</button>
                                 </form>
 
                                 <div id="commentList">
@@ -183,7 +184,7 @@
                         <div id="updateSection" class="animate-fade-in"
                             style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
                             <h3
-                                style="margin-top: 0; color: #ff8c00; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;">
+                                style="margin-top: 0; color: #ff8c00; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_settings_title">
                                 СМЕНИТЬ ЛОГИН И ПАРОЛЬ</h3>
                             <div class="update-box"
                                 style="margin-top: 20px; border: 2px solid rgba(255, 255, 255, 0.2); padding: 20px; background: rgba(255,255,255,0.01);">
@@ -191,20 +192,21 @@
                                     style="max-width: 100%; display: flex; flex-direction: column; gap: 15px; width: 100%;">
                                     <div class="input-group" style="margin-bottom: 0; width: 100%;">
                                         <input type="text" id="newUsername" maxlength="20"
+                                            data-i18n-placeholder="profile_new_username_placeholder"
                                             placeholder="Введите новый логин"
                                             style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
                                     </div>
                                     <div class="input-group" style="margin-bottom: 0; width: 100%;">
-                                        <input type="password" id="newPassword" placeholder="Введите новый пароль"
+                                        <input type="password" id="newPassword" data-i18n-placeholder="profile_new_password_placeholder" placeholder="Введите новый пароль"
                                             style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
                                     </div>
                                     <div class="input-group" style="margin-bottom: 0; width: 100%;">
-                                        <input type="password" id="currentPassword" placeholder="Текущий пароль (нужен только для смены пароля)"
+                                        <input type="password" id="currentPassword" data-i18n-placeholder="profile_curr_password_placeholder" placeholder="Текущий пароль"
                                             style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
                                     </div>
                                     <div style="text-align: center; width: 100%;">
                                         <button type="submit" class="auth-btn"
-                                            style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
+                                            style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;" data-i18n="profile_save_settings">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
                                     </div>
                                     <div id="message" style="margin-top: 10px;"></div>
                                 </form>
@@ -215,24 +217,21 @@
                         <div id="deleteAccountSection" class="animate-fade-in"
                             style="border: 2px solid #ff4444; padding: 25px; background: rgba(255, 68, 68, 0.02); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 15px;">
                             <h3
-                                style="margin-top: 0; color: #ff4444; border-bottom: 2px dashed #ff4444; padding-bottom: 8px; text-transform: uppercase;">
+                                style="margin-top: 0; color: #ff4444; border-bottom: 2px dashed #ff4444; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_delete_title">
                                 УДAЛЕНИЕ АККАУНТА</h3>
                             <div id="deleteStep1">
-                                <p style="font-size: 11px; margin-bottom: 15px; color: #ff8888;">Внимание! Это действие
-                                    необратимо. Все ваши данные будут стерты навсегда.</p>
+                                <p style="font-size: 11px; margin-bottom: 15px; color: #ff8888;" data-i18n="profile_delete_confirm">Внимание! Это действие необратимо. Все ваши данные будут стерты навсегда.</p>
                                 <button id="requestDeleteBtn" class="user-btn btn-delete"
-                                    style="width: auto; cursor: pointer; border-color: red; color: red; font-weight: bold; text-transform: uppercase;">УДAЛИТЬ АККАУНТ</button>
+                                    style="width: auto; cursor: pointer; border-color: red; color: red; font-weight: bold; text-transform: uppercase;" data-i18n="profile_delete_btn">УДAЛИТЬ АККАУНТ</button>
                             </div>
                             <div id="deleteStep2" style="display: none; margin-top: 15px;">
-                                <p style="font-size: 11px; margin-bottom: 15px; color: yellow;">Код подтверждения
-                                    отправлен на вашу почту. Введите его для подтверждения удаления:</p>
+                                <p style="font-size: 11px; margin-bottom: 15px; color: yellow;" data-i18n="profile_delete_code_sent">Код подтверждения отправлен на вашу почту. Введите его для подтверждения удаления:</p>
                                 <div
                                     style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-                                    <input type="text" id="deleteConfirmCode" placeholder="Код из письма"
+                                    <input type="text" id="deleteConfirmCode" data-i18n-placeholder="profile_delete_code_placeholder" placeholder="Код из письма"
                                         style="background: black; color: white; border: 2px solid #ff4444; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
                                     <button id="confirmDeleteBtn" class="user-btn btn-delete"
-                                        style="width: auto; cursor: pointer; text-transform: uppercase;">Подтвердить
-                                        удаление</button>
+                                        style="width: auto; cursor: pointer; text-transform: uppercase;" data-i18n="profile_delete_btn">Подтвердить удаление</button>
                                 </div>
                             </div>
                             <div id="deleteMessage" style="margin-top: 10px; font-size: 11px;"></div>

@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initializeChat(data);
     })
     .catch(() => {
-        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+        window.showCustomAlert(window.t('login_required', 'Пожалуйста, войдите в систему.')).then(() => {
             window.location.href = "login.html";
         });
     });
@@ -22,6 +22,7 @@ function initializeChat(myData) {
     let currentUserId = myData.id;
     let currentUserRole = myData.role;
     let currentFriendId = null;
+    window.currentFriendId = null;
     let currentFriendName = null;
     let currentFriendRole = null;
 
@@ -39,7 +40,7 @@ function initializeChat(myData) {
 
     window.deleteMessage = async function(messageId, event) {
         if (event) event.stopPropagation();
-        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить это сообщение?")) return;
+        if (!await window.showCustomConfirm(window.t('chat_delete_confirm', 'Вы уверены, что хотите удалить это сообщение?'))) return;
 
         fetch(`/api/messages/${messageId}`, {
             method: "DELETE",
@@ -50,12 +51,12 @@ function initializeChat(myData) {
             if (data.message) {
                 loadMessages();
             } else {
-                await window.showCustomAlert(data.error || "Ошибка удаления сообщения");
+                await window.showCustomAlert(data.error || window.t('error_network', 'Ошибка удаления сообщения'));
             }
         })
         .catch(async err => {
             console.error(err);
-            await window.showCustomAlert("Ошибка сети при удалении сообщения");
+            await window.showCustomAlert(window.t('error_network', 'Ошибка сети при удалении сообщения'));
         });
     };
 
@@ -76,14 +77,12 @@ function initializeChat(myData) {
             const unreadIds = new Set((unreadFriends || []).map(uf => uf.sender_id));
             const list = document.getElementById("chatFriendsList");
             if (friends.length === 0) {
-                const emptyHTML = '<p class="loading-text">У вас нет друзей</p>';
-                if (list.innerHTML !== emptyHTML) {
-                    list.innerHTML = emptyHTML;
-                }
+                const emptyHTML = `<p class="loading-text">${window.t('chat_no_friends', 'У вас нет друзей')}</p>`;
+                list.innerHTML = emptyHTML;
                 return;
             }
 
-            if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("У вас нет друзей")) {
+            if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("У вас нет друзей") || list.innerHTML.includes("You have no friends") || list.innerHTML.includes("У вас немає друзів")) {
                 list.innerHTML = '';
             }
 
@@ -196,6 +195,7 @@ function initializeChat(myData) {
     // Выбор друга для чата
     window.selectFriend = function(friendId, friendName, friendAvatar, friendStatus, friendRole) {
         currentFriendId = friendId;
+        window.currentFriendId = friendId;
         currentFriendName = friendName;
         currentFriendRole = friendRole;
 
@@ -236,13 +236,11 @@ function initializeChat(myData) {
                 window.updateNavbarNotifications();
             }
             if (messages.length === 0) {
-                const emptyHTML = '<p class="loading-text">Нет сообщений. Начните диалог!</p>';
-                if (container.innerHTML !== emptyHTML) {
-                    container.innerHTML = emptyHTML;
-                }
+                const emptyHTML = `<p class="loading-text">${window.t('chat_no_messages', 'Нет сообщений. Начните диалог!')}</p>`;
+                container.innerHTML = emptyHTML;
             } else {
                 const isCloseToBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
-                const isFirstLoad = container.innerHTML.includes("loading-text") || container.innerHTML.includes("Нет сообщений");
+                const isFirstLoad = container.innerHTML.includes("loading-text") || container.innerHTML.includes("Нет сообщений") || container.innerHTML.includes("No messages") || container.innerHTML.includes("Немає повідомлень");
 
                 // Сравниваем списки сообщений по их ID, чтобы определить необходимость полной перерисовки
                 const existingMessages = Array.from(container.querySelectorAll(".message"));
@@ -255,14 +253,17 @@ function initializeChat(myData) {
                     container.innerHTML = '';
                     let lastDateStr = null;
                     
+                    const curLang = localStorage.getItem("lang") || "en";
+                    const localeMap = { en: 'en-US', ru: 'ru-RU', uk: 'uk-UA' };
+                    const currentLocale = localeMap[curLang] || 'en-US';
+
                     messages.forEach((msg, index) => {
                          const msgId = String(msg.id);
                          const isMine = msg.sender_id === currentUserId;
                          const msgClass = isMine ? 'my-message' : 'friend-message';
                          
                          const dateObj = new Date(msg.created_at);
-                         // Формат: "25 июня 2026 г." или "25 июня 2026"
-                         const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                         const dateStr = dateObj.toLocaleDateString(currentLocale, { day: 'numeric', month: 'long', year: 'numeric' });
                          
                          if (dateStr !== lastDateStr) {
                              const divider = document.createElement("div");
@@ -272,11 +273,11 @@ function initializeChat(myData) {
                              lastDateStr = dateStr;
                          }
 
-                         const timeStr = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                         const timeStr = dateObj.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit' });
                          const contentHtml = escapeHtml(msg.content);
                          
                          const canDelete = isMine || currentUserRole === 'admin' || (currentUserRole === 'moderator' && currentFriendRole !== 'admin');
-                         const deleteBtn = canDelete ? `<button class="delete-btn" style="margin-left: 8px;" onclick="event.stopPropagation(); deleteMessage(${msgId}, event)">Удалить</button>` : '';
+                         const deleteBtn = canDelete ? `<button class="delete-btn" style="margin-left: 8px;" onclick="event.stopPropagation(); deleteMessage(${msgId}, event)">${window.t('delete', 'Удалить')}</button>` : '';
 
                          const msgNode = document.createElement("div");
                          const shouldAnimate = !isFirstLoad && (index === messages.length - 1);
@@ -312,7 +313,7 @@ function initializeChat(myData) {
         .catch(err => {
             console.error('Ошибка загрузки сообщений:', err);
             const container = document.getElementById("messagesContainer");
-            const errorHTML = '<p class="loading-text">Ошибка загрузки</p>';
+            const errorHTML = `<p class="loading-text">${window.t('error_load', 'Ошибка загрузки')}</p>`;
             if (container.innerHTML !== errorHTML) {
                 container.innerHTML = errorHTML;
             }
@@ -343,19 +344,19 @@ function initializeChat(myData) {
     // Отправка сообщения
     document.getElementById("sendBtn").addEventListener("click", async () => {
         if (!currentFriendId) {
-            await window.showCustomAlert("Выберите друга");
+            await window.showCustomAlert(window.t('chat_no_chat', 'Выберите друга'));
             return;
         }
 
         const content = document.getElementById("messageInput").value.trim();
         if (!content) {
-            document.getElementById("sendMessage").textContent = "Напишите сообщение";
+            document.getElementById("sendMessage").textContent = window.t('chat_message_empty', 'Напишите сообщение');
             document.getElementById("sendMessage").style.color = "#ff4444";
             return;
         }
 
         const msgStatus = document.getElementById("sendMessage");
-        msgStatus.textContent = "Отправка...";
+        msgStatus.textContent = window.t('loading', 'Отправка...');
         msgStatus.style.color = "#aaa";
 
         let imageUrl = null;
@@ -378,7 +379,7 @@ function initializeChat(myData) {
                 }
                 imageUrl = uploadData.url;
             } catch (err) {
-                msgStatus.textContent = "Ошибка загрузки медиа";
+                msgStatus.textContent = window.t('error_network', 'Ошибка загрузки медиа');
                 msgStatus.style.color = "#ff4444";
                 return;
             }
@@ -406,13 +407,13 @@ function initializeChat(myData) {
                 if (clearAttachBtn) clearAttachBtn.style.display = "none";
                 loadMessages();
             } else {
-                document.getElementById("sendMessage").textContent = data.error || "Ошибка отправки";
+                document.getElementById("sendMessage").textContent = data.error || window.t('error_network', 'Ошибка отправки');
                 document.getElementById("sendMessage").style.color = "#ff4444";
             }
         })
         .catch(err => {
             console.error('Ошибка:', err);
-            document.getElementById("sendMessage").textContent = "Ошибка сети";
+            document.getElementById("sendMessage").textContent = window.t('error_network', 'Ошибка сети');
             document.getElementById("sendMessage").style.color = "#ff4444";
         });
     });

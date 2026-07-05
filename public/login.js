@@ -21,7 +21,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         if (response.ok) {
             if (messageDiv) {
                 messageDiv.style.color = '#00ff00';
-                messageDiv.textContent = 'Успешный вход!';
+                messageDiv.textContent = window.t('login_success', 'Успешный вход!');
             }
             
             setTimeout(() => {
@@ -30,11 +30,11 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         } else {
             if (messageDiv) {
                 messageDiv.style.color = 'red';
-                messageDiv.textContent = data.error || 'Неверные учетные данные.';
+                messageDiv.textContent = data.error || window.t('login_failed', 'Неверные учетные данные.');
             }
         }
     } catch (error) {
         console.error('Ошибка при выполнении запроса входа:', error);
-        document.getElementById('message').textContent = 'Ошибка подключения к серверу.';
+        document.getElementById('message').textContent = window.t('error_network', 'Ошибка подключения к серверу.');
     }
 });

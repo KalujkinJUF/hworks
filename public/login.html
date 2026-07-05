@@ -2,35 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Логин</title>
+    <title data-i18n="login_title">Логин</title>
     <link rel="stylesheet" href="styles.css"> 
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <nav id="main-nav">
-                <a href="index.html" id="nav-home">Главная</a>
-                <a href="search.html" id="nav-search" style="display: none;">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-                <a href="login.html" id="nav-login">Логин</a>
-                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+                <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+                <a href="search.html" id="nav-search" style="display: none;" data-i18n="nav_search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+                <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+                <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
             </nav>
         </header>
 
         <main>
             <section class="auth-form">
-                <h2>Вход в систему</h2>
+                <h2 data-i18n="login_title">Вход в систему</h2>
                 <form id="login-form">
                     <div class="input-group">
-                        <input type="text" id="username" placeholder="Имя пользователя" required>
+                        <input type="text" id="username" data-i18n-placeholder="login_user_placeholder" placeholder="Логин или Email" required>
                     </div>
                     <div class="input-group">
-                        <input type="password" id="password" placeholder="Пароль" required>
+                        <input type="password" id="password" data-i18n-placeholder="login_pass_placeholder" placeholder="Пароль" required>
                     </div>
-                    <button type="submit" class="auth-btn">Войти</button>
+                    <button type="submit" class="auth-btn" data-i18n="login_btn">Войти</button>
                     
                     <div id="message" class="error-message"></div>
                 </form>

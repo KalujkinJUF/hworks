@@ -2231,4 +2231,36 @@ select:focus {
     color: #ffff00;
 }
 
+/* Переключатель языков */
+.lang-selector {
+    display: inline-flex;
+    gap: 5px;
+    margin-left: auto;
+    align-items: center;
+    padding-left: 15px;
+    border-left: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.lang-btn {
+    background: black;
+    color: white;
+    border: 2px solid white;
+    padding: 3px 8px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.lang-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-btn.active {
+    background: white;
+    color: black;
+}
+
+
 

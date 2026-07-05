@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Друзья</title>
+    <title data-i18n="nav_friends">Друзья</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <nav id="main-nav">
-                <a href="index.html" id="nav-home">Главная</a>
-                <a href="search.html" id="nav-search">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-                <a href="login.html" id="nav-login">Логин</a>
-                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+                <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+                <a href="search.html" id="nav-search" data-i18n="nav_search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;" data-i18n="nav_chat">Чат</a>
+                <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+                <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
             </nav>
         </header>
 
@@ -26,19 +27,19 @@
             <div class="feed-column">
                 <div class="feed-wrapper">
                     <section class="main-content-wrapper">
-                        <h2>Друзья</h2>
+                        <h2 data-i18n="nav_friends">Друзья</h2>
 
                         <!-- Табы для переключения между разделами -->
                         <div class="friends-tabs">
-                            <button class="tab-btn active" data-tab="friends">Мои друзья</button>
-                            <button class="tab-btn" data-tab="requests">Запросы (<span id="requests-count">0</span>)</button>
-                            <button class="tab-btn" data-tab="outgoing">Отправленные</button>
+                            <button class="tab-btn active" data-tab="friends" data-i18n="nav_friends">Мои друзья</button>
+                            <button class="tab-btn" data-tab="requests"><span data-i18n="friends_incoming">Входящие запросы</span> (<span id="requests-count">0</span>)</button>
+                            <button class="tab-btn" data-tab="outgoing" data-i18n="friends_outgoing">Отправленные</button>
                         </div>
 
                         <!-- Мои друзья -->
                         <div id="friends-tab" class="tab-content active">
                             <div id="friendsList" class="friends-list">
-                                <p class="loading-text">Загрузка...</p>
+                                <p class="loading-text" data-i18n="loading">Загрузка...</p>
                             </div>
                             <div id="friendsPagination" class="pagination-container" style="display: flex; justify-content: center; gap: 8px; margin-top: 20px;"></div>
                         </div>
@@ -46,14 +47,14 @@
                         <!-- Входящие запросы -->
                         <div id="requests-tab" class="tab-content" style="display: none;">
                             <div id="requestsList" class="friends-list">
-                                <p class="loading-text">Загрузка...</p>
+                                <p class="loading-text" data-i18n="loading">Загрузка...</p>
                             </div>
                         </div>
 
                         <!-- Отправленные запросы -->
                         <div id="outgoing-tab" class="tab-content" style="display: none;">
                             <div id="outgoingList" class="friends-list">
-                                <p class="loading-text">Загрузка...</p>
+                                <p class="loading-text" data-i18n="loading">Загрузка...</p>
                             </div>
                         </div>
                     </section>

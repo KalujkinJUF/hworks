@@ -28,7 +28,7 @@ function playRetroNotificationSound() {
         osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.1); // Слайд к E5
         
         // Настройка мягкого затухания
-        gain.gain.setValueAtTime(0.06, ctx.currentTime); // Тихая и мягкая громкость (6%)
+        gain.gain.setValueAtTime(0.25, ctx.currentTime); // Увеличили громкость до 25%
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12); // Затухание за 120мс
         
         osc.connect(gain);
@@ -59,10 +59,10 @@ window.showCustomAlert = function(message) {
         
         overlay.innerHTML = `
             <div class="custom-modal-box">
-                <div class="custom-modal-header">ВНИМАНИЕ</div>
+                <div class="custom-modal-header">${window.t('modal_alert_title', 'ВНИМАНИЕ')}</div>
                 <div class="custom-modal-content">${escapeHtmlModal(message)}</div>
                 <div class="custom-modal-buttons">
-                    <button class="custom-modal-btn btn-ok" id="customAlertOkBtn">OK</button>
+                    <button class="custom-modal-btn btn-ok" id="customAlertOkBtn">${window.t('modal_ok', 'OK')}</button>
                 </div>
             </div>
         `;
@@ -89,11 +89,11 @@ window.showCustomConfirm = function(message) {
         
         overlay.innerHTML = `
             <div class="custom-modal-box">
-                <div class="custom-modal-header">ПОДТВЕРЖДЕНИЕ</div>
+                <div class="custom-modal-header">${window.t('modal_confirm_title', 'ПОДТВЕРЖДЕНИЕ')}</div>
                 <div class="custom-modal-content">${escapeHtmlModal(message)}</div>
                 <div class="custom-modal-buttons">
-                    <button class="custom-modal-btn btn-yes" id="customConfirmYesBtn">ДА</button>
-                    <button class="custom-modal-btn btn-no" id="customConfirmNoBtn">НЕТ</button>
+                    <button class="custom-modal-btn btn-yes" id="customConfirmYesBtn">${window.t('modal_yes', 'ДА')}</button>
+                    <button class="custom-modal-btn btn-no" id="customConfirmNoBtn">${window.t('modal_no', 'НЕТ')}</button>
                 </div>
             </div>
         `;
@@ -179,33 +179,45 @@ function initializeNavbar(myData) {
         if (!token) return;
 
         // Инициализируем переменные отслеживания звука в контексте окна
-        if (typeof window.prevUnreadChatCount === 'undefined') {
-            window.prevUnreadChatCount = -1;
+        if (typeof window.prevUnreadNotificationCount === 'undefined') {
+            window.prevUnreadNotificationCount = -1;
             window.lastNotificationSoundTime = 0;
         }
 
-        // Получаем непрочитанные сообщения
-        fetch("/api/messages/unread/count", {
+        // Получаем непрочитанные от друзей с количеством
+        fetch("/api/messages/unread/friends", {
             credentials: 'include'
         })
         .then(res => res.json())
-        .then(data => {
-            const count = data.count || 0;
+        .then(unreadList => {
+            const list = unreadList || [];
+            
+            // Общая сумма для кнопки в навбаре
+            const totalCount = list.reduce((acc, item) => acc + item.count, 0);
+            
             const btnChat = document.getElementById("nav-chat");
             if (btnChat) {
-                btnChat.textContent = count > 0 ? `Чат (+${count})` : "Чат";
+                const chatText = window.t('nav_chat', 'Чат');
+                btnChat.textContent = totalCount > 0 ? `${chatText} (+${totalCount})` : chatText;
             }
 
-            // Воспроизводим звук при увеличении числа непрочитанных, если пользователь не на странице чата
+            // Сумма для уведомлений (исключаем открытый чат, если окно в фокусе)
             const isChatPage = window.location.pathname.split('/').pop() === 'chat.html';
-            if (!isChatPage && window.prevUnreadChatCount !== -1 && count > window.prevUnreadChatCount) {
+            const isAppVisible = !document.hidden && document.hasFocus();
+            const activeFriendId = (isChatPage && isAppVisible && window.currentFriendId) ? parseInt(window.currentFriendId) : null;
+
+            const notificationCount = list
+                .filter(item => !activeFriendId || parseInt(item.sender_id) !== activeFriendId)
+                .reduce((acc, item) => acc + item.count, 0);
+
+            if (window.prevUnreadNotificationCount !== -1 && notificationCount > window.prevUnreadNotificationCount) {
                 const now = Date.now();
                 if (now - window.lastNotificationSoundTime > 5000) {
                     playRetroNotificationSound();
                     window.lastNotificationSoundTime = now;
                 }
             }
-            window.prevUnreadChatCount = count;
+            window.prevUnreadNotificationCount = notificationCount;
         })
         .catch(err => console.error("Ошибка при получении непрочитанных сообщений:", err));
 
@@ -251,6 +263,9 @@ function initializeNavbar(myData) {
         if (btnLogout) btnLogout.style.display = "inline-block";
 
         updateNavbarNotifications();
+
+        // Автообновление уведомлений в реальном времени каждые 10 секунд
+        setInterval(updateNavbarNotifications, 10000);
 
         // Детекция активности и фоновый пинг присутствия
         let lastActivityTime = Date.now();

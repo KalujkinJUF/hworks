@@ -2,22 +2,23 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админ-панель</title>
+    <title data-i18n="admin_panel_title">Админ-панель</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container admin-container">
         <header>
 <nav id="main-nav">
-    <a href="index.html" id="nav-home">Главная</a>
-    <a href="search.html" id="nav-search" style="display: none;">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-    <a href="login.html" id="nav-login">Логин</a>
-    <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-    <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-    <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+    <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+    <a href="search.html" id="nav-search" style="display: none;" data-i18n="nav_search">Поиск</a>
+    <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+    <a href="chat.html" id="nav-chat" style="display: none;" data-i18n="nav_chat">Чат</a>
+    <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+    <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+    <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+    <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+    <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
 </nav>
         </header>
 
@@ -26,10 +27,10 @@
             <div class="rainbow-border">
                 <!-- Внутренняя панель -->
                 <div class="admin-panel">
-                    <h1 class="admin-title">Админ-панель</h1>
+                    <h1 class="admin-title" data-i18n="admin_panel_title">Админ-панель</h1>
                     
                     <!-- Кнопка показать/скрыть пользователей -->
-                    <button id="toggleUsersBtn" class="admin-toggle-btn">Показать всех пользователей</button>
+                    <button id="toggleUsersBtn" class="admin-toggle-btn" data-i18n="admin_users_list">Показать всех пользователей</button>
                     
                     <!-- Блок со списком пользователей (изначально скрыт) -->
                     <div id="usersContainer" class="users-container" style="display: none;">

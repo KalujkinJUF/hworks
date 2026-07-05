@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чат</title>
+    <title data-i18n="nav_chat">Чат</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
 </head>
 <body class="chat-page">
     <div class="container">
         <header>
             <nav id="main-nav">
-                <a href="index.html" id="nav-home">Главная</a>
-                <a href="search.html" id="nav-search">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-                <a href="login.html" id="nav-login">Логин</a>
-                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+                <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+                <a href="search.html" id="nav-search" data-i18n="nav_search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+                <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+                <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
             </nav>
         </header>
 
@@ -26,10 +27,10 @@
             <div class="chat-friends-column">
                 <div class="chat-section">
                     <div class="chat-header" style="justify-content: center; align-items: center;">
-                        <h2 style="margin: 0; padding: 0; border: none; font-size: 16px; color: white; text-transform: uppercase; text-align: center;">Чаты</h2>
+                        <h2 style="margin: 0; padding: 0; border: none; font-size: 16px; color: white; text-transform: uppercase; text-align: center;" data-i18n="nav_chat">Чаты</h2>
                     </div>
                     <div id="chatFriendsList" class="friends-list" style="margin-top: 15px;">
-                        <p class="loading-text">Загрузка друзей...</p>
+                        <p class="loading-text" data-i18n="loading">Загрузка друзей...</p>
                     </div>
                 </div>
             </div>
@@ -40,28 +41,28 @@
                     <div class="chat-header">
                         <div id="chatInfo" class="chat-info" style="display: none;">
                             <div class="friend-chat-info">
-                                <h2 id="chatTitle">Выберите друга</h2>
+                                <h2 id="chatTitle" data-i18n="chat_no_chat">Выберите друга</h2>
                                 <span id="friendStatus" class="friend-chat-status"></span>
                             </div>
                         </div>
-                        <div id="noChat" class="loading-text">Выберите друга для начала чата</div>
+                        <div id="noChat" class="loading-text" data-i18n="chat_no_chat">Выберите друга для начала чата</div>
                     </div>
 
                     <div id="messagesContainer" class="messages-container" style="display: none;">
-                        <p class="loading-text">Загрузка сообщений...</p>
+                        <p class="loading-text" data-i18n="loading">Загрузка сообщений...</p>
                     </div>
 
                     <div id="chatInputSection" class="chat-input-section" style="display: none;">
                         <div class="input-group" style="display: flex; flex-direction: column; gap: 8px;">
-                            <textarea id="messageInput" placeholder="Напишите сообщение..." rows="3"></textarea>
+                            <textarea id="messageInput" data-i18n-placeholder="chat_message_placeholder" placeholder="Напишите сообщение..." rows="3"></textarea>
                             <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; width: 100%; margin-top: 5px;">
                                 <input type="file" id="chatFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
-                                <button id="attachBtn" class="user-btn" style="width: auto; padding: 6px 12px; font-size: 11px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;">Прикрепить фото</button>
+                                <button id="attachBtn" class="user-btn" style="width: auto; padding: 6px 12px; font-size: 11px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" data-i18n="attach_photo">Прикрепить фото</button>
                                 <span id="attachedFileName" style="font-size: 11px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>
-                                <button id="clearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 6px 12px; font-size: 11px; border-color: red; color: red; margin: 0; cursor: pointer;">Удалить</button>
+                                <button id="clearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 6px 12px; font-size: 11px; border-color: red; color: red; margin: 0; cursor: pointer;" data-i18n="delete">Удалить</button>
                             </div>
                         </div>
-                        <button id="sendBtn" class="auth-btn" style="width: 100%;">Отправить</button>
+                        <button id="sendBtn" class="auth-btn" style="width: 100%;" data-i18n="send">Отправить</button>
                         <div id="sendMessage" class="verify-message"></div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 [package]
 name = "voidtree"
-version = "0.2.5"
+version = "0.2.6"
 description = "A Tauri App"
 authors = ["you"]
 license = ""

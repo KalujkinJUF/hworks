@@ -3,41 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>О нас</title>
+    <title data-i18n="about_title">О нас</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <nav id="main-nav">
-                <a href="index.html" id="nav-home">Главная</a>
-                <a href="search.html" id="nav-search">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-                <a href="login.html" id="nav-login">Логин</a>
-                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+                <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+                <a href="search.html" id="nav-search" data-i18n="nav_search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;" data-i18n="nav_chat">Чат</a>
+                <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+                <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
             </nav>
         </header>
 
         <main class="main-layout" style="display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 20px 0;">
             <section style="width: 100%; max-width: 800px; margin: 0 auto; text-align: center; border: 2px solid rgba(255, 255, 255, 0.25); padding: 30px; background: rgba(255, 255, 255, 0.01); box-sizing: border-box;">
-                <h2 style="color: #ffd700; border-bottom: 2px dashed white; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase;">О проекте voidtree</h2>
+                <h2 style="color: #ffd700; border-bottom: 2px dashed white; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase;" data-i18n="about_title">О проекте voidtree</h2>
                 
-                <p style="font-size: 13px; line-height: 1.8; color: white; text-align: left; margin-bottom: 20px;">
+                <p style="font-size: 13px; line-height: 1.8; color: white; text-align: left; margin-bottom: 20px;" data-i18n="about_description">
                     Добро пожаловать в <strong>voidtree</strong> — уютную, ламповую и стилизованную социальную сеть с ретро-эстетикой DOS-интерфейсов и пиксельной графики. 
                     Наш проект создан для тех, кто ценит простоту, скорость и уединение в сети. Здесь вы можете делиться мыслями, находить друзей, переписываться и настраивать свои профили так, как это делали в эпоху раннего веба.
                 </p>
 
                 <div style="border-top: 1px dashed rgba(255,255,255,0.2); margin: 20px 0;"></div>
 
-                <h3 style="color: #00ccff; text-transform: uppercase; margin-bottom: 15px;">Наши ключевые особенности</h3>
+                <h3 style="color: #00ccff; text-transform: uppercase; margin-bottom: 15px;" data-i18n="about_features_title">Наши ключевые особенности</h3>
                 <ul style="font-size: 12px; line-height: 1.8; color: #ccc; text-align: left; margin-bottom: 20px; list-style-type: square; padding-left: 20px;">
-                    <li><strong>Минимализм и производительность:</strong> Никаких тяжелых скриптов, трекеров и навязчивой рекламы. Только чистый контент.</li>
-                    <li><strong>Конфиденциальность:</strong> Мы не собираем ваши персональные данные и не передаем их третьим лицам. Все данные обрабатываются локально.</li>
-                    <li><strong>Ретро-интерфейс:</strong> Классический DOS-шрифт, монохромная цветовая палитра и стильные рамки.</li>
+                    <li data-i18n="about_feature_1">Полная анонимность (без отслеживания IP, геолокации и сбора телеметрии).</li>
+                    <li data-i18n="about_feature_2">Концепция Zero-Knowledge: личные сообщения и посты шифруются в базе данных по стандарту AES-256.</li>
+                    <li data-i18n="about_feature_3">Никаких скриптов слежки, строгие httpOnly cookie.</li>
+                    <li data-i18n="about_feature_4">Безопасная обработка медиафайлов (очистка EXIF и перекодирование).</li>
                 </ul>
 
                 <div style="border-top: 1px dashed rgba(255,255,255,0.2); margin: 20px 0;"></div>

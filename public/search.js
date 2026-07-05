@@ -94,14 +94,14 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(err => {
                 console.error("Error loading search users:", err);
-                messageDiv.textContent = "Ошибка загрузки данных";
+                messageDiv.textContent = window.t('error_load', 'Ошибка загрузки данных');
                 messageDiv.style.color = "#ff4444";
             });
     }
 
     function displayUsers(users) {
         if (users.length === 0) {
-            resultsDiv.innerHTML = '<p class="loading-text">Пользователей не найдено</p>';
+            resultsDiv.innerHTML = `<p class="loading-text">${window.t('search_no_results', 'Пользователей не найдено')}</p>`;
         } else {
             resultsDiv.innerHTML = users.map(u => {
                 const color = roleColors[u.role] || '#ffffff';
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span class="result-username" style="color: ${color};">${escapeHtml(u.username)}</span>
                                 <span class="result-role" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
                             </div>
-                            <p class="result-about">${escapeHtml(u.about) || 'Нет информации'}</p>
+                            <p class="result-about">${escapeHtml(u.about) || window.t('no_info', 'Нет информации')}</p>
                         </a>
                     </div>
                 `;

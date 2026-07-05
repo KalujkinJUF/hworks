@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initializeFriends(data);
     })
     .catch(() => {
-        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+        window.showCustomAlert(window.t('login_required', 'Пожалуйста, войдите в систему.')).then(() => {
             window.location.href = "login.html";
         });
     });
@@ -103,7 +103,7 @@ function initializeFriends(myData) {
             console.log('Получено друзей:', friends.length, friends);
             const list = document.getElementById("friendsList");
             if (friends.length === 0) {
-                list.innerHTML = '<p class="loading-text">У вас пока нет друзей</p>';
+                list.innerHTML = `<p class="loading-text">${window.t('friends_none', 'У вас пока нет друзей')}</p>`;
                 renderPagination('friendsPagination', currentPage, totalPages, (p) => loadFriends(p));
             } else {
                 list.innerHTML = friends.map(friend => {
@@ -129,7 +129,7 @@ function initializeFriends(myData) {
                             </div>
                         </a>
                         <div class="friend-actions" style="padding: 15px;">
-                            <button class="user-btn delete-btn" onclick="deleteFriend(${friend.id})">Удалить</button>
+                            <button class="user-btn delete-btn" onclick="deleteFriend(${friend.id})">${window.t('delete', 'Удалить')}</button>
                         </div>
                     </div>
                     `;
@@ -142,7 +142,7 @@ function initializeFriends(myData) {
             console.error('Ошибка загрузки друзей:', err);
             const list = document.getElementById("friendsList");
             if (list) {
-                list.innerHTML = `<p class="loading-text" style="color: #ff4444;">Ошибка загрузки: ${err.message}</p>`;
+                list.innerHTML = `<p class="loading-text" style="color: #ff4444;">${window.t('error_load', 'Ошибка загрузки')}: ${err.message}</p>`;
             }
         });
     }
@@ -158,7 +158,7 @@ function initializeFriends(myData) {
             const count = document.getElementById("requests-count");
             count.textContent = requests.length;
             if (requests.length === 0) {
-                list.innerHTML = '<p class="loading-text">Нет входящих запросов</p>';
+                list.innerHTML = `<p class="loading-text">${window.t('friends_no_requests', 'Нет входящих запросов')}</p>`;
             } else {
                 list.innerHTML = requests.map(req => {
                     const statusClass = `status-${req.user_status || 'offline'}`;
@@ -183,8 +183,8 @@ function initializeFriends(myData) {
                             </div>
                         </a>
                         <div class="friend-actions" style="padding: 15px; display: flex; gap: 8px;">
-                            <button class="auth-btn" style="margin: 0; width: auto;" onclick="acceptRequest(${req.request_id})">Принять</button>
-                            <button class="user-btn" style="margin: 0; width: auto;" onclick="rejectRequest(${req.request_id})">Отклонить</button>
+                            <button class="auth-btn" style="margin: 0; width: auto;" onclick="acceptRequest(${req.request_id})">${window.t('friends_accept', 'Принять')}</button>
+                            <button class="user-btn" style="margin: 0; width: auto;" onclick="rejectRequest(${req.request_id})">${window.t('friends_reject', 'Отклонить')}</button>
                         </div>
                     </div>
                     `;
@@ -203,7 +203,7 @@ function initializeFriends(myData) {
         .then(requests => {
             const list = document.getElementById("outgoingList");
             if (requests.length === 0) {
-                list.innerHTML = '<p class="loading-text">Вы не отправляли запросы</p>';
+                list.innerHTML = `<p class="loading-text">${window.t('friends_no_outgoing', 'Вы не отправляли запросы')}</p>`;
             } else {
                 list.innerHTML = requests.map(req => {
                     const statusClass = `status-${req.user_status || 'offline'}`;
@@ -228,7 +228,7 @@ function initializeFriends(myData) {
                             </div>
                         </a>
                         <div class="friend-actions" style="padding: 15px;">
-                            <span class="pending-status">Ожидание</span>
+                            <span class="pending-status">${window.t('friends_pending', 'Ожидание')}</span>
                         </div>
                     </div>
                     `;
@@ -267,7 +267,7 @@ function initializeFriends(myData) {
 
     // Удалить друга
     window.deleteFriend = async function(friendId) {
-        if (!await window.showCustomConfirm('Вы уверены?')) return;
+        if (!await window.showCustomConfirm(window.t('confirm_are_you_sure', 'Вы уверены?'))) return;
         fetch(`/api/friends/${friendId}`, {
             method: "DELETE",
             credentials: 'include'

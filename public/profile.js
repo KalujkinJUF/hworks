@@ -15,11 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
         const viewingUsername = params.get('username');
         if (!viewingUsername) {
-            window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+            window.showCustomAlert(window.t('login_required', 'Пожалуйста, войдите в систему.')).then(() => {
                 window.location.href = "login.html";
             });
         } else {
-            window.showCustomAlert("Просмотр профиля доступен только авторизованным пользователям.").then(() => {
+            window.showCustomAlert(window.t('login_required_profile', 'Просмотр профиля доступен только авторизованным пользователям.')).then(() => {
                 window.location.href = "login.html";
             });
         }
@@ -67,7 +67,7 @@ function initializeProfile(myData) {
             })
             .then(data => loadProfile(data, false))
             .catch(() => {
-                window.showCustomAlert('Пользователь не найден').then(() => {
+                window.showCustomAlert(window.t('error_user_not_found', 'Пользователь не найден')).then(() => {
                     window.location.href = 'index.html';
                 });
             });
@@ -78,7 +78,7 @@ function initializeProfile(myData) {
         // Обновляем заголовок профиля
         const profileTitle = document.getElementById("profileTitle");
         if (profileTitle) {
-            profileTitle.textContent = `Профиль (${data.username})`;
+            profileTitle.textContent = `${window.t('nav_profile', 'Профиль')} (${data.username})`;
         }
 
         // Логин
@@ -174,7 +174,7 @@ function initializeProfile(myData) {
         // Дата регистрации
         const regDateElem = document.getElementById("registrationDate");
         if (regDateElem) {
-            regDateElem.innerText = data.created_at ? new Date(data.created_at).toLocaleDateString() : "Не указана";
+            regDateElem.innerText = data.created_at ? new Date(data.created_at).toLocaleDateString() : window.t('not_specified', 'Не указана');
         }
 
         // "Обо мне"
@@ -188,7 +188,7 @@ function initializeProfile(myData) {
                 // Для чужого профиля показываем как текст
                 const bioGroup = document.querySelector('.bio-group');
                 if (bioGroup) {
-                    bioGroup.innerHTML = `<label for="aboutMe">Обо мне:</label><p style="text-align: left; color: white;">${escapeHtml(data.about) || 'Нет информации'}</p>`;
+                    bioGroup.innerHTML = `<label for="aboutMe">${window.t('profile_about_title', 'Обо мне')}:</label><p style="text-align: left; color: white;">${escapeHtml(data.about) || window.t('no_info', 'Нет информации')}</p>`;
                 }
             }
         }
@@ -238,7 +238,7 @@ function initializeProfile(myData) {
             if (subscribeBtn) {
                 if (!isOwn) {
                     subscribeBtn.style.display = 'inline-block';
-                    subscribeBtn.textContent = data.is_subscribed ? 'Отписаться' : 'Подписаться';
+                    subscribeBtn.textContent = data.is_subscribed ? window.t('unsubscribe', 'Отписаться') : window.t('subscribe', 'Подписаться');
                     subscribeBtn.onclick = () => {
                         fetch(`/api/users/subscribe/${data.id}`, {
                             method: "POST",
@@ -248,7 +248,7 @@ function initializeProfile(myData) {
                         .then(subRes => {
                             if (subRes.message) {
                                 data.is_subscribed = subRes.subscribed;
-                                subscribeBtn.textContent = subRes.subscribed ? 'Отписаться' : 'Подписаться';
+                                subscribeBtn.textContent = subRes.subscribed ? window.t('unsubscribe', 'Отписаться') : window.t('subscribe', 'Подписаться');
                                 const currentCount = parseInt(document.getElementById("followersCount").innerText);
                                 document.getElementById("followersCount").innerText = subRes.subscribed ? currentCount + 1 : currentCount - 1;
                             }
@@ -264,7 +264,7 @@ function initializeProfile(myData) {
                 if (!isOwn) {
                     friendBtn.style.display = 'inline-block';
                     if (data.friend_status === null) {
-                        friendBtn.textContent = "Добавить в друзья";
+                        friendBtn.textContent = window.t('friends_add', 'Добавить в друзья');
                         friendBtn.style.borderColor = "#00ff00";
                         friendBtn.style.color = "#00ff00";
                         friendBtn.onclick = () => {
@@ -277,13 +277,13 @@ function initializeProfile(myData) {
                                 if (resData.message) {
                                     window.location.reload();
                                 } else {
-                                    window.showCustomAlert(resData.error || "Ошибка отправки запроса");
+                                    window.showCustomAlert(resData.error || window.t('error_network', 'Ошибка отправки запроса'));
                                 }
                             });
                         };
                     } else if (data.friend_status === 'pending') {
                         if (data.friend_request_sender === currentUserId) {
-                            friendBtn.textContent = "Отменить запрос";
+                            friendBtn.textContent = window.t('friends_cancel', 'Отменить запрос');
                             friendBtn.style.borderColor = "#ffcc00";
                             friendBtn.style.color = "#ffcc00";
                             friendBtn.onclick = () => {
@@ -297,7 +297,7 @@ function initializeProfile(myData) {
                                 });
                             };
                         } else {
-                            friendBtn.textContent = "Принять запрос";
+                            friendBtn.textContent = window.t('friends_accept', 'Принять запрос');
                             friendBtn.style.borderColor = "#00ff00";
                             friendBtn.style.color = "#00ff00";
                             friendBtn.onclick = () => {
@@ -312,11 +312,11 @@ function initializeProfile(myData) {
                             };
                         }
                     } else if (data.friend_status === 'accepted') {
-                        friendBtn.textContent = "Удалить друга";
+                        friendBtn.textContent = window.t('friends_delete', 'Удалить друга');
                         friendBtn.style.borderColor = "#ff4444";
                         friendBtn.style.color = "#ff4444";
                         friendBtn.onclick = async () => {
-                            if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этого пользователя из друзей?")) return;
+                            if (!await window.showCustomConfirm(window.t('friends_delete_confirm', 'Вы уверены, что хотите удалить этого пользователя из друзей?'))) return;
                             fetch(`/api/friends/${data.id}`, {
                                 method: "DELETE",
                                 credentials: 'include'
@@ -448,7 +448,7 @@ function initializeProfile(myData) {
             })
             .catch(() => {
                 verifyMessage.style.color = "#ff4444";
-                verifyMessage.textContent = "Ошибка подключения";
+                verifyMessage.textContent = window.t('error_network', 'Ошибка подключения');
             });
         });
     }
@@ -464,7 +464,7 @@ function initializeProfile(myData) {
             if (!currentUserId) {
                 if (messageDiv) {
                     messageDiv.style.color = "red";
-                    messageDiv.textContent = "Данные пользователя ещё не загрузились";
+                    messageDiv.textContent = window.t('error_load', 'Данные пользователя ещё не загрузились');
                 }
                 return;
             }
@@ -479,7 +479,7 @@ function initializeProfile(myData) {
                 if (newUsernameInput.length < 3 || newUsernameInput.length > 20) {
                     if (messageDiv) {
                         messageDiv.style.color = "red";
-                        messageDiv.textContent = "Имя пользователя должно быть от 3 до 20 символов";
+                        messageDiv.textContent = window.t('error_username_length', 'Имя пользователя должно быть от 3 до 20 символов');
                     }
                     return;
                 }
@@ -487,7 +487,7 @@ function initializeProfile(myData) {
                 if (!usernameRegex.test(newUsernameInput)) {
                     if (messageDiv) {
                         messageDiv.style.color = "red";
-                        messageDiv.textContent = "Имя пользователя может содержать только буквы, цифры, подчёркивание, точку и дефис";
+                        messageDiv.textContent = window.t('error_username_chars', 'Имя пользователя может содержать только буквы, цифры, подчёркивание, точку и дефис');
                     }
                     return;
                 }
@@ -502,11 +502,11 @@ function initializeProfile(myData) {
             .then(async response => {
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.error || "Ошибка обновления профиля");
+                    throw new Error(errData.error || window.t('error_network', 'Ошибка обновления профиля'));
                 }
                 if (messageDiv) {
                     messageDiv.style.color = "#00ff00";
-                    messageDiv.textContent = "Профиль успешно обновлён!";
+                    messageDiv.textContent = window.t('profile_saved_success', 'Профиль успешно обновлён!');
                 }
                 setTimeout(() => window.location.reload(), 1500);
             })
@@ -514,7 +514,7 @@ function initializeProfile(myData) {
                 console.error(error);
                 if (messageDiv) {
                     messageDiv.style.color = "red";
-                    messageDiv.textContent = error.message || "Ошибка при обновлении профиля.";
+                    messageDiv.textContent = error.message || window.t('error_network', 'Ошибка при обновлении профиля.');
                 }
             });
         });
@@ -859,7 +859,7 @@ function initializeProfile(myData) {
                 } else {
                     if (changeEmailMessage) {
                         changeEmailMessage.style.color = "#ff4444";
-                        changeEmailMessage.textContent = data.error || "Ошибка смены email";
+                        changeEmailMessage.textContent = data.error || window.t('error_network', 'Ошибка смены email');
                     }
                 }
             })
@@ -867,7 +867,7 @@ function initializeProfile(myData) {
                 console.error(err);
                 if (changeEmailMessage) {
                     changeEmailMessage.style.color = "#ff4444";
-                    changeEmailMessage.textContent = "Ошибка сети";
+                    changeEmailMessage.textContent = window.t('error_network', 'Ошибка сети');
                 }
             });
         });
@@ -896,7 +896,7 @@ function initializeProfile(myData) {
                 } else {
                     if (deleteMessage) {
                         deleteMessage.style.color = "#ff4444";
-                        deleteMessage.textContent = data.error || "Ошибка запроса";
+                        deleteMessage.textContent = data.error || window.t('error_network', 'Ошибка запроса');
                     }
                 }
             })
@@ -904,7 +904,7 @@ function initializeProfile(myData) {
                 console.error(err);
                 if (deleteMessage) {
                     deleteMessage.style.color = "#ff4444";
-                    deleteMessage.textContent = "Ошибка сети";
+                    deleteMessage.textContent = window.t('error_network', 'Ошибка сети');
                 }
             });
         });
@@ -919,7 +919,7 @@ function initializeProfile(myData) {
             if (!code) {
                 if (deleteMessage) {
                     deleteMessage.style.color = "#ff4444";
-                    deleteMessage.textContent = "Введите код";
+                    deleteMessage.textContent = window.t('chat_message_empty', 'Введите код');
                 }
                 return;
             }
@@ -946,7 +946,7 @@ function initializeProfile(myData) {
                 } else {
                     if (deleteMessage) {
                         deleteMessage.style.color = "#ff4444";
-                        deleteMessage.textContent = data.error || "Ошибка подтверждения";
+                        deleteMessage.textContent = data.error || window.t('error_network', 'Ошибка подтверждения');
                     }
                 }
             })
@@ -954,7 +954,7 @@ function initializeProfile(myData) {
                 console.error(err);
                 if (deleteMessage) {
                     deleteMessage.style.color = "#ff4444";
-                    deleteMessage.textContent = "Ошибка сети";
+                    deleteMessage.textContent = window.t('error_network', 'Ошибка сети');
                 }
             });
         });

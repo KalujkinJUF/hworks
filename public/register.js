@@ -12,7 +12,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         const messageDiv = document.getElementById('message');
         if (messageDiv) {
             messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Пожалуйста, подтвердите, что вы не робот.';
+            messageDiv.textContent = window.t('register_captcha_required', 'Пожалуйста, подтвердите, что вы не робот.');
         }
         return;
     }
@@ -36,7 +36,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
             // Подсвечиваем зелёным (в нашем стиле это будет отлично смотреться)
             if (messageDiv) {
                 messageDiv.style.color = '#00ff00';
-                messageDiv.textContent = 'Успешно! Входим в профиль...';
+                messageDiv.textContent = window.t('register_success', 'Успешно! Входим в профиль...');
             }
 
             // Делаем небольшую задержку в 1.5 секунды, чтобы юзер успел увидеть надпись об успехе, и перекидываем
@@ -48,7 +48,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
             if (window.turnstile) window.turnstile.reset();
             if (messageDiv) {
                 messageDiv.style.color = 'red';
-                messageDiv.textContent = data.error || 'Произошла ошибка при регистрации.';
+                messageDiv.textContent = data.error || window.t('error_network', 'Произошла ошибка при регистрации.');
             }
         }
     } catch (error) {
@@ -57,7 +57,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         const messageDiv = document.getElementById('message');
         if (messageDiv) {
             messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Ошибка подключения к серверу.';
+            messageDiv.textContent = window.t('error_network', 'Ошибка подключения к серверу.');
         }
     }
 });

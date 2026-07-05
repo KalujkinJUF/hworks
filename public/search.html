@@ -2,30 +2,31 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Поиск пользователей</title>
+    <title data-i18n="search_title">Поиск пользователей</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
 <nav id="main-nav">
-    <a href="index.html" id="nav-home">Главная</a>
-    <a href="search.html" id="nav-search">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-    <a href="login.html" id="nav-login">Логин</a>
-    <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-    <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-    <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+    <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+    <a href="search.html" id="nav-search" data-i18n="nav_search">Поиск</a>
+    <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+    <a href="chat.html" id="nav-chat" style="display: none;" data-i18n="nav_chat">Чат</a>
+    <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+    <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+    <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+    <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+    <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
 </nav>
         </header>
 
         <main style="align-items: flex-start; overflow-y: auto;">
             <section class="search-section">
-                <h2>Поиск пользователей</h2>
+                <h2 data-i18n="search_title">Поиск пользователей</h2>
                 <div class="search-group">
-                    <input type="text" id="searchInput" placeholder="Введите имя..." class="search-input" style="max-width: 100%;">
+                    <input type="text" id="searchInput" data-i18n-placeholder="search_input_placeholder" placeholder="Введите имя..." class="search-input" style="max-width: 100%;">
                 </div>
                 <div id="searchResults" class="search-results"></div>
                 <div id="searchPagination" class="pagination-container" style="display: flex; justify-content: center; gap: 8px; margin-top: 20px;"></div>

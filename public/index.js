@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const color = roleColors[post.role] || '#ffffff';
             const avatar = post.avatar ? escapeHtml(post.avatar) : '';
-            const likeText = post.is_liked ? '♥ Понравилось' : '♡ Мне нравится';
+            const likeText = post.is_liked ? `♥ ${window.t('liked_btn', 'Понравилось')}` : `♡ ${window.t('like_btn', 'Мне нравится')}`;
             const likeColor = post.is_liked ? '#ff3333' : '#fff';
             const dateStr = new Date(post.created_at).toLocaleString();
             const contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
@@ -169,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span class="post-content-short">${truncatedText}</span>
                     <span class="post-content-full" style="display: none;">${contentHtml}</span>
                     <div style="text-align: center; margin-top: 10px;">
-                        <button class="read-more-btn" style="background: none; border: 2px solid white; color: white; padding: 4px 10px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; width: auto; margin: 0 auto;">Читать далее</button>
+                        <button class="read-more-btn" style="background: none; border: 2px solid white; color: white; padding: 4px 10px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; width: auto; margin: 0 auto;">${window.t('read_more', 'Читать далее')}</button>
                     </div>
                 `;
             }
@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const isPostAdmin = currentUserRole === 'admin';
                 const isPostModerator = currentUserRole === 'moderator' && post.role !== 'admin';
                 const canDeletePost = isPostAuthor || isPostAdmin || isPostModerator;
-                const deletePostBtnHtml = canDeletePost ? `<button class="delete-btn" style="margin-left: 15px;" onclick="deletePost(${post.id})">Удалить</button>` : '';
+                const deletePostBtnHtml = canDeletePost ? `<button class="delete-btn" style="margin-left: 15px;" onclick="deletePost(${post.id})">${window.t('delete', 'Удалить')}</button>` : '';
 
                 card.innerHTML = `
                     <div class="post-header">
@@ -209,16 +209,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
                         <button class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</button>
-                        <button class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="toggleCommentsSection(${post.id})">💬 Комментарии (${post.comments_count || 0})</button>
+                        <button class="comments-toggle-btn" style="color: #00ff00; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="toggleCommentsSection(${post.id})">💬 ${window.t('comments_title', 'Комментарии')} (${post.comments_count || 0})</button>
                     </div>
                     
                     <div id="commentsWrapper-${post.id}" class="comments-wrapper" style="display: none; margin-top: 15px; border: 2px solid white; padding: 15px; background: rgba(255,255,255,0.02);">
                         <div id="commentsList-${post.id}" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
-                            <p class="loading-text" style="font-size: 10px;">Загрузка комментариев...</p>
+                            <p class="loading-text" style="font-size: 10px;">${window.t('loading', 'Загрузка...')}</p>
                         </div>
                         <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; gap: 8px;">
-                            <input type="text" id="commentInput-${post.id}" placeholder="Напишите комментарий..." style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
-                            <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">Отправить</button>
+                            <input type="text" id="commentInput-${post.id}" placeholder="${window.t('write_comment_placeholder', 'Напишите комментарий...')}" style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                            <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">${window.t('send', 'Отправить')}</button>
                         </form>
                     </div>
                 `;
@@ -309,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? document.getElementById("patchFeed")
                     : document.getElementById("newsFeed");
                 if (container) {
-                    container.innerHTML = '<p class="loading-text">Ошибка загрузки постов</p>';
+                    container.innerHTML = `<p class="loading-text">${window.t('error_load', 'Ошибка загрузки постов')}</p>`;
                 }
             });
     }
@@ -332,11 +332,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(users => {
                 const list = document.getElementById("onlineList");
                 if (users.length === 0) {
-                    list.innerHTML = '<p class="loading-text">Никого нет в сети</p>';
+                    list.innerHTML = `<p class="loading-text">${window.t('nobody_online', 'Никого нет в сети')}</p>`;
                     return;
                 }
 
-                if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("Никого нет в сети")) {
+                if (list.innerHTML.includes("loading-text") || list.innerHTML.includes("Никого нет в сети") || list.innerHTML.includes("Nobody is online") || list.innerHTML.includes("Нікого немає в мережі")) {
                     list.innerHTML = '';
                 }
 
@@ -385,7 +385,7 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(() => {
                 const list = document.getElementById("onlineList");
-                list.innerHTML = '<p class="loading-text">Ошибка загрузки</p>';
+                list.innerHTML = `<p class="loading-text">${window.t('error_load', 'Ошибка загрузки')}</p>`;
             });
     }
 
@@ -595,7 +595,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(() => {
                 const pinContent = document.getElementById("adminPinContent");
                 if (pinContent) {
-                    pinContent.textContent = "Не удалось загрузить закреп.";
+                    pinContent.textContent = window.t('error_load', 'Не удалось загрузить закреп.');
                 }
             });
     }
@@ -612,11 +612,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if (adminPinEditArea.style.display === "none") {
                 adminPinEditArea.style.display = "block";
                 adminPinContent.style.display = "none";
-                editAdminPinBtn.textContent = "Отмена";
+                editAdminPinBtn.textContent = window.t('cancel', 'Отмена');
             } else {
                 adminPinEditArea.style.display = "none";
                 adminPinContent.style.display = "block";
-                editAdminPinBtn.textContent = "Редактировать";
+                editAdminPinBtn.textContent = window.t('edit', 'Редактировать');
             }
         });
     }
@@ -625,7 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveAdminPinBtn.addEventListener("click", async () => {
             const content = document.getElementById("adminPinInput").value.trim();
             if (!content) {
-                await window.showCustomAlert("Текст закрепа не может быть пустым");
+                await window.showCustomAlert(window.t('chat_message_empty', 'Текст не может быть пустым'));
                 return;
             }
 
@@ -643,13 +643,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.message) {
                     adminPinEditArea.style.display = "none";
                     adminPinContent.style.display = "block";
-                    editAdminPinBtn.textContent = "Редактировать";
+                    editAdminPinBtn.textContent = window.t('edit', 'Редактировать');
                     loadAdminPin();
                 } else {
-                    await window.showCustomAlert(data.error || "Ошибка сохранения");
+                    await window.showCustomAlert(data.error || window.t('error_network', 'Ошибка сохранения'));
                 }
             })
-            .catch(async () => await window.showCustomAlert("Ошибка сети"));
+            .catch(async () => await window.showCustomAlert(window.t('error_network', 'Ошибка сети')));
         });
     }
 
@@ -680,10 +680,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function createPost(type) {
         const content = document.getElementById("postContent").value.trim();
-        if (!content) { document.getElementById("postMessage").textContent = "Напишите текст"; return; }
+        if (!content) { document.getElementById("postMessage").textContent = window.t('write_post_placeholder', 'Напишите текст'); return; }
 
         const msg = document.getElementById("postMessage");
-        msg.textContent = "Публикация...";
+        msg.textContent = window.t('loading', 'Публикация...');
         msg.style.color = "#aaa";
 
         let imageUrl = null;
@@ -710,7 +710,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 imageUrl = uploadData.url;
             } catch (err) {
-                msg.textContent = "Ошибка загрузки медиа";
+                msg.textContent = window.t('error_network', 'Ошибка загрузки медиа');
                 msg.style.color = "#ff4444";
                 return;
             }

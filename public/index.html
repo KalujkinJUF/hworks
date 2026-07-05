@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная страница</title>
+    <title data-i18n="nav_home">Главная страница</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <nav id="main-nav">
-                <a href="index.html" id="nav-home">Главная</a>
-                <a href="search.html" id="nav-search">Поиск</a>
-                <a href="friends.html" id="nav-friends" style="display: none;">Друзья</a>
-                <a href="chat.html" id="nav-chat" style="display: none;">Чат</a>
-                <a href="register.html" id="nav-register">Регистрация</a>
-                <a href="login.html" id="nav-login">Логин</a>
-                <a href="profile.html" id="nav-profile" style="display: none;">Профиль</a>
-                <a href="admin.html" id="nav-admin" style="display: none;">Админка</a>
-                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;">Выйти</a>
+                <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+                <a href="search.html" id="nav-search" data-i18n="nav_search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;" data-i18n="nav_chat">Чат</a>
+                <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+                <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+                <a href="#" id="nav-logout" style="display: none; color: red; border-color: red;" data-i18n="nav_logout">Выйти</a>
             </nav>
         </header>
 
@@ -26,13 +27,13 @@
             <!-- Левая колонка: закреп от админа -->
             <aside class="admin-pin-column">
                 <div class="admin-pin-box">
-                    <h3 style="color: red; border-bottom: 2px dashed red; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;">Закреп от админа</h3>
-                    <div id="adminPinContent" class="admin-pin-content">Загрузка...</div>
+                    <h3 style="color: red; border-bottom: 2px dashed red; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;" data-i18n="admin_pin_title">Закреп от админа</h3>
+                    <div id="adminPinContent" class="admin-pin-content" data-i18n="admin_pin_placeholder">Загрузка...</div>
                     <div id="adminPinEditArea" style="display: none; margin-top: 10px;">
                         <textarea id="adminPinInput" rows="4"></textarea>
-                        <button id="saveAdminPinBtn" class="auth-btn" style="margin-top: 8px; padding: 6px 12px; font-size: 10px; width: 100%; cursor: pointer;">Сохранить</button>
+                        <button id="saveAdminPinBtn" class="auth-btn" style="margin-top: 8px; padding: 6px 12px; font-size: 10px; width: 100%; cursor: pointer;" data-i18n="save">Сохранить</button>
                     </div>
-                    <button id="editAdminPinBtn" class="user-btn" style="display: none; margin-top: 10px; width: 100%; border-color: yellow; color: yellow;">Редактировать</button>
+                    <button id="editAdminPinBtn" class="user-btn" style="display: none; margin-top: 10px; width: 100%; border-color: yellow; color: yellow;" data-i18n="edit">Редактировать</button>
                 </div>
             </aside>
 
@@ -40,44 +41,44 @@
             <div class="feed-column">
                 <div class="feed-wrapper">
                 <section class="main-content-wrapper">
-                    <h2>Посты</h2>
+                    <h2 data-i18n="posts_title">Посты</h2>
 
                     <!-- Переключатель ленты -->
                     <div class="feed-switcher" style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
-                        <button id="feedGlobalBtn" class="tab-btn active" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Глобальная лента</button>
-                        <button id="feedSubsBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; display: none; cursor: pointer;">Мои подписки</button>
-                        <button id="feedPatchBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Обновления</button>
+                        <button id="feedGlobalBtn" class="tab-btn active" style="padding: 8px 15px; font-size: 11px; cursor: pointer;" data-i18n="feed_global">Глобальная лента</button>
+                        <button id="feedSubsBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; display: none; cursor: pointer;" data-i18n="feed_subs">Мои подписки</button>
+                        <button id="feedPatchBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; cursor: pointer;" data-i18n="feed_updates">Обновления</button>
                     </div>
 
                     <!-- Форма создания поста (только админ/модератор) -->
                     <div id="postFormSection" class="post-form-section" style="display:none;">
-                        <textarea id="postContent" rows="3" placeholder="Напишите пост..."></textarea>
+                        <textarea id="postContent" rows="3" data-i18n-placeholder="write_post_placeholder" placeholder="Напишите пост..."></textarea>
                         <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; margin-top: 8px; margin-bottom: 8px; width: 100%;">
                             <input type="file" id="postFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
-                            <button id="postAttachBtn" class="user-btn" style="width: auto; padding: 6px 12px; font-size: 11px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;">Прикрепить фото</button>
+                            <button id="postAttachBtn" class="user-btn" style="width: auto; padding: 6px 12px; font-size: 11px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" data-i18n="attach_photo">Прикрепить фото</button>
                             <span id="postAttachedFileName" style="font-size: 11px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>
-                            <button id="postClearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 6px 12px; font-size: 11px; border-color: red; color: red; margin: 0; cursor: pointer;">Удалить</button>
+                            <button id="postClearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 6px 12px; font-size: 11px; border-color: red; color: red; margin: 0; cursor: pointer;" data-i18n="delete">Удалить</button>
                         </div>
                         <div class="post-form-controls">
-                            <button id="postNewsBtn" class="auth-btn" style="padding: 8px 20px; font-size: 12px; border-color: green; color: green; font-weight: bold; text-transform: uppercase;">ОПУБЛИКОВАТЬ ПОСТ</button>
-                            <button id="postPatchBtn" class="user-btn" style="border-color: #ff8c00; color: #ff8c00;">Обновление</button>
+                            <button id="postNewsBtn" class="auth-btn" style="padding: 8px 20px; font-size: 12px; border-color: green; color: green; font-weight: bold; text-transform: uppercase;" data-i18n="publish_post">ОПУБЛИКОВАТЬ ПОСТ</button>
+                            <button id="postPatchBtn" class="user-btn" style="border-color: #ff8c00; color: #ff8c00;" data-i18n="publish_update">Обновление</button>
                         </div>
                         <div id="postMessage" class="verify-message"></div>
                     </div>
 
                     <!-- Список постов -->
                     <div id="newsFeed" class="news-feed">
-                        <p class="loading-text">Загрузка...</p>
+                        <p class="loading-text" data-i18n="loading">Загрузка...</p>
                     </div>
 
                     <!-- Патч-ноты (обновления приложения) — отдельная вкладка -->
                     <div id="patchFeed" class="news-feed" style="display: none;">
-                        <p class="loading-text">Загрузка...</p>
+                        <p class="loading-text" data-i18n="loading">Загрузка...</p>
                     </div>
 
                     <!-- Кнопка "Загрузить еще" -->
                     <div id="loadMoreSection" style="text-align: center; margin-top: 20px; display: none;">
-                        <button id="loadMoreBtn" class="auth-btn" style="width: auto; padding: 10px 25px; font-size: 12px; margin: 0 auto; display: inline-block;">Загрузить ещё</button>
+                        <button id="loadMoreBtn" class="auth-btn" style="width: auto; padding: 10px 25px; font-size: 12px; margin: 0 auto; display: inline-block;" data-i18n="load_more">Загрузить ещё</button>
                     </div>
                 </section>
                 </div>
@@ -86,9 +87,9 @@
             <!-- Правая колонка: онлайн -->
             <aside class="sidebar-column">
                 <div class="online-box">
-                    <h3 style="color: green; border-bottom: 2px dashed green; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;">Сейчас онлайн</h3>
+                    <h3 style="color: green; border-bottom: 2px dashed green; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;" data-i18n="online_now_title">Сейчас онлайн</h3>
                     <div id="onlineList">
-                        <p class="loading-text">Загрузка...</p>
+                        <p class="loading-text" data-i18n="loading">Загрузка...</p>
                     </div>
                 </div>
             </aside>

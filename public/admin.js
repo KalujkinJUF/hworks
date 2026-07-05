@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then(data => {
         if (data.role !== 'admin' && data.role !== 'moderator') {
-            window.showCustomAlert("Доступ запрещён!").then(() => {
+            window.showCustomAlert(window.t('error_forbidden', 'Доступ запрещён!')).then(() => {
                 window.location.href = "index.html";
             });
             return;
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initializeAdmin(data);
     })
     .catch(() => {
-        window.showCustomAlert("Пожалуйста, войдите в систему.").then(() => {
+        window.showCustomAlert(window.t('login_required', 'Пожалуйста, войдите в систему.')).then(() => {
             window.location.href = "login.html";
         });
     });
@@ -67,7 +67,7 @@ function initializeAdmin(myData) {
             renderUsers();
         })
         .catch(() => {
-            adminMessage.textContent = "Ошибка загрузки пользователей";
+            adminMessage.textContent = window.t('error_load', 'Ошибка загрузки пользователей');
             adminMessage.style.color = "#ff4444";
         });
     }
@@ -95,9 +95,9 @@ function initializeAdmin(myData) {
                 </div>
                 <div class="user-card-body">
                     <div class="user-field">
-                        <label>Имя:</label>
+                        <label>${window.t('admin_username_label', 'Имя:')}</label>
                         ${canEdit ? `
-                        <input type="text" class="edit-username" value="${escapeHtml(user.username)}" placeholder="Новое имя">
+                        <input type="text" class="edit-username" value="${escapeHtml(user.username)}" placeholder="${window.t('admin_new_username_placeholder', 'Новое имя')}">
                         <button class="user-btn btn-save-username" data-id="${user.id}">✎</button>
                         ` : `
                         <span class="user-field-value">${escapeHtml(user.username)}</span>
@@ -105,7 +105,7 @@ function initializeAdmin(myData) {
                     </div>
                     ${isAdmin ? `
                     <div class="user-field">
-                        <label>Роль:</label>
+                        <label>${window.t('admin_role_label', 'Роль:')}</label>
                         <select class="edit-role">
                             <option value="newbie" ${user.role === 'newbie' ? 'selected' : ''}>newbie</option>
                             <option value="user" ${user.role === 'user' ? 'selected' : ''}>user</option>
@@ -119,42 +119,42 @@ function initializeAdmin(myData) {
                     </div>
                     ` : `
                     <div class="user-field">
-                        <label>Роль:</label>
+                        <label>${window.t('admin_role_label', 'Роль:')}</label>
                         <span class="user-field-value" style="color: ${color};">${escapeHtml(label)}</span>
                     </div>
                     `}
                     <div class="user-field">
-                        <label>Обо мне:</label>
+                        <label>${window.t('profile_about_title', 'Обо мне')}:</label>
                         ${canEdit ? `
                         <textarea class="edit-about" rows="2">${escapeHtml(user.about || '')}</textarea>
                         <button class="user-btn btn-save-about" data-id="${user.id}">✎</button>
                         ` : `
-                        <span class="user-field-value">${escapeHtml(user.about || 'Нет описания')}</span>
+                        <span class="user-field-value">${escapeHtml(user.about || window.t('no_info', 'Нет описания'))}</span>
                         `}
                     </div>
                     <div class="user-field">
-                        <label>Дата рег.:</label>
-                        <span class="user-field-value">${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Не указана'}</span>
+                        <label>${window.t('admin_reg_date_label', 'Дата рег.:')}</label>
+                        <span class="user-field-value">${user.created_at ? new Date(user.created_at).toLocaleDateString() : window.t('not_specified', 'Не указана')}</span>
                     </div>
                     <div class="user-field">
-                        <label>Email:</label>
+                        <label>${window.t('admin_email_label', 'Email:')}</label>
                         ${canEdit ? `
-                        <input type="email" class="edit-email" value="${escapeHtml(user.email || '')}" placeholder="Новый email">
+                        <input type="email" class="edit-email" value="${escapeHtml(user.email || '')}" placeholder="${window.t('admin_new_email_placeholder', 'Новый email')}">
                         <button class="user-btn btn-save-email" data-id="${user.id}">✎</button>
                         ` : `
-                        <span class="user-field-value">${escapeHtml(user.email || 'Не указан')}</span>
+                        <span class="user-field-value">${escapeHtml(user.email || window.t('not_specified', 'Не указан'))}</span>
                         `}
                     </div>
                     ${canEdit ? `
                     <div class="user-field">
-                        <label>Пароль:</label>
-                        <input type="text" class="edit-password" placeholder="Новый пароль">
+                        <label>${window.t('admin_password_label', 'Пароль:')}</label>
+                        <input type="text" class="edit-password" placeholder="${window.t('profile_new_password_placeholder', 'Новый пароль')}">
                         <button class="user-btn btn-save-password" data-id="${user.id}">✎</button>
                     </div>
                     ` : ''}
                     ${isAdmin ? `
                     <div class="user-card-actions">
-                        <button class="user-btn btn-delete" data-id="${user.id}">🗑 Удалить</button>
+                        <button class="user-btn btn-delete" data-id="${user.id}">🗑 ${window.t('delete', 'Удалить')}</button>
                     </div>
                     ` : ''}
                 </div>
@@ -262,7 +262,7 @@ function initializeAdmin(myData) {
                 const card = btn.closest(".user-card");
                 const password = card.querySelector(".edit-password").value;
                 if (!password || password.trim() === "") {
-                    adminMessage.textContent = "Введите новый пароль";
+                    adminMessage.textContent = window.t('chat_message_empty', 'Введите новый пароль');
                     adminMessage.style.color = "#ff4444";
                     return;
                 }
@@ -286,7 +286,7 @@ function initializeAdmin(myData) {
             document.querySelectorAll(".btn-delete").forEach(btn => {
                 btn.addEventListener("click", async () => {
                     const id = btn.dataset.id;
-                    if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этого пользователя?")) return;
+                    if (!await window.showCustomConfirm(window.t('admin_delete_user_confirm', 'Вы уверены, что хотите удалить этого пользователя?'))) return;
                     fetch(`/api/admin/user/${id}`, {
                         method: "DELETE",
                         credentials: 'include'
@@ -305,11 +305,11 @@ function initializeAdmin(myData) {
     toggleBtn.addEventListener("click", () => {
         if (usersContainer.style.display === "none") {
             usersContainer.style.display = "block";
-            toggleBtn.textContent = "Скрыть всех пользователей";
+            toggleBtn.textContent = window.t('admin_hide_users_list', 'Скрыть всех пользователей');
             loadUsers();
         } else {
             usersContainer.style.display = "none";
-            toggleBtn.textContent = "Показать всех пользователей";
+            toggleBtn.textContent = window.t('admin_users_list', 'Показать всех пользователей');
         }
     });
 

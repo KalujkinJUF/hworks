@@ -960,7 +960,7 @@ function initializeProfile(myData) {
         });
     }
 
-    window.switchProfileTab = function(tabName) {
+    function switchProfileTab(tabName) {
         const tabInfo = document.getElementById("tabInfo");
         const tabSettings = document.getElementById("tabSettings");
         const tabInfoBtn = document.getElementById("tabInfoBtn");
@@ -977,7 +977,16 @@ function initializeProfile(myData) {
             if (tabInfoBtn) tabInfoBtn.classList.remove("active");
             if (tabSettingsBtn) tabSettingsBtn.classList.add("active");
         }
-    };
+    }
+
+    const tabInfoBtn = document.getElementById("tabInfoBtn");
+    const tabSettingsBtn = document.getElementById("tabSettingsBtn");
+    if (tabInfoBtn) {
+        tabInfoBtn.addEventListener("click", () => switchProfileTab("info"));
+    }
+    if (tabSettingsBtn) {
+        tabSettingsBtn.addEventListener("click", () => switchProfileTab("settings"));
+    }
 }
 
 // Функция для экранирования HTML

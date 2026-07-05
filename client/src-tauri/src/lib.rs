@@ -235,6 +235,48 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
     .setup(|app| {
+        // Создаем системный трей
+        let tray_menu = tauri::menu::Menu::with_items(app.handle(), &[
+            &tauri::menu::MenuItem::with_id(app.handle(), "show", "Показать", true, None::<&str>).unwrap(),
+            &tauri::menu::MenuItem::with_id(app.handle(), "exit", "Выйти", true, None::<&str>).unwrap(),
+        ]).unwrap();
+
+        let _tray = tauri::tray::TrayIconBuilder::new()
+            .icon(app.default_window_icon().unwrap().clone())
+            .menu(&tray_menu)
+            .on_menu_event(|app, event| {
+                match event.id.as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.focus();
+                        }
+                    }
+                    "exit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                }
+            })
+            .on_tray_icon_event(|tray, event| {
+                if let tauri::tray::TrayIconEvent::Click {
+                    button: tauri::tray::MouseButton::Left,
+                    ..
+                } = event {
+                    let app = tray.app_handle();
+                    if let Some(window) = app.get_webview_window("main") {
+                        if window.is_visible().unwrap_or(false) {
+                            let _ = window.hide();
+                        } else {
+                            let _ = window.show();
+                            let _ = window.focus();
+                        }
+                    }
+                }
+            })
+            .build(app)
+            .unwrap();
+
         let handle = app.handle().clone();
         std::thread::spawn(move || {
             let mut config = read_config(&handle);
@@ -291,6 +333,12 @@ pub fn run() {
             }
         });
         Ok(())
+    })
+    .on_window_event(|window, event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            let _ = window.hide();
+            api.prevent_close();
+        }
     })
     .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window])
     .run(tauri::generate_context!())

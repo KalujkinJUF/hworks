@@ -284,6 +284,7 @@ function initializeChat(myData) {
                          msgNode.dataset.msgId = msgId;
                          msgNode.innerHTML = `
                              <div class="message-content">${contentHtml}</div>
+                             ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;"><img src="${escapeHtml(msg.image_url)}" style="max-width: 100%; max-height: 200px; display: block; object-fit: contain;"></div>` : ''}
                              <div class="message-time">${timeStr}${deleteBtn}</div>
                          `;
                          container.appendChild(msgNode);
@@ -318,6 +319,27 @@ function initializeChat(myData) {
         });
     }
 
+    // Логика прикрепления файлов в чате
+    const attachBtn = document.getElementById("attachBtn");
+    const chatFileInput = document.getElementById("chatFileInput");
+    const attachedFileName = document.getElementById("attachedFileName");
+    const clearAttachBtn = document.getElementById("clearAttachBtn");
+
+    if (attachBtn && chatFileInput) {
+        attachBtn.addEventListener("click", () => chatFileInput.click());
+        chatFileInput.addEventListener("change", () => {
+            if (chatFileInput.files && chatFileInput.files[0]) {
+                attachedFileName.textContent = chatFileInput.files[0].name;
+                clearAttachBtn.style.display = "inline-block";
+            }
+        });
+        clearAttachBtn.addEventListener("click", () => {
+            chatFileInput.value = "";
+            attachedFileName.textContent = "";
+            clearAttachBtn.style.display = "none";
+        });
+    }
+
     // Отправка сообщения
     document.getElementById("sendBtn").addEventListener("click", async () => {
         if (!currentFriendId) {
@@ -332,6 +354,36 @@ function initializeChat(myData) {
             return;
         }
 
+        const msgStatus = document.getElementById("sendMessage");
+        msgStatus.textContent = "Отправка...";
+        msgStatus.style.color = "#aaa";
+
+        let imageUrl = null;
+
+        if (chatFileInput && chatFileInput.files && chatFileInput.files[0]) {
+            const formData = new FormData();
+            formData.append("file", chatFileInput.files[0]);
+
+            try {
+                const uploadRes = await fetch("/api/users/upload-media", {
+                    method: "POST",
+                    credentials: 'include',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                if (uploadData.error) {
+                    msgStatus.textContent = uploadData.error;
+                    msgStatus.style.color = "#ff4444";
+                    return;
+                }
+                imageUrl = uploadData.url;
+            } catch (err) {
+                msgStatus.textContent = "Ошибка загрузки медиа";
+                msgStatus.style.color = "#ff4444";
+                return;
+            }
+        }
+
         fetch("/api/messages", {
             method: "POST",
             headers: {
@@ -340,7 +392,8 @@ function initializeChat(myData) {
             credentials: 'include',
             body: JSON.stringify({
                 receiver_id: currentFriendId,
-                content: content
+                content: content,
+                image_url: imageUrl
             })
         })
         .then(res => res.json())
@@ -348,6 +401,9 @@ function initializeChat(myData) {
             if (data.message) {
                 document.getElementById("messageInput").value = "";
                 document.getElementById("sendMessage").textContent = "";
+                if (chatFileInput) chatFileInput.value = "";
+                if (attachedFileName) attachedFileName.textContent = "";
+                if (clearAttachBtn) clearAttachBtn.style.display = "none";
                 loadMessages();
             } else {
                 document.getElementById("sendMessage").textContent = data.error || "Ошибка отправки";

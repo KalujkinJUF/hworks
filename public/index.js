@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
     let currentUserId = null;
     let currentUserRole = null;
     let csrfToken = null;
@@ -205,6 +205,7 @@
                         ${deletePostBtnHtml}
                     </div>
                     <div class="post-content">${postContentMarkup}</div>
+                    ${post.image_url ? `<div class="post-media-box" style="margin-top: 10px; border: 2px solid white; padding: 2px; max-width: 100%; max-height: 400px; display: inline-block; background: black;"><img src="${escapeHtml(post.image_url)}" style="max-width: 100%; max-height: 380px; display: block; object-fit: contain;"></div>` : ''}
                     
                     <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
                         <button class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</button>
@@ -656,9 +657,64 @@
     loadOnline();
     setInterval(loadOnline, 30000);
 
+    // Логика прикрепления файлов к посту
+    const postAttachBtn = document.getElementById("postAttachBtn");
+    const postFileInput = document.getElementById("postFileInput");
+    const postAttachedFileName = document.getElementById("postAttachedFileName");
+    const postClearAttachBtn = document.getElementById("postClearAttachBtn");
+
+    if (postAttachBtn && postFileInput) {
+        postAttachBtn.addEventListener("click", () => postFileInput.click());
+        postFileInput.addEventListener("change", () => {
+            if (postFileInput.files && postFileInput.files[0]) {
+                postAttachedFileName.textContent = postFileInput.files[0].name;
+                postClearAttachBtn.style.display = "inline-block";
+            }
+        });
+        postClearAttachBtn.addEventListener("click", () => {
+            postFileInput.value = "";
+            postAttachedFileName.textContent = "";
+            postClearAttachBtn.style.display = "none";
+        });
+    }
+
     async function createPost(type) {
         const content = document.getElementById("postContent").value.trim();
-        if (!content) { document.getElementById("postMessage").textContent = "Напишите text"; return; }
+        if (!content) { document.getElementById("postMessage").textContent = "Напишите текст"; return; }
+
+        const msg = document.getElementById("postMessage");
+        msg.textContent = "Публикация...";
+        msg.style.color = "#aaa";
+
+        let imageUrl = null;
+
+        // Если прикреплен файл, сначала загрузим его
+        if (postFileInput && postFileInput.files && postFileInput.files[0]) {
+            const formData = new FormData();
+            formData.append("file", postFileInput.files[0]);
+
+            try {
+                const uploadRes = await fetch("/api/users/upload-media", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-Token": csrfToken
+                    },
+                    credentials: 'include',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                if (uploadData.error) {
+                    msg.textContent = uploadData.error;
+                    msg.style.color = "#ff4444";
+                    return;
+                }
+                imageUrl = uploadData.url;
+            } catch (err) {
+                msg.textContent = "Ошибка загрузки медиа";
+                msg.style.color = "#ff4444";
+                return;
+            }
+        }
 
         fetch("/api/users/posts", {
             method: "POST",
@@ -667,15 +723,17 @@
                 "X-CSRF-Token": csrfToken
             },
             credentials: 'include',
-            body: JSON.stringify({ content, type })
+            body: JSON.stringify({ content, type, image_url: imageUrl })
         })
             .then(res => res.json())
             .then(data => {
-                const msg = document.getElementById("postMessage");
                 msg.textContent = data.message || data.error;
                 msg.style.color = data.message ? "#00ff00" : "#ff4444";
                 if (data.message) {
                     document.getElementById("postContent").value = "";
+                    if (postFileInput) postFileInput.value = "";
+                    if (postAttachedFileName) postAttachedFileName.textContent = "";
+                    if (postClearAttachBtn) postClearAttachBtn.style.display = "none";
                     loadPosts();
                 }
             })

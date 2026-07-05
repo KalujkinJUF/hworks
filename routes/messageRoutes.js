@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
 const db = require('../config/db');
 const { verifyToken, verifyNotBanned } = require('../middleware/auth');
+const { encrypt, decrypt } = require('../config/crypto');
 const { requireRole } = require('../middleware/rbac');
 const logger = require('../config/logger');
 
@@ -128,13 +129,16 @@ router.get('/:friendId', verifyToken, verifyNotBanned, (req, res) => {
                  WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
                  ORDER BY created_at ASC LIMIT 100`,
                  [userId, friendId, friendId, userId],
-                (err, results) => {
-                    if (err) {
-                        logger.error('Ошибка БД при получении сообщений');
-                        return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-                    }
-                    res.json(results);
-                }
+                 (err, results) => {
+                     if (err) {
+                         logger.error('Ошибка БД при получении сообщений');
+                         return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                     }
+                     results.forEach(m => {
+                         m.content = decrypt(m.content);
+                     });
+                     res.json(results);
+                 }
             );
         }
     );
@@ -170,10 +174,12 @@ router.post('/', (req, res) => {
             }
 
             const sanitizedContent = sanitize(content.trim());
+            const encryptedContent = encrypt(sanitizedContent);
+            const imageUrl = req.body.image_url || null;
 
             db.query(
-                'INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)',
-                [senderId, receiverId, sanitizedContent],
+                'INSERT INTO messages (sender_id, receiver_id, content, image_url) VALUES (?, ?, ?, ?)',
+                [senderId, receiverId, encryptedContent, imageUrl],
                 (err, result) => {
                     if (err) {
                         logger.error('Ошибка БД при отправке сообщения');

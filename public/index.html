@@ -26,7 +26,7 @@
             <!-- Левая колонка: закреп от админа -->
             <aside class="admin-pin-column">
                 <div class="admin-pin-box">
-                    <h3>Закреп от админа</h3>
+                    <h3 style="color: red; border-bottom: 2px dashed red; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;">Закреп от админа</h3>
                     <div id="adminPinContent" class="admin-pin-content">Загрузка...</div>
                     <div id="adminPinEditArea" style="display: none; margin-top: 10px;">
                         <textarea id="adminPinInput" rows="4"></textarea>
@@ -46,15 +46,21 @@
                     <div class="feed-switcher" style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
                         <button id="feedGlobalBtn" class="tab-btn active" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Глобальная лента</button>
                         <button id="feedSubsBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; display: none; cursor: pointer;">Мои подписки</button>
-                        <button id="feedPatchBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Обновления приложения</button>
+                        <button id="feedPatchBtn" class="tab-btn" style="padding: 8px 15px; font-size: 11px; cursor: pointer;">Обновления</button>
                     </div>
 
                     <!-- Форма создания поста (только админ/модератор) -->
                     <div id="postFormSection" class="post-form-section" style="display:none;">
                         <textarea id="postContent" rows="3" placeholder="Напишите пост..."></textarea>
+                        <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; margin-top: 8px; margin-bottom: 8px; width: 100%;">
+                            <input type="file" id="postFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
+                            <button id="postAttachBtn" class="user-btn" style="width: auto; padding: 6px 12px; font-size: 11px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;">Прикрепить фото</button>
+                            <span id="postAttachedFileName" style="font-size: 11px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>
+                            <button id="postClearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 6px 12px; font-size: 11px; border-color: red; color: red; margin: 0; cursor: pointer;">Удалить</button>
+                        </div>
                         <div class="post-form-controls">
-                            <button id="postNewsBtn" class="auth-btn" style="padding: 8px 20px; font-size: 12px;">Опубликовать пост</button>
-                            <button id="postPatchBtn" class="user-btn" style="border-color: #ff8c00; color: #ff8c00;">Обновление приложения</button>
+                            <button id="postNewsBtn" class="auth-btn" style="padding: 8px 20px; font-size: 12px; border-color: green; color: green; font-weight: bold; text-transform: uppercase;">ОПУБЛИКОВАТЬ ПОСТ</button>
+                            <button id="postPatchBtn" class="user-btn" style="border-color: #ff8c00; color: #ff8c00;">Обновление</button>
                         </div>
                         <div id="postMessage" class="verify-message"></div>
                     </div>
@@ -80,7 +86,7 @@
             <!-- Правая колонка: онлайн -->
             <aside class="sidebar-column">
                 <div class="online-box">
-                    <h3>Сейчас онлайн</h3>
+                    <h3 style="color: green; border-bottom: 2px dashed green; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;">Сейчас онлайн</h3>
                     <div id="onlineList">
                         <p class="loading-text">Загрузка...</p>
                     </div>

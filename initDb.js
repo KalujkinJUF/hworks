@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL,
+    email_hash VARCHAR(255) UNIQUE DEFAULT NULL,
     email_code VARCHAR(255) DEFAULT NULL,
     role ENUM('newbie', 'user', 'premium', 'vip', 'moderator', 'admin', 'banned') DEFAULT 'newbie',
     verified TINYINT(1) DEFAULT 0,
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS posts (
     user_id INT NOT NULL,
     content TEXT NOT NULL,
     type ENUM('news', 'patch_note') DEFAULT 'news',
+    image_url VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id),
@@ -54,6 +56,7 @@ CREATE TABLE IF NOT EXISTS messages (
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     content TEXT NOT NULL,
+    image_url VARCHAR(255) DEFAULT NULL,
     is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -113,6 +116,14 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read TINYINT(1) DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_viewed_wall TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS delete_code VARCHAR(255) DEFAULT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'online';
+
+-- Миграция под шифрование почты и добавление медиа
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_hash VARCHAR(255) DEFAULT NULL;
+ALTER TABLE users ADD UNIQUE INDEX IF NOT EXISTS idx_email_hash (email_hash);
+ALTER TABLE users DROP INDEX IF EXISTS email;
+ALTER TABLE users MODIFY COLUMN email VARCHAR(255) NOT NULL;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) DEFAULT NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) DEFAULT NULL;
 
 -- Таблица закрепа от админа
 CREATE TABLE IF NOT EXISTS admin_pin (

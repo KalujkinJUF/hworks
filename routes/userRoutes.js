@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
 const { verifyToken, verifyNotBanned, optionalVerifyToken } = require('../middleware/auth');
+const { encrypt, decrypt, hashValue } = require('../config/crypto');
 const { requireRole, requireAdmin, requireAdminOrModerator } = require('../middleware/rbac');
 const { processUploadedImage } = require('../middleware/fileUpload');
 const router = express.Router();
@@ -99,6 +100,10 @@ const findUser = (id) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT id, username, role, about, email FROM users WHERE id = ?', [id], (err, results) => {
             if (err) return reject(err);
+            if (results[0]) {
+                results[0].email = decrypt(results[0].email);
+                results[0].about = decrypt(results[0].about);
+            }
             resolve(results[0]);
         });
     });
@@ -247,11 +252,14 @@ router.post('/register', authLimiter, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const emailClean = email.trim();
+    const emailEncrypted = encrypt(emailClean);
+    const emailHash = hashValue(emailClean);
     const emailCode = crypto.randomInt(100000, 1000000).toString();
 
     db.query(
-        'INSERT INTO users (username, password, email, email_code, role, verified) VALUES (?, ?, ?, ?, ?, ?)',
-        [usernameTrim, hashedPassword, email.trim(), emailCode, 'newbie', 0],
+        'INSERT INTO users (username, password, email, email_hash, email_code, role, verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [usernameTrim, hashedPassword, emailEncrypted, emailHash, emailCode, 'newbie', 0],
         (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -323,8 +331,11 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
             return res.status(400).json({ error: 'Изменение email доступно только для неверифицированных аккаунтов' });
         }
 
+        const emailHash = hashValue(cleanEmail);
+        const emailEncrypted = encrypt(cleanEmail);
+
         // Проверяем, свободен ли email
-        db.query('SELECT id FROM users WHERE email = ? AND id != ?', [cleanEmail, userId], async (err2, emailResults) => {
+        db.query('SELECT id FROM users WHERE email_hash = ? AND id != ?', [emailHash, userId], async (err2, emailResults) => {
             if (err2) return res.status(500).json({ error: 'Ошибка БД' });
             if (emailResults.length > 0) {
                 return res.status(409).json({ error: 'Пользователь с таким email уже существует' });
@@ -333,8 +344,8 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
             const emailCode = crypto.randomInt(100000, 1000000).toString();
 
             db.query(
-                'UPDATE users SET email = ?, email_code = ? WHERE id = ?',
-                [cleanEmail, emailCode, userId],
+                'UPDATE users SET email = ?, email_hash = ?, email_code = ? WHERE id = ?',
+                [emailEncrypted, emailHash, emailCode, userId],
                 (err3) => {
                     if (err3) return res.status(500).json({ error: 'Ошибка при обновлении email' });
 
@@ -352,11 +363,21 @@ router.post('/change-unverified-email', verifyToken, async (req, res) => {
 // Логин (с rate limit)
 router.post('/login', authLimiter, (req, res) => {
     const { username, password } = req.body;
-    db.query('SELECT id, username, password, role, email, custom_status FROM users WHERE username = ?', [username], async (err, results) => {
+    
+    let query = 'SELECT id, username, password, role, email, custom_status FROM users WHERE username = ?';
+    let queryParam = username;
+    
+    if (username && username.includes('@')) {
+        query = 'SELECT id, username, password, role, email, custom_status FROM users WHERE email_hash = ?';
+        queryParam = hashValue(username);
+    }
+
+    db.query(query, [queryParam], async (err, results) => {
         if (err || results.length === 0) {
             return res.status(401).json({ error: 'Неверные учетные данные' });
         }
         const user = results[0];
+        user.email = decrypt(user.email);
         if (user.role === 'banned') {
             return res.status(403).json({ error: 'Ваш аккаунт заблокирован' });
         }
@@ -396,6 +417,8 @@ router.get('/profile', verifyToken, verifyNotBanned, async (req, res) => {
             (err, results) => {
                 if (err || results.length === 0) return res.status(404).send('User not found');
                 const user = results[0];
+                user.email = decrypt(user.email);
+                user.about = decrypt(user.about);
                 updateLastActive(req.user.id);
                 db.query('UPDATE users SET last_viewed_wall = NOW() WHERE id = ?', [req.user.id]);
                 res.json({
@@ -463,6 +486,7 @@ router.get('/profile/:username', verifyToken, (req, res) => {
         (err, results) => {
             if (err || results.length === 0) return res.status(404).json({ error: 'User not found' });
             const profile = results[0];
+            profile.about = decrypt(profile.about);
             profile.is_subscribed = !!profile.is_subscribed;
             res.json(profile);
         }
@@ -521,6 +545,27 @@ router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, upload
             res.json({ avatar: avatarUrl, message: 'Аватарка обновлена' });
         });
     });
+});
+
+// Загрузка медиа-вложений для постов и ЛС (с rate limit)
+router.post('/upload-media', verifyToken, verifyNotBanned, avatarUploadLimiter, upload.single('file'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
+
+    // Проверяем реальное содержимое файла (magic bytes)
+    const isValidImage = await checkRealFileType(req.file.path);
+    if (!isValidImage) {
+        try { fs.unlinkSync(req.file.path); } catch (e) {}
+        return res.status(400).json({ error: 'Недопустимый формат файла. Разрешены только изображения (jpeg, png, gif, webp).' });
+    }
+
+    // Re-encoding изображения для удаления метаданных/EXIF/XSS
+    const processed = await processUploadedImage(req.file.path);
+    if (!processed) {
+        return res.status(400).json({ error: 'Не удалось обработать изображение' });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl });
 });
 
 // Посты — получить все с учетом лайков и подписок (публично доступно)
@@ -587,7 +632,10 @@ router.get('/posts', optionalVerifyToken, (req, res) => {
                 logger.error('Ошибка получения постов');
                 return res.status(500).json({ error: 'Ошибка БД при получении постов' });
             }
-            results.forEach(p => p.is_liked = !!p.is_liked);
+            results.forEach(p => {
+                p.is_liked = !!p.is_liked;
+                p.content = decrypt(p.content);
+            });
             res.json({
                 posts: results,
                 totalPages,
@@ -638,10 +686,12 @@ router.post('/posts', verifyToken, verifyNotBanned, requireAdminOrModerator, (re
 
             // Санитизация контента поста от XSS
             const sanitizedContent = sanitize(content.trim());
+            const encryptedContent = encrypt(sanitizedContent);
+            const imageUrl = req.body.image_url || null;
 
             db.query(
-                'INSERT INTO posts (user_id, content, type) VALUES (?, ?, ?)',
-                [userId, sanitizedContent, postType],
+                'INSERT INTO posts (user_id, content, type, image_url) VALUES (?, ?, ?, ?)',
+                [userId, encryptedContent, postType, imageUrl],
                 (err, result) => {
                     if (err) {
                         logger.error('Ошибка БД при создании поста');
@@ -711,7 +761,8 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
 
     try {
         const sanitizedAbout = about != null ? sanitize(String(about)) : about;
-        const result = await updateUser(userId, usernameTrim, password, sanitizedAbout);
+        const encryptedAbout = encrypt(sanitizedAbout);
+        const result = await updateUser(userId, usernameTrim, password, encryptedAbout);
         if (result.affectedRows === 0) return res.status(404).send('User not found');
         updateLastActive(userId);
         res.send('User updated successfully');
@@ -1066,7 +1117,8 @@ router.put('/:id/bio', verifyToken, verifyNotBanned, (req, res) => {
     }
     const { about } = req.body;
     const sanitizedAbout = about != null ? sanitize(String(about)) : about;
-    db.query('UPDATE users SET about = ? WHERE id = ?', [sanitizedAbout, userId], (err) => {
+    const encryptedAbout = encrypt(sanitizedAbout);
+    db.query('UPDATE users SET about = ? WHERE id = ?', [encryptedAbout, userId], (err) => {
         if (err) return res.status(500).json({ error: 'Ошибка обновления биографии' });
         updateLastActive(userId);
         res.json({ message: 'Биография обновлена' });

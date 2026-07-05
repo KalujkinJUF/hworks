@@ -34,9 +34,8 @@
                 <!-- Переключатель вкладок -->
                 <div class="profile-tabs"
                     style="display: flex; gap: 10px; margin-bottom: 25px; justify-content: center; width: 100%;">
-                    <button id="tabInfoBtn" class="tab-btn active">Информация и
-                        отзывы</button>
-                    <button id="tabSettingsBtn" class="tab-btn" style="display: none;">Настройки профиля</button>
+                    <button id="tabInfoBtn" class="tab-btn active">Информация</button>
+                    <button id="tabSettingsBtn" class="tab-btn" style="display: none;">Настройки</button>
                 </div>
 
                 <!-- Вкладка 1: Информация и отзывы -->
@@ -123,8 +122,8 @@
                             <div id="profileCommentsSection"
                                 style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 20px; background-color: rgba(255, 255, 255, 0.01); margin-top: 0; min-height: 400px; text-align: left; box-sizing: border-box; width: 100%;">
                                 <h3
-                                    style="color: #00ff00; border-bottom: 2px dashed white; padding-bottom: 10px; font-size: 16px; text-align: center; margin-top: 0; text-transform: uppercase;">
-                                    Стена</h3>
+                                    style="color: #00ff00; border-bottom: 2px dashed #00ff00; padding-bottom: 10px; font-size: 16px; text-align: center; margin-top: 0; text-transform: uppercase;">
+                                    СТЕНА</h3>
 
                                 <form id="commentForm"
                                     style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; width: 100%;">
@@ -132,7 +131,7 @@
                                         rows="3"
                                         style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; resize: none; outline: none; margin-bottom: 10px;"></textarea>
                                     <button type="submit" class="auth-btn"
-                                        style="width: auto; padding: 8px 25px; font-size: 11px; cursor: pointer; text-transform: uppercase;">Написать</button>
+                                        style="width: auto; padding: 8px 25px; font-size: 11px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;">НАПИСАТЬ</button>
                                 </form>
 
                                 <div id="commentList">
@@ -185,14 +184,14 @@
                             style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
                             <h3
                                 style="margin-top: 0; color: #ff8c00; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;">
-                                Сменить имя и пароль</h3>
+                                СМЕНИТЬ ЛОГИН И ПАРОЛЬ</h3>
                             <div class="update-box"
                                 style="margin-top: 20px; border: 2px solid rgba(255, 255, 255, 0.2); padding: 20px; background: rgba(255,255,255,0.01);">
                                 <form id="updateForm" class="auth-form"
                                     style="max-width: 100%; display: flex; flex-direction: column; gap: 15px; width: 100%;">
                                     <div class="input-group" style="margin-bottom: 0; width: 100%;">
                                         <input type="text" id="newUsername" maxlength="20"
-                                            placeholder="Введите новое имя"
+                                            placeholder="Введите новый логин"
                                             style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
                                     </div>
                                     <div class="input-group" style="margin-bottom: 0; width: 100%;">
@@ -205,8 +204,7 @@
                                     </div>
                                     <div style="text-align: center; width: 100%;">
                                         <button type="submit" class="auth-btn"
-                                            style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; text-transform: uppercase;">Сохранить
-                                            изменения</button>
+                                            style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
                                     </div>
                                     <div id="message" style="margin-top: 10px;"></div>
                                 </form>
@@ -218,13 +216,12 @@
                             style="border: 2px solid #ff4444; padding: 25px; background: rgba(255, 68, 68, 0.02); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 15px;">
                             <h3
                                 style="margin-top: 0; color: #ff4444; border-bottom: 2px dashed #ff4444; padding-bottom: 8px; text-transform: uppercase;">
-                                Удаление аккаунта</h3>
+                                УДAЛЕНИЕ АККАУНТА</h3>
                             <div id="deleteStep1">
                                 <p style="font-size: 11px; margin-bottom: 15px; color: #ff8888;">Внимание! Это действие
                                     необратимо. Все ваши данные будут стерты навсегда.</p>
                                 <button id="requestDeleteBtn" class="user-btn btn-delete"
-                                    style="width: auto; cursor: pointer; text-transform: uppercase;">Удалить
-                                    аккаунт</button>
+                                    style="width: auto; cursor: pointer; border-color: red; color: red; font-weight: bold; text-transform: uppercase;">УДAЛИТЬ АККАУНТ</button>
                             </div>
                             <div id="deleteStep2" style="display: none; margin-top: 15px;">
                                 <p style="font-size: 11px; margin-bottom: 15px; color: yellow;">Код подтверждения

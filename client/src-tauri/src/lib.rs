@@ -77,7 +77,7 @@ fn test_connection(url: &str) -> Result<(), String> {
 
 #[tauri::command]
 fn get_version() -> String {
-    "a0.2.4".to_string()
+    format!("a{}", env!("CARGO_PKG_VERSION"))
 }
 
 #[tauri::command]

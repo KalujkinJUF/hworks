@@ -1,7 +1,11 @@
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Serialize, Deserialize};
 use tauri::{AppHandle, Manager, WebviewWindow};
+
+static LAST_CLICK_MS: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct AppConfig {
@@ -250,6 +254,7 @@ pub fn run() {
         let _tray = tauri::tray::TrayIconBuilder::new()
             .icon(app.default_window_icon().unwrap().clone())
             .menu(&tray_menu)
+            .show_menu_on_left_click(false)
             .on_menu_event(|app, event| {
                 match event.id.as_ref() {
                     "show" => {
@@ -269,6 +274,17 @@ pub fn run() {
                     button: tauri::tray::MouseButton::Left,
                     ..
                 } = event {
+                    let now_ms = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis() as u64;
+
+                    let last = LAST_CLICK_MS.load(Ordering::Relaxed);
+                    if now_ms - last < 500 {
+                        return;
+                    }
+                    LAST_CLICK_MS.store(now_ms, Ordering::Relaxed);
+
                     let app = tray.app_handle();
                     if let Some(window) = app.get_webview_window("main") {
                         if window.is_visible().unwrap_or(false) {

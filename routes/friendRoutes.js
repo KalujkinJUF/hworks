@@ -17,7 +17,6 @@ const friendLimiter = rateLimit({
 // Все маршруты друзей требуют авторизации и проверки на бан
 router.use(verifyToken);
 router.use(verifyNotBanned);
-router.use(friendLimiter);
 
 // Получить список друзей текущего пользователя (с пагинацией)
 router.get('/', (req, res) => {
@@ -107,7 +106,7 @@ router.get('/requests/outgoing', (req, res) => {
 });
 
 // Отправить запрос в друзья
-router.post('/request/:userId', verifyToken, verifyNotBanned, (req, res) => {
+router.post('/request/:userId', verifyToken, verifyNotBanned, friendLimiter, (req, res) => {
     const senderId = req.user.id;
     const receiverId = parseInt(req.params.userId);
 
@@ -159,7 +158,7 @@ router.post('/request/:userId', verifyToken, verifyNotBanned, (req, res) => {
 });
 
 // Принять запрос в друзья
-router.post('/accept/:requestId', (req, res) => {
+router.post('/accept/:requestId', friendLimiter, (req, res) => {
     const userId = req.user.id;
     const requestId = parseInt(req.params.requestId);
 
@@ -180,7 +179,7 @@ router.post('/accept/:requestId', (req, res) => {
 });
 
 // Отклонить запрос в друзья
-router.post('/reject/:requestId', (req, res) => {
+router.post('/reject/:requestId', friendLimiter, (req, res) => {
     const userId = req.user.id;
     const requestId = parseInt(req.params.requestId);
 
@@ -201,7 +200,7 @@ router.post('/reject/:requestId', (req, res) => {
 });
 
 // Удалить друга
-router.delete('/:friendId', (req, res) => {
+router.delete('/:friendId', friendLimiter, (req, res) => {
     const userId = req.user.id;
     const friendId = parseInt(req.params.friendId);
 
@@ -267,7 +266,7 @@ router.get('/mutual/:userId', verifyToken, verifyNotBanned, (req, res) => {
 });
 
 // Принять запрос в друзья по ID отправителя
-router.post('/accept-user/:senderId', verifyToken, verifyNotBanned, (req, res) => {
+router.post('/accept-user/:senderId', verifyToken, verifyNotBanned, friendLimiter, (req, res) => {
     const userId = req.user.id;
     const senderId = parseInt(req.params.senderId);
     
@@ -305,7 +304,7 @@ router.post('/accept-user/:senderId', verifyToken, verifyNotBanned, (req, res) =
 });
 
 // Отклонить или отменить запрос в друзья по ID пользователя
-router.post('/reject-user/:targetUserId', (req, res) => {
+router.post('/reject-user/:targetUserId', friendLimiter, (req, res) => {
     const userId = req.user.id;
     const targetUserId = parseInt(req.params.targetUserId);
     db.query(

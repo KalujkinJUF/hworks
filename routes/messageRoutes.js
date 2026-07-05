@@ -27,7 +27,6 @@ const messageLimiter = rateLimit({
 // Все маршруты сообщений требуют авторизации и проверки на то, что пользователь не забанен
 router.use(verifyToken);
 router.use(verifyNotBanned);
-router.use(messageLimiter);
 
 // Получить общее количество непрочитанных сообщений
 router.get('/unread/count', (req, res) => {
@@ -145,7 +144,7 @@ router.get('/:friendId', verifyToken, verifyNotBanned, (req, res) => {
 });
 
 // Отправить сообщение
-router.post('/', (req, res) => {
+router.post('/', messageLimiter, (req, res) => {
     const senderId = req.user.id;
     const { receiver_id, content } = req.body;
     const receiverId = parseInt(receiver_id);
@@ -196,7 +195,7 @@ router.post('/', (req, res) => {
 });
 
 // Удаление сообщения в чате с проверкой иерархии прав
-router.delete('/:id', verifyToken, verifyNotBanned, (req, res) => {
+router.delete('/:id', verifyToken, verifyNotBanned, messageLimiter, (req, res) => {
     const messageId = req.params.id;
     const requesterId = req.user.id;
 

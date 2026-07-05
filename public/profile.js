@@ -572,7 +572,7 @@ function initializeProfile(myData) {
                     return `
                         <a href="profile.html?username=${encodeURIComponent(f.username)}" style="text-decoration: none; color: inherit;">
                             <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
-                                ${f.avatar ? `<img src="${escapeHtml(f.avatar)}" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';"><div style="display:none; width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                ${f.avatar ? `<img src="${escapeHtml(f.avatar)}" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;"><div style="display:none; width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
                                 <span style="font-size: 8px; margin-top: 5px; color: ${color}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center;">${escapeHtml(f.username)}</span>
                             </div>
                         </a>
@@ -727,7 +727,7 @@ function initializeProfile(myData) {
                     return `
                         <div class="comment-card" data-comment-id="${c.id}" style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 15px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.01);">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid white; object-fit: cover;" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';"><div style="display:none; width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid white; object-fit: cover;"><div style="display:none; width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
                                 <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 12px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
                                 <span style="font-size: 10px; color: rgba(255,255,255,0.5); margin-left: auto;">${new Date(c.created_at).toLocaleString()}${deleteBtn}</span>
                             </div>

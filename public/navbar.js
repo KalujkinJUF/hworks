@@ -1,3 +1,15 @@
+// Глобальный перехват ошибок загрузки изображений (для соответствия CSP без unsafe-inline)
+document.addEventListener('error', (e) => {
+    if (e.target && e.target.tagName === 'IMG') {
+        const img = e.target;
+        img.style.display = 'none';
+        const placeholder = img.nextElementSibling;
+        if (placeholder) {
+            placeholder.style.display = ''; // Сбрасываем display: none
+        }
+    }
+}, true);
+
 // Обработка clear_session от Tauri-клиента (при обновлении версии)
 (function() {
     const params = new URLSearchParams(window.location.search);

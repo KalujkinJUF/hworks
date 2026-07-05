@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="search-result-card" style="display: flex; justify-content: space-between; align-items: flex-start; cursor: auto;">
                         <a href="profile.html?username=${encodeURIComponent(u.username)}" style="text-decoration: none; color: inherit; flex: 1;">
                             <div class="result-header">
-                                ${u.avatar ? `<img src="${escapeHtml(u.avatar)}" class="result-avatar" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><div style="display:none; width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: inline-block;"></div>'}
+                                ${u.avatar ? `<img src="${escapeHtml(u.avatar)}" class="result-avatar"><div style="display:none; width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: inline-block;"></div>'}
                                 <span class="result-username" style="color: ${color};">${escapeHtml(u.username)}</span>
                                 <span class="result-role" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
                             </div>

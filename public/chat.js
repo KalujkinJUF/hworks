@@ -121,7 +121,7 @@ function initializeChat(myData) {
                     item.dataset.role = friend.role || 'user';
 
                     item.innerHTML = `
-                        ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar" onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="friend-avatar-placeholder" style="display:none;"></div>` : '<div class="friend-avatar-placeholder"></div>'}
+                        ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar"><div class="friend-avatar-placeholder" style="display:none;"></div>` : '<div class="friend-avatar-placeholder"></div>'}
                         <div class="friend-item-info">
                             <span class="friend-item-name" style="color: ${roleColor};">${escapeHtml(friend.username)}</span>
                             <span class="friend-item-status"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>

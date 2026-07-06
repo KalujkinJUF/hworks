@@ -29,8 +29,8 @@ document.addEventListener('spa:navigate', () => {
                 }
                 
                 setTimeout(() => {
-                    // Navigate via SPA router instead of hard reload
-                    window.SPA.navigate('index.html');
+                    // Navigate via hard reload to initialize user state
+                    window.location.href = 'index.html';
                 }, 1000);
             } else {
                 if (messageDiv) {

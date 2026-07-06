@@ -82,7 +82,7 @@ document.addEventListener('spa:navigate', () => {
 
             // Делаем небольшую задержку в 1.5 секунды, чтобы юзер успел увидеть надпись об успехе, и перекидываем
             setTimeout(() => {
-                window.SPA.navigate('profile.html');
+                window.location.href = 'profile.html';
             }, 1500);
 
         } else {

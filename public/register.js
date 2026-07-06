@@ -10,7 +10,7 @@ function loadTurnstileScript() {
         }
         const s = document.createElement('script');
         s.id = 'cf-turnstile-script';
-        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
         s.async = true; s.defer = true;
         s.onload = () => resolve();
         document.head.appendChild(s);

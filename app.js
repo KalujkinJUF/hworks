@@ -106,7 +106,7 @@ app.get('/api/health', (req, res) => {
 });
 // Эндпоинт получения текущей версии
 app.get('/api/version', (req, res) => {
-    res.json({ version: 'a0.2.6' });
+    res.json({ version: 'a0.2.7' });
 });
 
 // Раздача всего из папки public

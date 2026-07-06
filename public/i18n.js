@@ -632,10 +632,11 @@
         bindLanguageButtons();
     });
     
-    // We do NOT bind language buttons multiple times
+    // При навигации через SPA (например, при переходе в профиль) появляются новые кнопки смены языка, их нужно биндить
     document.addEventListener("spa:navigate", () => {
         applyTheme();
         window.applyTranslations();
+        bindLanguageButtons();
     });
 
 

@@ -135,10 +135,10 @@ window.showCustomConfirm = function(message) {
 };
 
 
-if (!window._navbarInitialized) {
-    window._navbarInitialized = true;
-    let _navbarInterval1 = null;
-    let _navbarInterval2 = null;
+if (window._navbarInitialized) return;
+window._navbarInitialized = true;
+let _navbarInterval1 = null;
+let _navbarInterval2 = null;
 
 // Since navbar is global, we keep listeners and intervals, 
 // BUT we re-trigger checkRole on spa:navigate to update auth buttons correctly!
@@ -394,50 +394,6 @@ function checkRole(data) {
         
         // Перенаправление забаненных пользователей
         if (currentPage === 'friends.html' || currentPage === 'chat.html') {
-}, 30000);
-
-        // Проверяем роль через профиль, чтобы показать кнопку админки или скрыть функции забаненного
-        if (myData) {
-            checkRole(myData);
-        }
-    } else {
-        // Если пользователь НЕ залогинился:
-        if (btnRegister && currentPage !== 'register.html') btnRegister.style.display = "inline-block";
-        if (btnLogin && currentPage !== 'login.html') btnLogin.style.display = "inline-block";
-        if (btnProfile) btnProfile.style.display = "none";
-        if (btnFriends) btnFriends.style.display = "none";
-        if (btnChat) btnChat.style.display = "none";
-        if (btnSearch && currentPage !== 'search.html' && currentPage !== 'profile.html') btnSearch.style.display = "inline-block";
-        if (btnAdmin) btnAdmin.style.display = "none";
-        if (btnLogout) btnLogout.style.display = "none";
-    }
-
-    // Логика для кнопки "Выйти"
-    if (btnLogout) {
-        btnLogout.addEventListener("click", (e) => {
-            e.preventDefault();
-            fetch('/api/users/logout', {
-                method: 'POST',
-                credentials: 'include'
-            }).finally(() => {
-                window.location.href = "index.html";
-            });
-        });
-    }
-}
-
-function checkRole(data) {
-    const btnFriends = document.getElementById("nav-friends");
-    const btnChat = document.getElementById("nav-chat");
-    const btnAdmin = document.getElementById("nav-admin");
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-
-    if (data.role === 'banned') {
-        if (btnFriends) btnFriends.style.display = "none";
-        if (btnChat) btnChat.style.display = "none";
-        
-        // Перенаправление забаненных пользователей
-        if (currentPage === 'friends.html' || currentPage === 'chat.html') {
             window.showCustomAlert(window.t('alert_banned_access', 'Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.')).then(() => {
                 window.location.href = "profile.html";
             });
@@ -447,4 +403,5 @@ function checkRole(data) {
         btnAdmin.style.display = "inline-block";
     }
 }
+
 }

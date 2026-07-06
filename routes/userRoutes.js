@@ -700,8 +700,10 @@ router.post('/posts', verifyToken, verifyNotBanned, loadRole, (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
     const { content, type } = req.body;
-    
-    if (!content || content.trim() === '') {
+    const imageUrl = sanitizeImageUrl(req.body.image_url);
+
+    // #4 разрешаем пост без текста, если приложено изображение
+    if ((!content || content.trim() === '') && !imageUrl) {
         return res.status(400).json({ error: 'Контент не может быть пустым' });
     }
 
@@ -734,10 +736,9 @@ router.post('/posts', verifyToken, verifyNotBanned, loadRole, (req, res) => {
                 }
             }
 
-            // Санитизация контента поста от XSS
-            const sanitizedContent = sanitize(content.trim());
+            // Санитизация контента поста от XSS (пустой при посте только с фото)
+            const sanitizedContent = content ? sanitize(content.trim()) : '';
             const encryptedContent = encrypt(sanitizedContent);
-            const imageUrl = sanitizeImageUrl(req.body.image_url);
 
             db.query(
                 'INSERT INTO posts (user_id, content, type, image_url) VALUES (?, ?, ?, ?)',

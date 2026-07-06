@@ -680,7 +680,8 @@ document.addEventListener('spa:navigate', () => {
 
     async function createPost(type) {
         const content = document.getElementById("postContent").value.trim();
-        if (!content) { document.getElementById("postMessage").textContent = window.t('write_post_placeholder', 'Напишите текст'); return; }
+        const hasFile = postFileInput && postFileInput.files && postFileInput.files[0];
+        if (!content && !hasFile) { document.getElementById("postMessage").textContent = window.t('write_post_placeholder', 'Напишите текст'); return; }
 
         const newsBtn = document.getElementById("postNewsBtn");
         const patchBtn = document.getElementById("postPatchBtn");

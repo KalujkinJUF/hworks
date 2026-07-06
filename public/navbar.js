@@ -52,26 +52,42 @@ document.addEventListener('error', (e) => {
 })();
 
 // Воспроизведение мягкого 8-битного ретро-звука уведомления (chiptune blip)
+// Постоянный аудиоконтекст (создаём один раз) + разблокировка по первому взаимодействию,
+// чтобы звук приходил даже когда окно свёрнуто / не в фокусе (#6).
+function getNotifCtx() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!window.__notifCtx) {
+        try { window.__notifCtx = new AudioCtx(); } catch (e) { return null; }
+    }
+    return window.__notifCtx;
+}
+['pointerdown', 'keydown'].forEach(ev => {
+    window.addEventListener(ev, () => {
+        const ctx = getNotifCtx();
+        if (ctx && ctx.state === 'suspended' && ctx.resume) ctx.resume();
+    }, { passive: true });
+});
+
 function playRetroNotificationSound() {
     try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        
+        const ctx = getNotifCtx();
+        if (!ctx) return;
+        if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
+
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        
-        osc.type = 'sine'; // Мягкая синусоида
-        osc.frequency.setValueAtTime(440, ctx.currentTime); // Нота А4
-        osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.1); // Слайд к E5
-        
-        // Настройка мягкого затухания
-        gain.gain.setValueAtTime(0.25, ctx.currentTime); // Увеличили громкость до 25%
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12); // Затухание за 120мс
-        
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.1);
+
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+
         osc.connect(gain);
         gain.connect(ctx.destination);
-        
+
         osc.start();
         osc.stop(ctx.currentTime + 0.12);
     } catch (e) {
@@ -396,7 +412,13 @@ function initializeNavbar(myData) {
             .then(res => res.json())
             .then(data => {
                 // Если мы на странице собственного профиля, динамически обновим отображаемый статус (без сброса селекта настроек)
-                if (data.currentStatus) {
+                // #10 Обновляем #userStatusText ТОЛЬКО на своём профиле, иначе пинг
+                // перезаписывает статус чужого профиля своим (человек "away", а показывает "online").
+                const page = window.location.pathname.split('/').pop();
+                const viewingUsername = new URLSearchParams(window.location.search).get('username');
+                const ownName = window.currentUserNavbarData && window.currentUserNavbarData.username;
+                const isOwnProfile = page === 'profile.html' && (!viewingUsername || (ownName && viewingUsername.toLowerCase() === ownName.toLowerCase()));
+                if (data.currentStatus && isOwnProfile) {
                     const statusText = document.getElementById("userStatusText");
                     const statusMap = { online: 'Online', offline: 'Offline', away: 'Away', dnd: 'DND' };
                     const statusColors = { online: '#00ff00', offline: '#888888', away: '#ffcc00', dnd: '#ff3333' };

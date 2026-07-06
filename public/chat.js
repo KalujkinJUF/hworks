@@ -237,6 +237,18 @@ function initializeChat(myData) {
         loadFriendsList();
     };
 
+    // Прокрутка вниз с повтором после загрузки картинок (#5 — иначе "прыгает" к img)
+    function scrollToBottom(container) {
+        container.scrollTop = container.scrollHeight;
+        container.querySelectorAll('img').forEach(img => {
+            if (!img.complete) {
+                const again = () => { container.scrollTop = container.scrollHeight; };
+                img.addEventListener('load', again, { once: true });
+                img.addEventListener('error', again, { once: true });
+            }
+        });
+    }
+
     // Загрузка сообщений
     function loadMessages() {
         if (!currentFriendId) return;
@@ -266,6 +278,7 @@ function initializeChat(myData) {
                 
                 const idsChanged = (existingIds.length !== newIds.length) || existingIds.some((id, idx) => id !== newIds[idx]);
 
+                const prevFromBottom = container.scrollHeight - container.scrollTop;
                 if (isFirstLoad || idsChanged) {
                     container.innerHTML = '';
                     let lastDateStr = null;
@@ -310,8 +323,12 @@ function initializeChat(myData) {
                          container.appendChild(msgNode);
                     });
 
-                    if (isFirstLoad || idsChanged) {
-                        container.scrollTop = container.scrollHeight;
+                    // #5/#18 первая загрузка или близко к низу -> вниз (после картинок);
+                    // иначе сохраняем позицию по расстоянию от низа (не дёргаем при удалении/прокрутке вверх)
+                    if (isFirstLoad || isCloseToBottom) {
+                        scrollToBottom(container);
+                    } else {
+                        container.scrollTop = container.scrollHeight - prevFromBottom;
                     }
                 } else {
                     // Если состав не изменился, просто обновляем контент (на случай редактирования)

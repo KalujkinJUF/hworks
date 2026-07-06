@@ -216,7 +216,7 @@ function initializeNavbar(myData) {
         })
         .then(res => res.json())
         .then(unreadList => {
-            const list = unreadList || [];
+            const list = Array.isArray(unreadList) ? unreadList : [];
             
             // Общая сумма для кнопки в навбаре
             const totalCount = list.reduce((acc, item) => acc + item.count, 0);
@@ -253,7 +253,7 @@ function initializeNavbar(myData) {
         })
         .then(res => res.json())
         .then(requests => {
-            const count = requests.length || 0;
+            const count = Array.isArray(requests) ? requests.length : 0;
             const btnFriends = document.getElementById("nav-friends");
             if (btnFriends) {
                 const friendsText = window.t('nav_friends', 'Друзья');

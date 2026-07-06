@@ -231,12 +231,14 @@ function initializeChat(myData) {
     // Загрузка сообщений
     function loadMessages() {
         if (!currentFriendId) return;
+        const fetchFriendId = currentFriendId;
 
-        fetch(`/api/messages/${currentFriendId}`, {
+        fetch(`/api/messages/${fetchFriendId}`, {
             credentials: 'include'
         })
         .then(res => res.json())
         .then(messages => {
+            if (currentFriendId !== fetchFriendId) return;
             const container = document.getElementById("messagesContainer");
             if (window.updateNavbarNotifications) {
                 window.updateNavbarNotifications();
@@ -435,7 +437,8 @@ function initializeChat(myData) {
     });
 
     // Автообновление сообщений каждые 2 секунды
-    setInterval(() => {
+    if (_spaInterval_2) clearInterval(_spaInterval_2);
+    _spaInterval_2 = setInterval(() => {
         if (currentFriendId) {
             loadMessages();
         }

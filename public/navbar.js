@@ -168,7 +168,56 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+function updateNavbarVisibility(myData) {
+    const token = myData ? true : false;
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+
+    const btnRegister = document.getElementById("nav-register");
+    const btnLogin = document.getElementById("nav-login");
+    const btnProfile = document.getElementById("nav-profile");
+    const btnSearch = document.getElementById("nav-search");
+    const btnFriends = document.getElementById("nav-friends");
+    const btnChat = document.getElementById("nav-chat");
+    const btnAdmin = document.getElementById("nav-admin");
+    const btnLogout = document.getElementById("nav-logout");
+
+    const params = new URLSearchParams(window.location.search);
+    const viewingUsername = params.get('username');
+    const isViewingSomeoneElse = (currentPage === 'profile.html' && viewingUsername);
+
+    // Reset default visibility first based on auth
+    if (token) {
+        if (btnRegister) btnRegister.style.display = "none";
+        if (btnLogin) btnLogin.style.display = "none";
+        if (btnProfile) btnProfile.style.display = "inline-block";
+        if (btnFriends) btnFriends.style.display = "inline-block";
+        if (btnChat) btnChat.style.display = "inline-block";
+        if (btnSearch) btnSearch.style.display = "inline-block";
+        if (btnLogout) btnLogout.style.display = "inline-block";
+    } else {
+        if (btnRegister) btnRegister.style.display = "inline-block";
+        if (btnLogin) btnLogin.style.display = "inline-block";
+        if (btnProfile) btnProfile.style.display = "none";
+        if (btnFriends) btnFriends.style.display = "none";
+        if (btnChat) btnChat.style.display = "none";
+        if (btnSearch) btnSearch.style.display = "inline-block";
+        if (btnAdmin) btnAdmin.style.display = "none";
+        if (btnLogout) btnLogout.style.display = "none";
+    }
+
+    if (btnRegister && currentPage === 'register.html') btnRegister.style.display = "none";
+    if (btnLogin && currentPage === 'login.html') btnLogin.style.display = "none";
+    if (btnProfile && currentPage === 'profile.html' && !isViewingSomeoneElse) btnProfile.style.display = "none";
+    if (btnSearch && currentPage === 'search.html') btnSearch.style.display = "none";
+    if (btnFriends && currentPage === 'friends.html') btnFriends.style.display = "none";
+    if (btnChat && currentPage === 'chat.html') btnChat.style.display = "none";
+    if (btnAdmin && currentPage === 'admin.html') btnAdmin.style.display = "none";
+}
+
+window.updateNavbarVisibility = updateNavbarVisibility;
+
 function initializeNavbar(myData) {
+    window.currentUserNavbarData = myData;
     const token = myData ? true : false;
 
     // Определяем текущую страницу
@@ -195,14 +244,7 @@ function initializeNavbar(myData) {
     const viewingUsername = params.get('username');
     const isViewingSomeoneElse = (currentPage === 'profile.html' && viewingUsername);
 
-    // Сначала скрываем текущую страницу (для всех случаев)
-    if (btnRegister && currentPage === 'register.html') btnRegister.style.display = "none";
-    if (btnLogin && currentPage === 'login.html') btnLogin.style.display = "none";
-    if (btnProfile && currentPage === 'profile.html' && !isViewingSomeoneElse) btnProfile.style.display = "none";
-    if (btnSearch && currentPage === 'search.html') btnSearch.style.display = "none";
-    if (btnFriends && currentPage === 'friends.html') btnFriends.style.display = "none";
-    if (btnChat && currentPage === 'chat.html') btnChat.style.display = "none";
-    if (btnAdmin && currentPage === 'admin.html') btnAdmin.style.display = "none";
+    updateNavbarVisibility(myData);
 
     function updateNavbarNotifications() {
         if (!token) return;

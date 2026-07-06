@@ -2301,7 +2301,7 @@ a.post-author, a.username-link, a[href^="profile.html"] {
    ========================================================================== */
 
 /* 1. ГЛОБАЛЬНЫЕ СТИЛИ */
-{
+body {
     background: radial-gradient(circle at 50% 0%, #dcf0ff 0%, #87cefa 50%, #4682b4 100%);
     background-attachment: fixed;
     color: #2b4561;

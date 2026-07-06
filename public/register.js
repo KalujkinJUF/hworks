@@ -1,4 +1,8 @@
-document.getElementById('register-form').addEventListener('submit', async (e) => {
+document.addEventListener('spa:navigate', () => {
+    const registerForm = document.getElementById('register-form');
+    if (!registerForm) return;
+    
+    registerForm.addEventListener('submit', async (e) => {
     e.preventDefault(); // Предотвращаем перезагрузку страницы
 
     const username = document.getElementById('username').value;
@@ -41,7 +45,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
 
             // Делаем небольшую задержку в 1.5 секунды, чтобы юзер успел увидеть надпись об успехе, и перекидываем
             setTimeout(() => {
-                window.location.href = 'profile.html';
+                window.SPA.navigate('profile.html');
             }, 1500);
 
         } else {
@@ -60,4 +64,5 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
             messageDiv.textContent = window.t('error_network', 'Ошибка подключения к серверу.');
         }
     }
+});
 });

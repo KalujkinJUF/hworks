@@ -67,8 +67,8 @@ function initializeChat(myData) {
     };
 
     const roleColors = {
-        newbie: '#888888', user: '#00ccff', premium: '#ffd700',
-        vip: '#9b59b6', moderator: '#ff8c00', admin: '#ff4444', banned: '#333333'
+        newbie: '#888888', user: '#2ecc71', premium: '#ffd700',
+        vip: '#9b59b6', moderator: '#3498db', admin: '#ff4444', banned: '#333333'
     };
 
     loadFriendsList();

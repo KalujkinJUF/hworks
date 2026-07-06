@@ -42,10 +42,10 @@ function initializeAdmin(myData) {
     // Цвета для ролей
     const roleColors = {
         newbie: '#888888',
-        user: '#00ccff',
+        user: '#2ecc71',
         premium: '#ffd700',
         vip: '#9b59b6',
-        moderator: '#ff8c00',
+        moderator: '#3498db',
         admin: '#ff4444',
         banned: '#333333'
     };

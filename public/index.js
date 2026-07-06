@@ -58,7 +58,7 @@ document.addEventListener('spa:navigate', () => {
 
     let currentFeed = 'global';
     const roleColors = {
-        admin: '#ff4444', moderator: '#ff8c00', user: '#00ccff',
+        admin: '#ff4444', moderator: '#3498db', user: '#2ecc71',
         newbie: '#888888', premium: '#ffd700', vip: '#9b59b6', banned: '#333333'
     };
 

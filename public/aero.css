@@ -599,8 +599,8 @@ textarea#aboutMe:focus {
 }
 
 .role-user {
-    color: #00ccff;
-    border-color: #00ccff;
+    color: #2ecc71;
+    border-color: #2ecc71;
 }
 
 /* Поля внутри карточки */
@@ -2095,7 +2095,7 @@ select:focus {
 
 .custom-modal-header {
     font-size: 18px;
-    color: #004488;
+    color: #cc0000;
     border-bottom: 1px solid rgba(0, 100, 200, 0.2);
     padding-bottom: 12px;
     margin-bottom: 15px;
@@ -2105,7 +2105,7 @@ select:focus {
 
 .custom-modal-content {
     font-size: 14px;
-    color: #333;
+    color: #000000;
     line-height: 1.5;
     margin-bottom: 25px;
     word-break: break-word;
@@ -2122,16 +2122,30 @@ select:focus {
     min-width: 100px;
 }
 
-.custom-modal-btn.btn-no {
+.custom-modal-btn.btn-yes {
     background: linear-gradient(180deg, #ffffff 0%, #ffdbdb 45%, #ffb3b3 50%, #ffcccc 100%) !important;
     border: 1px solid #ff6666 !important;
     color: #cc0000 !important;
 }
 
-.custom-modal-btn.btn-no:hover {
+.custom-modal-btn.btn-yes:hover {
     background: linear-gradient(180deg, #ffffff 0%, #ffe6e6 45%, #ffcccc 50%, #ffe0e0 100%) !important;
     box-shadow: 0 4px 10px rgba(255, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
     border-color: #ff3333 !important;
+}
+
+.custom-modal-btn.btn-no,
+.custom-modal-btn.btn-ok {
+    background: linear-gradient(180deg, #ffffff 0%, #d0e8ff 45%, #a8d4ff 50%, #cce4ff 100%) !important;
+    border: 1px solid #4a90d9 !important;
+    color: #004488 !important;
+}
+
+.custom-modal-btn.btn-no:hover,
+.custom-modal-btn.btn-ok:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #e6f2ff 45%, #cce4ff 50%, #e0efff 100%) !important;
+    box-shadow: 0 4px 10px rgba(0, 100, 200, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+    border-color: #2f80ed !important;
 }
 
 .delete-btn {
@@ -2886,97 +2900,6 @@ select:focus {
     animation: slideDownContainer 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
 }
 
-/* ==========================================================================
-   8. CUSTOM DOS MODAL OVERLAYS & DELETE BUTTONS
-   ========================================================================== */
-.custom-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-}
-
-.custom-modal-box {
-    background-color: black;
-    border: 3px double white;
-    padding: 20px;
-    width: 90%;
-    max-width: 450px;
-    box-sizing: border-box;
-    text-align: center;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-}
-
-.custom-modal-header {
-    font-size: 14px;
-    color: red;
-    border-bottom: 2px solid white;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.custom-modal-content {
-    font-size: 12px;
-    color: yellow;
-    line-height: 1.6;
-    margin-bottom: 20px;
-    word-break: break-word;
-}
-
-.custom-modal-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}
-
-.custom-modal-btn {
-    font-family: 'PublicPixel-rv0pA', monospace;
-    font-size: 12px;
-    padding: 8px 20px;
-    background-color: black;
-    border: 2px solid white;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-.custom-modal-btn.btn-yes {
-    color: #00ff00;
-    border-color: #00ff00;
-}
-
-.custom-modal-btn.btn-yes:hover {
-    background-color: rgba(0, 255, 0, 0.1);
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-}
-
-.custom-modal-btn.btn-no {
-    color: #ff4444;
-    border-color: #ff4444;
-}
-
-.custom-modal-btn.btn-no:hover {
-    background-color: rgba(255, 68, 68, 0.1);
-    box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
-}
-
-.custom-modal-btn.btn-ok {
-    color: yellow;
-    border-color: yellow;
-}
-
-.custom-modal-btn.btn-ok:hover {
-    background-color: rgba(255, 255, 0, 0.1);
-    box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
-}
-
 .delete-btn {
     background: transparent;
     color: #ff4444;
@@ -3478,11 +3401,11 @@ a:hover {
 }
 
 /* Цвета ролей (убираем жесткие обводки, оставляем только цвет текста) */
-.role-moderator { color: #9b59b6 !important; border-color: transparent !important; }
+.role-moderator { color: #3498db !important; border-color: transparent !important; }
 .role-admin { color: #e74c3c !important; border-color: transparent !important; }
 .role-vip { color: #f39c12 !important; border-color: transparent !important; }
 .role-premium { color: #ff66cc !important; border-color: transparent !important; }
-.role-user { color: #3498db !important; border-color: transparent !important; }
+.role-user { color: #2ecc71 !important; border-color: transparent !important; }
 
 /* Убираем пунктирные линии */
 .profile-section h2,

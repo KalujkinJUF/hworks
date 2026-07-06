@@ -420,7 +420,8 @@ router.post('/login', authLimiter, (req, res) => {
 router.get('/profile', verifyToken, verifyNotBanned, async (req, res) => {
     try {
         db.query(
-            `SELECT id, username, email, verified, created_at, about, avatar, role, user_status, custom_status,
+            `SELECT id, username, email, verified, created_at, about, avatar, role,
+                    IF(last_active >= NOW() - INTERVAL 5 MINUTE, user_status, 'offline') AS user_status, custom_status,
                     (SELECT COUNT(*) FROM subscriptions WHERE following_id = users.id) AS followers_count,
                     (SELECT COUNT(*) FROM subscriptions WHERE follower_id = users.id) AS following_count
              FROM users WHERE id = ?`,

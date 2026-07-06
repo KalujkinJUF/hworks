@@ -57,16 +57,16 @@
                                     <img id="avatarImg" src="" alt="Аватар" class="profile-avatar"
                                         style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid white; object-fit: cover; margin-bottom: 10px; display: block;">
                                     <button id="changeAvatarBtn" class="user-btn"
-                                        style="padding: 4px 8px; font-size: 9px; cursor: pointer; width: 100%;">Сменить
+                                        style="padding: 4px 8px; font-size: 9px; cursor: pointer; width: 100%;" data-i18n="profile_change_avatar">Сменить
                                         аватар</button>
                                 </div>
 
                                 <!-- Текстовый блок инфо -->
                                 <div class="profile-info-block" style="flex-grow: 1; text-align: left; min-width: 0;">
-                                    <p style="margin-top: 0;">Имя: <span id="username"
-                                            style="font-weight: bold;">Загрузка...</span> <span id="roleBadge"
+                                    <p style="margin-top: 0;"><span data-i18n="profile_username">Имя:</span> <span id="username"
+                                            style="font-weight: bold;" data-i18n="loading">Загрузка...</span> <span id="roleBadge"
                                             class="role-badge"></span></p>
-                                    <p id="statusContainer">Статус: <span id="userStatusText">Загрузка...</span>
+                                    <p id="statusContainer"><span data-i18n="profile_status">Статус:</span> <span id="userStatusText" data-i18n="loading">Загрузка...</span>
                                         <select id="userStatusSelect"
                                             style="display: none; background: black; color: yellow; border: 2px solid white; font-family: inherit; font-size: 10px; padding: 2px; margin-left: 5px; cursor: pointer;">
                                             <option value="online">Online</option>
@@ -75,16 +75,16 @@
                                             <option value="offline">Offline</option>
                                         </select>
                                     </p>
-                                    <p id="emailContainer">Email: <span id="email">Загрузка...</span></p>
-                                    <p>Регистрация: <span id="registrationDate">Загрузка...</span></p>
+                                    <p id="emailContainer"><span data-i18n="profile_email">Email:</span> <span id="email" data-i18n="loading">Загрузка...</span></p>
+                                    <p><span data-i18n="profile_joined">Регистрация:</span> <span id="registrationDate" data-i18n="loading">Загрузка...</span></p>
                                     <p id="subscriptionStats" style="margin-top: 10px; font-size: 11px;">
-                                        Подписчики: <span id="followersCount">0</span> | Подписки: <span
+                                        <span data-i18n="profile_followers">Подписчики:</span> <span id="followersCount">0</span> | <span data-i18n="profile_following">Подписки:</span> <span
                                             id="followingCount">0</span>
                                     </p>
 
                                     <!-- Кнопка Добавить аватар (показывается только если аватара нет и это свой профиль) -->
                                     <button id="addAvatarBtn" class="user-btn"
-                                        style="display: none; padding: 6px 12px; font-size: 10px; margin-top: 8px; cursor: pointer; border-color: yellow; color: yellow;">Добавить
+                                        style="display: none; padding: 6px 12px; font-size: 10px; margin-top: 8px; cursor: pointer; border-color: yellow; color: yellow;" data-i18n="profile_add_avatar">Добавить
                                         аватар</button>
 
                                     <button id="subscribeBtn" class="user-btn"
@@ -110,7 +110,7 @@
                             <div id="mutualFriendsSection"
                                 style="display: none; border: 2px solid rgba(255, 255, 255, 0.25); padding: 15px; background: rgba(255, 255, 255, 0.01); box-sizing: border-box; width: 100%;">
                                 <h3
-                                    style="color: #00ccff; text-align: center; margin-top: 0; font-size: 14px; text-transform: uppercase; border-bottom: 2px dashed white; padding-bottom: 8px;">
+                                    style="color: #00ccff; text-align: center; margin-top: 0; font-size: 14px; text-transform: uppercase; border-bottom: 2px dashed white; padding-bottom: 8px;" data-i18n="profile_mutual_friends">
                                     Общие друзья</h3>
                                 <div id="mutualFriendsList"
                                     style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px;">
@@ -128,7 +128,7 @@
 
                                 <form id="commentForm"
                                     style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; width: 100%;">
-                                    <textarea id="commentContent" placeholder="Оставьте отзыв о пользователе..."
+                                    <textarea id="commentContent" data-i18n-placeholder="write_comment_placeholder" placeholder="Оставьте отзыв о пользователе..."
                                         rows="3"
                                         style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; resize: none; outline: none; margin-bottom: 10px;"></textarea>
                                     <button type="submit" class="auth-btn"
@@ -136,7 +136,7 @@
                                 </form>
 
                                 <div id="commentList">
-                                    <p class="loading-text">Загрузка отзывов...</p>
+                                    <p class="loading-text" data-i18n="profile_wall_loading">Загрузка отзывов...</p>
                                 </div>
                                 <div id="commentsPagination" class="pagination-container" style="display: flex; justify-content: center; gap: 8px; margin-top: 20px;"></div>
                             </div>
@@ -152,28 +152,28 @@
                         <div id="verifySection" class="verify-section"
                             style="display:none; border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
                             <h3
-                                style="margin-top: 0; color: #00ccff; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;">
+                                style="margin-top: 0; color: #00ccff; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_email_verification">
                                 Подтверждение почты</h3>
-                            <p class="verify-hint" style="font-size: 11px; margin-bottom: 15px;">На вашу почту отправлен
+                            <p class="verify-hint" style="font-size: 11px; margin-bottom: 15px;" data-i18n="profile_email_verification_hint">На вашу почту отправлен
                                 код. Введите его ниже:</p>
                             <div class="verify-group"
                                 style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-                                <input type="text" id="verifyCode" maxlength="6" placeholder="6-значный код"
+                                <input type="text" id="verifyCode" maxlength="6" data-i18n-placeholder="profile_delete_code_placeholder" placeholder="6-значный код"
                                     style="background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
                                 <button id="verifyBtn" class="auth-btn"
-                                    style="padding: 10px; font-size: 12px; width: auto; cursor: pointer;">Подтвердить</button>
+                                    style="padding: 10px; font-size: 12px; width: auto; cursor: pointer;" data-i18n="profile_verify_btn">Подтвердить</button>
                             </div>
                             <div id="verifyMessage" class="verify-message" style="margin-top: 10px;"></div>
 
                             <div id="changeEmailSection"
                                 style="margin-top: 15px; border-top: 2px dashed rgba(255, 255, 255, 0.2); padding-top: 15px; width: 100%;">
-                                <p style="font-size: 11px; margin-bottom: 8px; color: #aaa;">Не пришел код или
+                                <p style="font-size: 11px; margin-bottom: 8px; color: #aaa;" data-i18n="profile_new_email_hint">Не пришел код или
                                     опечатались в адресе?</p>
                                 <div style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;">
-                                    <input type="email" id="newEmailInput" placeholder="Новый email"
+                                    <input type="email" id="newEmailInput" data-i18n-placeholder="profile_new_email_placeholder" placeholder="Новый email"
                                         style="flex-grow: 1; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 11px; outline: none; box-sizing: border-box;">
                                     <button id="changeEmailBtn" class="user-btn"
-                                        style="padding: 10px; font-size: 11px; cursor: pointer; white-space: nowrap;">Сменить
+                                        style="padding: 10px; font-size: 11px; cursor: pointer; white-space: nowrap;" data-i18n="profile_new_email_btn">Сменить
                                         email</button>
                                 </div>
                                 <div id="changeEmailMessage" style="margin-top: 8px; font-size: 11px;"></div>
@@ -231,7 +231,7 @@
                                     <input type="text" id="deleteConfirmCode" data-i18n-placeholder="profile_delete_code_placeholder" placeholder="Код из письма"
                                         style="background: black; color: white; border: 2px solid #ff4444; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
                                     <button id="confirmDeleteBtn" class="user-btn btn-delete"
-                                        style="width: auto; cursor: pointer; text-transform: uppercase;" data-i18n="profile_delete_btn">Подтвердить удаление</button>
+                                        style="width: auto; cursor: pointer; text-transform: uppercase;" data-i18n="profile_confirm_delete_btn">Подтвердить удаление</button>
                                 </div>
                             </div>
                             <div id="deleteMessage" style="margin-top: 10px; font-size: 11px;"></div>

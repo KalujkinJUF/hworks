@@ -442,17 +442,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
                 if (card) card.remove();
             } else {
-                await window.showCustomAlert(data.error || "Ошибка удаления поста");
+                await window.showCustomAlert(data.error || window.t('error_delete_post', 'Ошибка удаления поста'));
             }
         })
         .catch(async err => {
             console.error("Ошибка при удалении поста:", err);
-            await window.showCustomAlert("Ошибка сети");
+            await window.showCustomAlert(window.t('error_network', 'Ошибка сети'));
         });
     };
 
     window.deleteComment = async function(postId, commentId) {
-        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот комментарий?")) return;
+        if (!await window.showCustomConfirm(window.t('confirm_comment_delete', 'Вы уверены, что хотите удалить этот комментарий?'))) return;
         
         fetch(`/api/users/comments/${commentId}`, {
             method: "DELETE",
@@ -467,12 +467,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadPostComments(postId);
                 loadPosts(); // to update comment counts
             } else {
-                await window.showCustomAlert(data.error || "Ошибка удаления комментария");
+                await window.showCustomAlert(data.error || window.t('error_delete_comment', 'Ошибка удаления комментария'));
             }
         })
         .catch(async err => {
             console.error("Ошибка при удалении комментария:", err);
-            await window.showCustomAlert("Ошибка сети");
+            await window.showCustomAlert(window.t('error_network', 'Ошибка сети'));
         });
     };
 

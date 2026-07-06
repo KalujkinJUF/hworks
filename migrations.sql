@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     about TEXT DEFAULT NULL,
     user_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'offline',
     custom_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'online',
-    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -120,6 +120,7 @@ UPDATE users SET email = '' WHERE email IS NULL;
 ALTER TABLE users MODIFY COLUMN email VARCHAR(255) NOT NULL;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) DEFAULT NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) DEFAULT NULL;
+ALTER TABLE users MODIFY COLUMN last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 -- Таблица закрепа от админа
 CREATE TABLE IF NOT EXISTS admin_pin (

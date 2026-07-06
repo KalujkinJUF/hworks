@@ -10,10 +10,11 @@ const setCsrfToken = (req, res, next) => {
     // Устанавливаем токен только если его нет (без ротации при каждом запросе)
     if (!req.cookies || !req.cookies.csrfToken) {
         const token = generateCsrfToken();
+        const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
         res.cookie('csrfToken', token, {
             httpOnly: false, // Фронт должен уметь прочитать этот cookie
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: isSecure,
+            sameSite: 'lax',
             maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней — совпадает с JWT
         });
     }
@@ -46,10 +47,11 @@ const verifyCsrfToken = (req, res, next) => {
 // Middleware для ротации CSRF токена (используется при login/register)
 const rotateCsrfToken = (req, res, next) => {
     const newToken = generateCsrfToken();
+    const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.cookie('csrfToken', newToken, {
         httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: isSecure,
+        sameSite: 'lax',
         maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней — совпадает с JWT
     });
     next();
@@ -58,13 +60,14 @@ const rotateCsrfToken = (req, res, next) => {
 // Endpoint для получения CSRF токена (если фронт хочет явно запросить)
 const getCsrfToken = (req, res) => {
     const token = req.cookies.csrfToken || generateCsrfToken();
+    const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
     
     // Если токена не было, устанавливаем его
     if (!req.cookies.csrfToken) {
         res.cookie('csrfToken', token, {
             httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: isSecure,
+            sameSite: 'lax',
             maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней — совпадает с JWT
         });
     }

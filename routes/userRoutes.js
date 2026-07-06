@@ -274,11 +274,12 @@ router.post('/register', authLimiter, async (req, res) => {
             sendVerificationCode(email, emailCode)
                 .catch(err => logger.error('Ошибка отправки письма'));
 
+            const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
             // Устанавливаем httpOnly cookie с JWT (365 дней — выход только при обновлении клиента)
             res.cookie('token', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                secure: isSecure,
+                sameSite: 'lax',
                 maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней
             });
 
@@ -389,11 +390,12 @@ router.post('/login', authLimiter, (req, res) => {
 
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '365d' });
 
+        const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
         // Устанавливаем httpOnly cookie с JWT (365 дней — выход только при обновлении клиента)
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: isSecure,
+            sameSite: 'lax',
             maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней
         });
 
@@ -1248,15 +1250,16 @@ router.post('/delete-account/confirm', codeLimiter, verifyToken, verifyNotBanned
 
 // Выход из аккаунта
 router.post('/logout', (req, res) => {
+    const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        secure: isSecure,
+        sameSite: 'lax'
     });
     res.clearCookie('csrfToken', {
         httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        secure: isSecure,
+        sameSite: 'lax'
     });
     res.json({ message: 'Вы вышли из аккаунта' });
 });

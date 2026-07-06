@@ -413,7 +413,7 @@ function initializeProfile(myData) {
                     if (addAvatarBtn) addAvatarBtn.style.display = 'none';
                 }
             })
-            .catch(async () => await window.showCustomAlert("Ошибка загрузки аватарки"));
+            .catch(async () => await window.showCustomAlert(window.t('error_avatar_upload', 'Ошибка загрузки аватарки')));
         });
     }
 
@@ -773,12 +773,12 @@ function initializeProfile(myData) {
             if (data.message) {
                 loadProfileComments(viewingProfileId);
             } else {
-                await window.showCustomAlert(data.error || "Ошибка удаления отзыва");
+                await window.showCustomAlert(data.error || window.t('error_delete_review', 'Ошибка удаления отзыва'));
             }
         })
         .catch(async err => {
             console.error(err);
-            await window.showCustomAlert("Ошибка сети при удалении отзыва");
+            await window.showCustomAlert(window.t('error_network_delete_review', 'Ошибка сети при удалении отзыва'));
         });
     };
 

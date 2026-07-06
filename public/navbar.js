@@ -380,7 +380,7 @@ function checkRole(data) {
         
         // Перенаправление забаненных пользователей
         if (currentPage === 'friends.html' || currentPage === 'chat.html') {
-            window.showCustomAlert("Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.").then(() => {
+            window.showCustomAlert(window.t('alert_banned_access', 'Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.')).then(() => {
                 window.location.href = "profile.html";
             });
         }

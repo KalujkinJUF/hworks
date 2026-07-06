@@ -31,7 +31,6 @@ document.addEventListener('spa:navigate', () => {
 
 function initializeAdmin(myData) {
 
-    const toggleBtn = document.getElementById("toggleUsersBtn");
     const usersContainer = document.getElementById("usersContainer");
     const usersList = document.getElementById("usersList");
     const adminMessage = document.getElementById("adminMessage");
@@ -82,7 +81,9 @@ function initializeAdmin(myData) {
         usersList.innerHTML = "";
         const isAdmin = currentRole === 'admin';
 
-        usersData.forEach(user => {
+        const q = (document.getElementById("adminSearchInput")?.value || '').trim().toLowerCase();
+        const filtered = q ? usersData.filter(u => (u.username || '').toLowerCase().includes(q)) : usersData;
+        filtered.forEach(user => {
             const card = document.createElement("div");
             card.className = "user-card";
             card.dataset.id = user.id;
@@ -308,16 +309,12 @@ function initializeAdmin(myData) {
         }
     }
 
-    toggleBtn.addEventListener("click", () => {
-        if (usersContainer.style.display === "none") {
-            usersContainer.style.display = "block";
-            toggleBtn.textContent = window.t('admin_hide_users_list', 'Скрыть всех пользователей');
-            loadUsers();
-        } else {
-            usersContainer.style.display = "none";
-            toggleBtn.textContent = window.t('admin_users_list', 'Показать всех пользователей');
-        }
-    });
+    // #14 Список пользователей всегда виден + поиск пользователей
+    loadUsers();
+    const adminSearchInput = document.getElementById("adminSearchInput");
+    if (adminSearchInput) {
+        adminSearchInput.addEventListener("input", () => renderUsers());
+    }
 
     // Функция для экранирования HTML
     function escapeHtml(text) {

@@ -71,6 +71,11 @@ function initializeChat(myData) {
         vip: '#9b59b6', moderator: '#3498db', admin: '#ff4444', banned: '#333333'
     };
 
+    const roleLabels = {
+        newbie: 'NEWBIE', user: 'USER', premium: 'PREMIUM',
+        vip: 'VIP', moderator: 'MOD', admin: 'ADMIN', banned: 'BANNED'
+    };
+
     loadFriendsList();
 
     // Загрузка списка друзей слева
@@ -114,6 +119,7 @@ function initializeChat(myData) {
                     dnd: 'DND'
                 }[friend.user_status || 'offline'];
                 const roleColor = roleColors[friend.role] || '#fff';
+                const roleLabel = roleLabels[friend.role] || String(friend.role || 'user').toUpperCase();
                 const avatarUrl = friend.avatar || '';
 
                 let item = list.querySelector(`.chat-friend-item[data-id="${friendId}"]`);
@@ -130,7 +136,10 @@ function initializeChat(myData) {
                         ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-chat-avatar"><div class="friend-avatar-placeholder" style="display:none;"></div>` : '<div class="friend-avatar-placeholder"></div>'}
                         <div class="friend-item-info">
                             <span class="friend-item-name" style="color: ${roleColor};">${escapeHtml(friend.username)}</span>
-                            <span class="friend-item-status"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                <span class="friend-item-role" style="color: ${roleColor}; border: 1px solid ${roleColor}; border-radius: 3px; padding: 0 4px; font-size: 9px; line-height: 14px; text-transform: uppercase;">${escapeHtml(roleLabel)}</span>
+                                <span class="friend-item-status"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
+                            </div>
                         </div>
                     `;
 

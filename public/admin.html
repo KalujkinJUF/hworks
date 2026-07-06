@@ -28,11 +28,13 @@
                 <div class="admin-panel">
                     <h1 class="admin-title" data-i18n="admin_panel_title">Админ-панель</h1>
                     
-                    <!-- Кнопка показать/скрыть пользователей -->
-                    <button id="toggleUsersBtn" class="admin-toggle-btn" data-i18n="admin_users_list">Показать всех пользователей</button>
-                    
-                    <!-- Блок со списком пользователей (изначально скрыт) -->
-                    <div id="usersContainer" class="users-container" style="display: none;">
+                    <!-- Поиск пользователей -->
+                    <div class="search-group" style="margin-bottom: 15px;">
+                        <input type="text" id="adminSearchInput" data-i18n-placeholder="search_input_placeholder" placeholder="Введите имя..." class="search-input" style="max-width: 100%;">
+                    </div>
+
+                    <!-- Блок со списком пользователей -->
+                    <div id="usersContainer" class="users-container">
                         <div id="usersList"></div>
                     </div>
 

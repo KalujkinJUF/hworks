@@ -520,6 +520,7 @@ document.addEventListener('spa:navigate', () => {
                         return `
                         <div style="padding-left: 12px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 8px; padding-bottom: 8px; margin-bottom: 8px; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                                ${comment.avatar ? `<img src="${escapeHtml(comment.avatar)}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); object-fit: cover; flex-shrink: 0;"><div style="display:none; width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; flex-shrink: 0;"></div>` : '<div style="width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; flex-shrink: 0;"></div>'}
                                 <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
                                 <span class="wall-comment-date" style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
                         ${currentUserId ? `<button class="reply-comment-btn" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}

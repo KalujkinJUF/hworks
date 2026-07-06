@@ -29,7 +29,50 @@ function initializeFriends() {
         vip: '#9b59b6', moderator: '#3498db', admin: '#ff4444', banned: '#333333'
     };
 
+    const roleLabels = {
+        newbie: 'NEWBIE', user: 'USER', premium: 'PREMIUM',
+        vip: 'VIP', moderator: 'MOD', admin: 'ADMIN', banned: 'BANNED'
+    };
+
     let currentFriendsPage = 1;
+    let friendsData = [];
+
+    // #2 Общая карточка пользователя в стиле страницы поиска (аватар + ник + бейдж ранга)
+    function buildUserCard(user, actionsHtml) {
+        const color = roleColors[user.role] || '#ffffff';
+        const roleLabel = roleLabels[user.role] || String(user.role || '').toUpperCase();
+        const st = user.user_status || 'offline';
+        const statusText = { online: 'Online', offline: 'Offline', away: 'Away', dnd: 'DND' }[st] || 'Offline';
+        const avatar = user.avatar
+            ? `<img src="${escapeHtml(user.avatar)}" class="result-avatar"><div style="display:none; width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>`
+            : '<div style="width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: inline-block;"></div>';
+        return `
+            <div class="search-result-card" style="display: flex; justify-content: space-between; align-items: center; cursor: auto;">
+                <a href="profile.html?username=${encodeURIComponent(user.username)}" style="text-decoration: none; color: inherit; flex: 1; min-width: 0;">
+                    <div class="result-header">
+                        ${avatar}
+                        <span class="result-username" style="color: ${color};">${escapeHtml(user.username)}</span>
+                        <span class="result-role" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
+                        <span class="result-status" style="font-size: 11px; display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; opacity: 0.85;"><span class="friend-status-icon status-${st}"></span>${statusText}</span>
+                    </div>
+                </a>
+                <div class="friend-actions" style="flex-shrink: 0; padding-left: 12px; display: flex; gap: 8px;">${actionsHtml || ''}</div>
+            </div>
+        `;
+    }
+
+    // #8 Рендер списка друзей с учётом поиска
+    function renderFriendsList() {
+        const list = document.getElementById("friendsList");
+        if (!list) return;
+        const q = (document.getElementById("friendsSearchInput")?.value || '').trim().toLowerCase();
+        const filtered = q ? friendsData.filter(f => (f.username || '').toLowerCase().includes(q)) : friendsData;
+        if (filtered.length === 0) {
+            list.innerHTML = `<p class="loading-text">${q ? window.t('search_no_results', 'Пользователей не найдено') : window.t('friends_none', 'У вас пока нет друзей')}</p>`;
+            return;
+        }
+        list.innerHTML = filtered.map(f => buildUserCard(f, `<button class="user-btn delete-btn" onclick="deleteFriend(${f.id})">${window.t('friends_delete', 'Удалить друга')}</button>`)).join('');
+    }
 
     function renderPagination(containerId, currentPage, totalPages, onPageChange) {
         const container = document.getElementById(containerId);
@@ -84,65 +127,22 @@ function initializeFriends() {
         container.appendChild(nextBtn);
     }
 
-    // Загрузка друзей
-    function loadFriends(page = currentFriendsPage) {
-        currentFriendsPage = page;
-        console.log('Загрузка друзей...');
-        fetch(`/api/friends?page=${page}&limit=15`, {
+    // Загрузка друзей (limit 100 — поиск фильтрует клиентски)
+    function loadFriends() {
+        fetch(`/api/friends?page=1&limit=100`, {
             credentials: 'include'
         })
         .then(res => {
-            console.log('Статус ответа:', res.status);
-            if (!res.ok) {
-                throw new Error(`HTTP ошибка: ${res.status}`);
-            }
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
         })
         .then(data => {
-            const friends = data.friends || [];
-            const totalPages = data.totalPages || 0;
-            const currentPage = data.currentPage || 1;
-
-            console.log('Получено друзей:', friends.length, friends);
-            const list = document.getElementById("friendsList");
-            if (friends.length === 0) {
-                list.innerHTML = `<p class="loading-text">${window.t('friends_none', 'У вас пока нет друзей')}</p>`;
-                renderPagination('friendsPagination', currentPage, totalPages, (p) => loadFriends(p));
-            } else {
-                list.innerHTML = friends.map(friend => {
-                    const statusClass = `status-${friend.user_status || 'offline'}`;
-                    const statusText = {
-                        online: 'Online',
-                        offline: 'Offline',
-                        away: 'Away',
-                        dnd: 'DND'
-                    }[friend.user_status || 'offline'];
-                    return `
-                    <div class="friend-card" style="padding: 0;">
-                        <a href="profile.html?username=${encodeURIComponent(friend.username)}" style="text-decoration: none; color: inherit; display: flex; flex: 1; padding: 15px; min-width: 0;">
-                            <div class="friend-info" style="cursor: pointer; width: 100%;">
-                                ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
-                                <div class="friend-details">
-                                    <span class="friend-name" style="color: ${roleColors[friend.role] || '#fff'}; font-weight: bold;">${escapeHtml(friend.username)}</span>
-                                    <div style="display: flex; gap: 10px;">
-                                        <span class="friend-role" style="color: ${roleColors[friend.role] || '#fff'};">${escapeHtml(friend.role.toUpperCase())}</span>
-                                        <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                        <div class="friend-actions" style="padding: 15px;">
-                            <button class="user-btn delete-btn" onclick="deleteFriend(${friend.id})">${window.t('delete', 'Удалить')}</button>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
-
-                renderPagination('friendsPagination', currentPage, totalPages, (p) => loadFriends(p));
-            }
+            friendsData = data.friends || [];
+            renderFriendsList();
+            const pag = document.getElementById("friendsPagination");
+            if (pag) pag.style.display = 'none';
         })
         .catch(err => {
-            console.error('Ошибка загрузки друзей:', err);
             const list = document.getElementById("friendsList");
             if (list) {
                 list.innerHTML = `<p class="loading-text" style="color: #ff4444;">${window.t('error_load', 'Ошибка загрузки')}: ${err.message}</p>`;
@@ -163,35 +163,10 @@ function initializeFriends() {
             if (requests.length === 0) {
                 list.innerHTML = `<p class="loading-text">${window.t('friends_no_requests', 'Нет входящих запросов')}</p>`;
             } else {
-                list.innerHTML = requests.map(req => {
-                    const statusClass = `status-${req.user_status || 'offline'}`;
-                    const statusText = {
-                        online: 'Online',
-                        offline: 'Offline',
-                        away: 'Away',
-                        dnd: 'DND'
-                    }[req.user_status || 'offline'];
-                    return `
-                    <div class="friend-card" style="padding: 0;">
-                        <a href="profile.html?username=${encodeURIComponent(req.username)}" style="text-decoration: none; color: inherit; display: flex; flex: 1; padding: 15px; min-width: 0;">
-                            <div class="friend-info" style="cursor: pointer; width: 100%;">
-                                ${req.avatar ? `<img src="${escapeHtml(req.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
-                                <div class="friend-details">
-                                    <span class="friend-name" style="color: ${roleColors[req.role] || '#fff'}; font-weight: bold;">${escapeHtml(req.username)}</span>
-                                    <div style="display: flex; gap: 10px;">
-                                        <span class="friend-role" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.role.toUpperCase())}</span>
-                                        <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                        <div class="friend-actions" style="padding: 15px; display: flex; gap: 8px;">
-                            <button class="auth-btn" style="margin: 0; width: auto;" onclick="acceptRequest(${req.request_id})">${window.t('friends_accept', 'Принять')}</button>
-                            <button class="user-btn" style="margin: 0; width: auto;" onclick="rejectRequest(${req.request_id})">${window.t('friends_reject', 'Отклонить')}</button>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
+                list.innerHTML = requests.map(req => buildUserCard(req,
+                    `<button class="auth-btn" style="margin: 0; width: auto;" onclick="acceptRequest(${req.request_id})">${window.t('friends_accept', 'Принять')}</button>` +
+                    `<button class="user-btn" style="margin: 0; width: auto;" onclick="rejectRequest(${req.request_id})">${window.t('friends_reject', 'Отклонить')}</button>`
+                )).join('');
             }
         })
         .catch(err => console.error('Ошибка загрузки запросов:', err));
@@ -208,34 +183,9 @@ function initializeFriends() {
             if (requests.length === 0) {
                 list.innerHTML = `<p class="loading-text">${window.t('friends_no_outgoing', 'Вы не отправляли запросы')}</p>`;
             } else {
-                list.innerHTML = requests.map(req => {
-                    const statusClass = `status-${req.user_status || 'offline'}`;
-                    const statusText = {
-                        online: 'Online',
-                        offline: 'Offline',
-                        away: 'Away',
-                        dnd: 'DND'
-                    }[req.user_status || 'offline'];
-                    return `
-                    <div class="friend-card" style="padding: 0;">
-                        <a href="profile.html?username=${encodeURIComponent(req.username)}" style="text-decoration: none; color: inherit; display: flex; flex: 1; padding: 15px; min-width: 0;">
-                            <div class="friend-info" style="cursor: pointer; width: 100%;">
-                                ${req.avatar ? `<img src="${escapeHtml(req.avatar)}" class="friend-avatar">` : '<div class="friend-avatar-placeholder"></div>'}
-                                <div class="friend-details">
-                                    <span class="friend-name" style="color: ${roleColors[req.role] || '#fff'}; font-weight: bold;">${escapeHtml(req.username)}</span>
-                                    <div style="display: flex; gap: 10px;">
-                                        <span class="friend-role" style="color: ${roleColors[req.role] || '#fff'};">${escapeHtml(req.role.toUpperCase())}</span>
-                                        <span class="friend-role" style="color: inherit;"><span class="friend-status-icon ${statusClass}"></span>${statusText}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                        <div class="friend-actions" style="padding: 15px;">
-                            <span class="pending-status">${window.t('friends_pending', 'Ожидание')}</span>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
+                list.innerHTML = requests.map(req => buildUserCard(req,
+                    `<span class="pending-status">${window.t('friends_pending', 'Ожидание')}</span>`
+                )).join('');
             }
         })
         .catch(err => console.error('Ошибка загрузки отправленных:', err));
@@ -292,6 +242,12 @@ function initializeFriends() {
             document.getElementById(tab + "-tab").style.display = "block";
         });
     });
+
+    // #8 Поиск по друзьям (клиентская фильтрация)
+    const friendsSearchInput = document.getElementById("friendsSearchInput");
+    if (friendsSearchInput) {
+        friendsSearchInput.addEventListener("input", renderFriendsList);
+    }
 
     // Загрузка данных
     loadFriends();

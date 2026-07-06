@@ -257,7 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const commentsBtn = card.querySelector(".comments-toggle-btn");
                 if (commentsBtn) {
-                    const newCommentsStr = `💬 Комментарии (${post.comments_count || 0})`;
+                    const newCommentsStr = `💬 ${window.t('comments_title', 'Комментарии')} (${post.comments_count || 0})`;
                     if (commentsBtn.textContent !== newCommentsStr) {
                         commentsBtn.textContent = newCommentsStr;
                     }
@@ -427,7 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.deletePost = async function(postId) {
-        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот пост?")) return;
+        if (!await window.showCustomConfirm(window.t('confirm_post_delete', 'Вы уверены, что хотите удалить этот пост?'))) return;
         
         fetch(`/api/users/posts/${postId}`, {
             method: "DELETE",

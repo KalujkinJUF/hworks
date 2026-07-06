@@ -32,6 +32,12 @@
             "cancel": "Cancel",
             "edit": "Edit",
             "send": "Send",
+            "enter_code": "Enter the 6-digit code",
+            "enter_email": "Enter email",
+            "saved": "Saved!",
+            "error_generic": "Error",
+            "error_save": "Save error",
+            "confirm_review_delete": "Are you sure you want to delete this review?",
 
             // Index (Main Feed)
             "admin_pin_title": "Admin Pin",
@@ -193,6 +199,12 @@
             "cancel": "Отмена",
             "edit": "Редактировать",
             "send": "Отправить",
+            "enter_code": "Введите 6-значный код",
+            "enter_email": "Введите email",
+            "saved": "Сохранено!",
+            "error_generic": "Ошибка",
+            "error_save": "Ошибка сохранения",
+            "confirm_review_delete": "Вы уверены, что хотите удалить этот отзыв?",
 
             // Index (Main Feed)
             "admin_pin_title": "Закреп от админа",
@@ -224,7 +236,7 @@
             "profile_joined": "Регистрация:",
             "profile_role": "Роль:",
             "profile_status": "Статус:",
-            "profile_about_title": "О БО МНЕ:",
+            "profile_about_title": "ОБО МНЕ:",
             "profile_wall_title": "СТЕНА",
             "profile_write_btn": "НАПИСАТЬ",
             "profile_settings_title": "СМЕНИТЬ ЛОГИН И ПАРОЛЬ",
@@ -354,6 +366,12 @@
             "cancel": "Скасувати",
             "edit": "Редагувати",
             "send": "Надіслати",
+            "enter_code": "Введіть 6-значний код",
+            "enter_email": "Введіть email",
+            "saved": "Збережено!",
+            "error_generic": "Помилка",
+            "error_save": "Помилка збереження",
+            "confirm_review_delete": "Ви впевнені, що хочете видалити цей відгук?",
 
             // Index (Main Feed)
             "admin_pin_title": "Закріп від адміна",

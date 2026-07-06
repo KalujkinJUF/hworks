@@ -188,7 +188,7 @@ function initializeProfile(myData) {
                 // Для чужого профиля показываем как текст
                 const bioGroup = document.querySelector('.bio-group');
                 if (bioGroup) {
-                    bioGroup.innerHTML = `<label for="aboutMe">${window.t('profile_about_title', 'Обо мне')}:</label><p style="text-align: left; color: white;">${escapeHtml(data.about) || window.t('no_info', 'Нет информации')}</p>`;
+                    bioGroup.innerHTML = `<label for="aboutMe">${window.t('profile_about_title', 'Обо мне:')}</label><p style="text-align: left; color: white;">${escapeHtml(data.about) || window.t('no_info', 'Нет информации')}</p>`;
                 }
             }
         }
@@ -425,7 +425,7 @@ function initializeProfile(myData) {
             const code = document.getElementById("verifyCode").value.trim();
             const verifyMessage = document.getElementById("verifyMessage");
             if (!code || code.length !== 6) {
-                verifyMessage.textContent = "Введите 6-значный код";
+                verifyMessage.textContent = window.t('enter_code', 'Введите 6-значный код');
                 verifyMessage.style.color = "#ff4444";
                 return;
             }
@@ -443,7 +443,7 @@ function initializeProfile(myData) {
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
                     verifyMessage.style.color = "#ff4444";
-                    verifyMessage.textContent = data.error || "Ошибка";
+                    verifyMessage.textContent = data.error || window.t('error_generic', 'Ошибка');
                 }
             })
             .catch(() => {
@@ -763,7 +763,7 @@ function initializeProfile(myData) {
     window.loadProfileComments = loadProfileComments;
 
     window.deleteWallComment = async function(commentId) {
-        if (!await window.showCustomConfirm("Вы уверены, что хотите удалить этот отзыв?")) return;
+        if (!await window.showCustomConfirm(window.t('confirm_review_delete', 'Вы уверены, что хотите удалить этот отзыв?'))) return;
         fetch(`/api/users/comments/${commentId}`, {
             method: "DELETE",
             credentials: 'include'
@@ -803,13 +803,13 @@ function initializeProfile(myData) {
                 if (data.message) {
                     if (bioMessage) {
                         bioMessage.style.color = "#00ff00";
-                        bioMessage.textContent = "Сохранено!";
+                        bioMessage.textContent = window.t('saved', 'Сохранено!');
                         setTimeout(() => { bioMessage.textContent = ""; }, 2000);
                     }
                 } else {
                     if (bioMessage) {
                         bioMessage.style.color = "#ff4444";
-                        bioMessage.textContent = data.error || "Ошибка сохранения";
+                        bioMessage.textContent = data.error || window.t('error_save', 'Ошибка сохранения');
                     }
                 }
             })
@@ -817,7 +817,7 @@ function initializeProfile(myData) {
                 console.error(err);
                 if (bioMessage) {
                     bioMessage.style.color = "#ff4444";
-                    bioMessage.textContent = "Ошибка сети";
+                    bioMessage.textContent = window.t('error_network', 'Ошибка сети');
                 }
             });
         });
@@ -832,7 +832,7 @@ function initializeProfile(myData) {
             if (!email) {
                 if (changeEmailMessage) {
                     changeEmailMessage.style.color = "#ff4444";
-                    changeEmailMessage.textContent = "Введите email";
+                    changeEmailMessage.textContent = window.t('enter_email', 'Введите email');
                 }
                 return;
             }

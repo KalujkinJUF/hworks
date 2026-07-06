@@ -54,6 +54,11 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "https://challenges.cloudflare.com"],
+            // Разрешаем инлайновые обработчики (onclick/onsubmit и т.п.): кнопки лайка,
+            // комментариев, удаления и формы построены на onclick. Без этого Helmet ставит
+            // script-src-attr 'none' по умолчанию и блокирует их. Контент экранируется
+            // (sanitize-html + escapeHtml), поэтому риск инъекции обработчиков минимален.
+            scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             imgSrc: ["'self'", "data:", "blob:"],
             connectSrc: ["'self'", process.env.CLIENT_URL, "https://challenges.cloudflare.com"],

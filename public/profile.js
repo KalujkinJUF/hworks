@@ -1000,10 +1000,8 @@ function initializeProfile(myData) {
         themeSelector.addEventListener("change", (e) => {
             const newTheme = e.target.value;
             localStorage.setItem('app_theme', newTheme);
-            if (newTheme === 'aero') {
-                document.body.classList.add('theme-aero');
-            } else {
-                document.body.classList.remove('theme-aero');
+            if (window.applyTheme) {
+                window.applyTheme();
             }
         });
     }

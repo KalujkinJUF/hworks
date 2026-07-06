@@ -594,30 +594,31 @@
     }
 
     // Функция применения темы
-    function applyTheme() {
+    window.applyTheme = function applyTheme() {
         const theme = localStorage.getItem('app_theme') || 'default';
+        const themeFile = theme === 'aero' ? 'aero.css' : 'default.css';
+        
         let themeLink = document.getElementById('theme-stylesheet');
         
         if (!themeLink) {
             themeLink = document.createElement('link');
             themeLink.id = 'theme-stylesheet';
             themeLink.rel = 'stylesheet';
+            themeLink.href = themeFile;
             if (document.head) {
                 document.head.appendChild(themeLink);
-            }
-        }
-        
-        if (theme === 'aero') {
-            document.documentElement.classList.add('theme-aero');
-            if (document.body) document.body.classList.add('theme-aero');
-            if (!themeLink.href.endsWith('aero.css')) {
-                themeLink.href = 'aero.css';
+            } else {
+                document.documentElement.appendChild(themeLink);
             }
         } else {
-            document.documentElement.classList.remove('theme-aero');
-            if (document.body) document.body.classList.remove('theme-aero');
-            themeLink.href = '';
+            if (!themeLink.href.endsWith(themeFile)) {
+                themeLink.href = themeFile;
+            }
         }
+
+        // Очищаем старые классы, так как теперь темы полностью автономны
+        document.documentElement.classList.remove('theme-aero');
+        if (document.body) document.body.classList.remove('theme-aero');
     }
 
     // Применяем тему сразу для предотвращения FOUC

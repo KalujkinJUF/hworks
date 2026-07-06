@@ -2268,25 +2268,6 @@ select:focus {
 }
 
 
-/* ==========================================================================
-   ROLE COLORS
-   ========================================================================== */
-.role-moderator {
-    color: #9b59b6 !important;
-}
-.role-admin {
-    color: #ff3366 !important;
-}
-.role-vip {
-    color: #ffcc00 !important;
-}
-.role-premium {
-    color: #ff99cc !important;
-}
-.role-user {
-    color: #3498db !important;
-}
-
 .username, .friend-name {
     text-decoration: none !important;
 }

@@ -55,6 +55,8 @@
                 if (main && newMain) {
                     main.innerHTML = newMain.innerHTML;
                     main.className = newMain.className;
+                    document.body.className = doc.body.className;
+                    document.body.id = doc.body.id;
                 }
                 
                 if (!isPopState) {

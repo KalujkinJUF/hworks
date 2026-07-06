@@ -40,12 +40,28 @@ body.theme-aero .friend-card,
 body.theme-aero .sidebar-section,
 body.theme-aero .profile-section > div,
 body.theme-aero .users-container,
-body.theme-aero .search-section {
-    background: linear-gradient(135deg, rgba(200, 235, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%);
+body.theme-aero .search-section,
+body.theme-aero .admin-pin-box,
+body.theme-aero .online-box,
+body.theme-aero .messages-container,
+body.theme-aero .chat-section,
+body.theme-aero .chat-friends-column,
+body.theme-aero .chat-main-column {
+    background: linear-gradient(135deg, rgba(140, 190, 225, 0.75) 0%, rgba(200, 225, 245, 0.65) 100%) !important;
     border: 1px solid rgba(160, 205, 235, 0.6);
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 50, 100, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
+}
+
+/* Принудительный темный текст для контента, который мог переопределяться через inline styles */
+body.theme-aero .comment-content,
+body.theme-aero .messages-container,
+body.theme-aero .messages-container *,
+body.theme-aero .admin-pin-content,
+body.theme-aero .online-box,
+body.theme-aero .online-box * {
+    color: #333 !important;
 }
 
 body.theme-aero button,

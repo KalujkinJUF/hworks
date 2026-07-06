@@ -681,6 +681,11 @@ document.addEventListener('spa:navigate', () => {
         const content = document.getElementById("postContent").value.trim();
         if (!content) { document.getElementById("postMessage").textContent = window.t('write_post_placeholder', 'Напишите текст'); return; }
 
+        const newsBtn = document.getElementById("postNewsBtn");
+        const patchBtn = document.getElementById("postPatchBtn");
+        if (newsBtn) newsBtn.disabled = true;
+        if (patchBtn) patchBtn.disabled = true;
+
         const msg = document.getElementById("postMessage");
         msg.textContent = window.t('loading', 'Публикация...');
         msg.style.color = "#aaa";
@@ -700,12 +705,16 @@ document.addEventListener('spa:navigate', () => {
                 });
                 const uploadData = await uploadRes.json();
                 if (uploadData.error) {
+                    if (newsBtn) newsBtn.disabled = false;
+                    if (patchBtn) patchBtn.disabled = false;
                     msg.textContent = uploadData.error;
                     msg.style.color = "#ff4444";
                     return;
                 }
                 imageUrl = uploadData.url;
             } catch (err) {
+                if (newsBtn) newsBtn.disabled = false;
+                if (patchBtn) patchBtn.disabled = false;
                 msg.textContent = window.t('error_network', 'Ошибка загрузки медиа');
                 msg.style.color = "#ff4444";
                 return;
@@ -722,6 +731,8 @@ document.addEventListener('spa:navigate', () => {
         })
             .then(res => res.json())
             .then(data => {
+                if (newsBtn) newsBtn.disabled = false;
+                if (patchBtn) patchBtn.disabled = false;
                 msg.textContent = data.message || data.error;
                 msg.style.color = data.message ? "#00ff00" : "#ff4444";
                 if (data.message) {
@@ -732,7 +743,10 @@ document.addEventListener('spa:navigate', () => {
                     loadPosts();
                 }
             })
-            .catch(() => { });
+            .catch(() => {
+                if (newsBtn) newsBtn.disabled = false;
+                if (patchBtn) patchBtn.disabled = false;
+            });
     }
 
     document.getElementById("postNewsBtn").addEventListener("click", () => createPost('news'));

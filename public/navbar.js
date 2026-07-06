@@ -144,7 +144,10 @@ let _navbarInterval2 = null;
 // BUT we re-trigger checkRole on spa:navigate to update auth buttons correctly!
 document.addEventListener("spa:navigate", () => {
     if (window.updateNavbarNotifications) window.updateNavbarNotifications();
-    if (typeof myData !== 'undefined' && myData) checkRole(myData);
+    if (window.updateNavbarVisibility) window.updateNavbarVisibility(window.currentUserNavbarData);
+    if (window.currentUserNavbarData) {
+        checkRole(window.currentUserNavbarData);
+    }
 });
 
 document.addEventListener("DOMContentLoaded", () => {

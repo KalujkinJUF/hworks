@@ -2669,3 +2669,9 @@ a:hover {
     max-width: 500px !important;
     margin: 50px auto !important;
 }
+
+
+/* SPA Transitions */
+main { transition: opacity 0.2s ease, transform 0.2s ease; }
+.page-exit { opacity: 0 !important; transform: translateY(10px) !important; }
+.page-enter { opacity: 0 !important; transform: translateY(-10px) !important; }

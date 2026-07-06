@@ -134,7 +134,21 @@ window.showCustomConfirm = function(message) {
     });
 };
 
+
+if (window._navbarInitialized) return;
+window._navbarInitialized = true;
+let _navbarInterval1 = null;
+let _navbarInterval2 = null;
+
+// Since navbar is global, we keep listeners and intervals, 
+// BUT we re-trigger checkRole on spa:navigate to update auth buttons correctly!
+document.addEventListener("spa:navigate", () => {
+    if (window.updateNavbarNotifications) window.updateNavbarNotifications();
+    if (typeof myData !== 'undefined' && myData) checkRole(myData);
+});
+
 document.addEventListener("DOMContentLoaded", () => {
+
     // Проверка авторизации через cookie (httpOnly)
     fetch("/api/users/profile", {
         credentials: 'include'
@@ -279,7 +293,7 @@ function initializeNavbar(myData) {
         updateNavbarNotifications();
 
         // Автообновление уведомлений в реальном времени каждые 10 секунд
-        setInterval(updateNavbarNotifications, 10000);
+        if(_navbarInterval1) clearInterval(_navbarInterval1); _navbarInterval1 = setInterval(updateNavbarNotifications, 10000);
 
         // Детекция активности и фоновый пинг присутствия
         let lastActivityTime = Date.now();
@@ -328,15 +342,15 @@ function initializeNavbar(myData) {
         sendPresencePing(false);
 
         // Периодический пинг каждые 30 секунд для проверки простоя и обновления last_active
-        setInterval(() => {
-            const idleThreshold = 5 * 60 * 1000; // 5 минут
-            const currentIdleState = (Date.now() - lastActivityTime) > idleThreshold;
-            
-            if (currentIdleState !== isIdle) {
-                isIdle = currentIdleState;
-            }
-            sendPresencePing(isIdle);
-        }, 30000);
+        
+if(_navbarInterval2) clearInterval(_navbarInterval2); _navbarInterval2 = setInterval(() => {
+    const idleThreshold = 5 * 60 * 1000;
+    const currentIdleState = (Date.now() - lastActivityTime) > idleThreshold;
+    if (currentIdleState !== isIdle) {
+        isIdle = currentIdleState;
+    }
+    sendPresencePing(isIdle);
+}, 30000);
 
         // Проверяем роль через профиль, чтобы показать кнопку админки или скрыть функции забаненного
         if (myData) {

@@ -1,4 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
+let _spaInterval_0 = null;
+document.addEventListener('spa:unload', () => {
+    if (_spaInterval_0) clearInterval(_spaInterval_0);
+});
+document.addEventListener('spa:navigate', () => {
+    if (!document.querySelector('.newsFeed') && !document.getElementById('newsFeed')) return;
+
     let currentUserId = null;
     let currentUserRole = null;
     let csrfToken = null;
@@ -644,7 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadPosts();
     loadOnline();
-    setInterval(loadOnline, 30000);
+    _spaInterval_0 = setInterval(loadOnline, 30000);
 
     // Логика прикрепления файлов к посту
     const postAttachBtn = document.getElementById("postAttachBtn");

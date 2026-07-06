@@ -1,4 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
+let _spaInterval_5 = null;
+document.addEventListener('spa:unload', () => {
+    if (_spaInterval_5) clearInterval(_spaInterval_5);
+});
+document.addEventListener('spa:navigate', () => {
+    if (!document.querySelector('.searchSection') && !document.getElementById('searchSection')) return;
+
 
     const searchInput = document.getElementById("searchInput");
     const resultsDiv = document.getElementById("searchResults");

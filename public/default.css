@@ -2293,3 +2293,8 @@ a.post-author, a.username-link, a[href^="profile.html"] {
     background: rgba(255, 255, 255, 0.01);
     margin-bottom: 15px;
 }
+
+/* SPA Transitions */
+main { transition: opacity 0.2s ease, transform 0.2s ease; }
+.page-exit { opacity: 0 !important; transform: translateY(10px) !important; }
+.page-enter { opacity: 0 !important; transform: translateY(-10px) !important; }

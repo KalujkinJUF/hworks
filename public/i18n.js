@@ -629,6 +629,13 @@
         window.applyTranslations();
         bindLanguageButtons();
     });
+    
+    // We do NOT bind language buttons multiple times
+    document.addEventListener("spa:navigate", () => {
+        applyTheme();
+        window.applyTranslations();
+    });
+
 
     window.addEventListener("load", () => {
         applyTheme();

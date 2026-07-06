@@ -1,4 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
+let _spaInterval_2 = null;
+document.addEventListener('spa:unload', () => {
+    if (_spaInterval_2) clearInterval(_spaInterval_2);
+});
+document.addEventListener('spa:navigate', () => {
+    if (!document.querySelector('.messagesBox') && !document.getElementById('messagesBox')) return;
+
     // Проверка авторизации через cookie (httpOnly)
     fetch("/api/users/profile", {
         credentials: 'include'

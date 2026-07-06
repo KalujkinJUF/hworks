@@ -10,6 +10,37 @@ document.addEventListener('error', (e) => {
     }
 }, true);
 
+// #15 Просмотрщик фото (lightbox) для изображений в постах и чате
+(function() {
+    const style = document.createElement('style');
+    style.textContent = '.message-media-box img, .post-media-box img { cursor: zoom-in; }';
+    document.head.appendChild(style);
+
+    function openLightbox(src) {
+        const overlay = document.createElement('div');
+        overlay.className = 'lightbox-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:100000;cursor:zoom-out;padding:20px;box-sizing:border-box;';
+        const img = document.createElement('img');
+        img.src = src;
+        img.style.cssText = 'max-width:95vw;max-height:95vh;object-fit:contain;box-shadow:0 0 30px rgba(0,0,0,0.8);';
+        overlay.appendChild(img);
+        const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+        overlay.addEventListener('click', close);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+    }
+
+    document.addEventListener('click', (e) => {
+        const img = e.target.closest('.message-media-box img, .post-media-box img');
+        if (img && img.getAttribute('src')) {
+            e.preventDefault();
+            e.stopPropagation();
+            openLightbox(img.getAttribute('src'));
+        }
+    });
+})();
+
 // Обработка clear_session от Tauri-клиента (при обновлении версии)
 (function() {
     const params = new URLSearchParams(window.location.search);

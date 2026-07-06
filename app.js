@@ -17,6 +17,10 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const app = express();
 app.set('trust proxy', 1);
+// Отключаем ETag для динамических ответов (res.json/res.send): иначе браузер
+// с устаревшим кэшем шлёт If-None-Match и получает 304, который fetch трактует
+// как res.ok===false. Статику express.static это не затрагивает (свои ETag).
+app.set('etag', false);
 const jwt = require('jsonwebtoken');
 const mysql = require('mysql');
 const userRoutes = require('./routes/userRoutes');

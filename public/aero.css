@@ -3197,7 +3197,9 @@ footer {
 .friends-container,
 .friend-card,
 .sidebar-section,
-.profile-section > div,
+.profile-layout,
+.bio-group,
+#profileCommentsSection,
 .users-container,
 .admin-pin-box,
 .online-box,
@@ -3509,4 +3511,67 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
+}
+
+/* Увеличение шрифтов для темы Aero */
+body, p, span, div, input, textarea, button, select, a {
+    font-size: 14px;
+}
+h2 {
+    font-size: 20px !important;
+}
+h3 {
+    font-size: 18px !important;
+}
+.post-content, .comment-content, .message-text, .about-section p {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+}
+.post-date, .comment-date, .friend-role, .pending-status, .post-category {
+    font-size: 12px !important;
+}
+
+/* Специфические кнопки для комментариев в теме Aero */
+.reply-comment-btn,
+.delete-comment-btn {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    padding: 0 !important;
+    margin-left: 8px !important;
+    cursor: pointer !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+}
+.reply-comment-btn {
+    color: #0066cc !important;
+}
+.reply-comment-btn:hover {
+    text-decoration: underline !important;
+}
+.delete-comment-btn {
+    color: #ff4444 !important;
+}
+.delete-comment-btn:hover {
+    text-decoration: underline !important;
+}
+.wall-comment-date {
+    font-size: 11px !important;
+    color: #000000 !important; /* Чёрный цвет даты сообщений на стене */
+    font-weight: 500 !important;
+}
+
+/* Отключение фона для табов профиля */
+.profile-tabs {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
 }

@@ -2306,3 +2306,30 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     overflow-x: hidden;
     padding-right: 6px;
 }
+
+/* Comment style elements */
+.reply-comment-btn {
+    color: yellow;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 8px;
+    background: none;
+    border: none;
+    padding: 0;
+}
+.reply-comment-btn:hover {
+    text-decoration: underline;
+}
+.delete-comment-btn {
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    background: none;
+    border: none;
+    padding: 0;
+}
+.wall-comment-date {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}

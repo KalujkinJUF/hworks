@@ -461,7 +461,7 @@ function initializeProfile(myData) {
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
                     verifyMessage.style.color = "#ff4444";
-                    verifyMessage.textContent = data.error || window.t('error_generic', 'Ошибка');
+                    verifyMessage.textContent = window.tErr(data.error) || window.t('error_generic', 'Ошибка');
                 }
             })
             .catch(() => {
@@ -589,9 +589,9 @@ function initializeProfile(myData) {
                     const color = roleColors[f.role] || '#ffffff';
                     return `
                         <a href="profile.html?username=${encodeURIComponent(f.username)}" style="text-decoration: none; color: inherit;">
-                            <div style="display: flex; flex-direction: column; align-items: center; width: 70px;">
-                                ${f.avatar ? `<img src="${escapeHtml(f.avatar)}" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;"><div style="display:none; width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
-                                <span style="font-size: 8px; margin-top: 5px; color: ${color}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center;">${escapeHtml(f.username)}</span>
+                            <div style="display: flex; flex-direction: column; align-items: center; width: 90px;">
+                                ${f.avatar ? `<img src="${escapeHtml(f.avatar)}" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; object-fit: cover;"><div style="display:none; width: 50px; height: 50px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 50px; height: 50px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                <span style="font-size: 11px; margin-top: 5px; color: ${color}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center;">${escapeHtml(f.username)}</span>
                             </div>
                         </a>
                     `;
@@ -706,7 +706,7 @@ function initializeProfile(myData) {
             initialLoadDone = true;
 
             if (comments.length === 0) {
-                list.innerHTML = '<p class="loading-text">Отзывов пока нет</p>';
+                list.innerHTML = `<p class="loading-text">${window.t('profile_no_reviews', 'Отзывов пока нет')}</p>`;
                 renderPagination('commentsPagination', currentPage, totalPages, (p) => {
                     loadProfileComments(targetId, p);
                     const wallHeader = document.getElementById("profileCommentsSection");
@@ -737,13 +737,13 @@ function initializeProfile(myData) {
                     }
 
                     return `
-                        <div class="comment-card" data-comment-id="${c.id}" style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 15px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.01);">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid white; object-fit: cover;"><div style="display:none; width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
-                                <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 12px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
-                                <span style="font-size: 10px; color: rgba(255,255,255,0.5); margin-left: auto;">${new Date(c.created_at).toLocaleString()}${deleteBtn}</span>
+                        <div class="comment-card" data-comment-id="${c.id}" style="border: 1px solid rgba(255, 255, 255, 0.2); padding: 12px; margin-bottom: 12px; background: rgba(0, 0, 0, 0.2);">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); object-fit: cover;">` : '<div style="width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
+                                <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 11px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
+                                <span class="wall-comment-date" style="margin-left: auto; font-size: 10px; color: #888;">${new Date(c.created_at).toLocaleString()}${deleteBtn}</span>
                             </div>
-                            <div class="comment-content" style="font-size: 12px; text-align: left; color: white; word-break: break-word; line-height: 1.5;">${commentContentMarkup}</div>
+                            <div class="comment-content" style="font-size: 12px; text-align: left; color: #ddd; word-break: break-word; line-height: 1.4;">${commentContentMarkup}</div>
                         </div>
                     `;
                 }).join('');
@@ -785,7 +785,7 @@ function initializeProfile(myData) {
             if (data.message) {
                 loadProfileComments(viewingProfileId);
             } else {
-                await window.showCustomAlert(data.error || window.t('error_delete_review', 'Ошибка удаления отзыва'));
+                await window.showCustomAlert(window.tErr(data.error) || window.t('error_delete_review', 'Ошибка удаления отзыва'));
             }
         })
         .catch(async err => {
@@ -821,7 +821,7 @@ function initializeProfile(myData) {
                 } else {
                     if (bioMessage) {
                         bioMessage.style.color = "#ff4444";
-                        bioMessage.textContent = data.error || window.t('error_save', 'Ошибка сохранения');
+                        bioMessage.textContent = window.tErr(data.error) || window.t('error_save', 'Ошибка сохранения');
                     }
                 }
             })
@@ -871,7 +871,7 @@ function initializeProfile(myData) {
                 } else {
                     if (changeEmailMessage) {
                         changeEmailMessage.style.color = "#ff4444";
-                        changeEmailMessage.textContent = data.error || window.t('error_network', 'Ошибка смены email');
+                        changeEmailMessage.textContent = window.tErr(data.error) || window.t('error_network', 'Ошибка смены email');
                     }
                 }
             })
@@ -908,7 +908,7 @@ function initializeProfile(myData) {
                 } else {
                     if (deleteMessage) {
                         deleteMessage.style.color = "#ff4444";
-                        deleteMessage.textContent = data.error || window.t('error_network', 'Ошибка запроса');
+                        deleteMessage.textContent = window.tErr(data.error) || window.t('error_network', 'Ошибка запроса');
                     }
                 }
             })
@@ -958,7 +958,7 @@ function initializeProfile(myData) {
                 } else {
                     if (deleteMessage) {
                         deleteMessage.style.color = "#ff4444";
-                        deleteMessage.textContent = data.error || window.t('error_network', 'Ошибка подтверждения');
+                        deleteMessage.textContent = window.tErr(data.error) || window.t('error_network', 'Ошибка подтверждения');
                     }
                 }
             })

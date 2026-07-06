@@ -48,7 +48,7 @@
             "feed_updates": "Updates",
             "write_post_placeholder": "Write a post...",
             "attach_photo": "Attach photo",
-            "publish_post": "PUBLISH POST",
+            "publish_post": "Publish post",
             "publish_update": "Update",
             "load_more": "Load more",
             "online_now_title": "Online now",
@@ -167,7 +167,24 @@
             "admin_users_list": "Users List",
             "admin_ban_user": "Ban",
             "admin_unban_user": "Unban",
-            "admin_change_role": "Change Role"
+            "admin_change_role": "Change Role",
+            "no_info": "No information",
+            "unsubscribe": "Unsubscribe",
+            "subscribe": "Subscribe",
+            "profile_no_reviews": "No reviews yet",
+            "profile_add_friend": "Add Friend",
+            "login_success": "Login successful!",
+            "login_failed": "Invalid credentials.",
+            "error_too_many_login_attempts": "Too many attempts. Please try again in 15 minutes.",
+            "error_too_many_profile_updates": "Too many profile updates. Please try again in 15 minutes.",
+            "error_too_many_searches": "Too many searches. Please try again in 5 minutes.",
+            "error_too_many_code_attempts": "Too many verification code attempts. Please try again in 15 minutes.",
+            "error_too_many_messages": "Too many messages. Please try again in 5 minutes.",
+            "error_too_many_requests": "Too many requests. Please try again in 5 minutes.",
+            "error_invalid_verify_code": "Invalid verification code.",
+            "error_username_taken": "Username is already taken.",
+            "error_email_taken": "Email is already registered.",
+            "error_invalid_captcha": "Invalid captcha token."
         },
         ru: {
             // Navigation
@@ -217,7 +234,7 @@
             "feed_updates": "Обновления",
             "write_post_placeholder": "Напишите пост...",
             "attach_photo": "Прикрепить фото",
-            "publish_post": "ОПУБЛИКОВАТЬ ПОСТ",
+            "publish_post": "Опубликовать пост",
             "publish_update": "Обновление",
             "load_more": "Загрузить ещё",
             "online_now_title": "Сейчас онлайн",
@@ -336,7 +353,24 @@
             "admin_users_list": "Список пользователей",
             "admin_ban_user": "Бан",
             "admin_unban_user": "Разбанить",
-            "admin_change_role": "Сменить роль"
+            "admin_change_role": "Сменить роль",
+            "no_info": "Нет информации",
+            "unsubscribe": "Отписаться",
+            "subscribe": "Подписаться",
+            "profile_no_reviews": "Отзывов пока нет",
+            "profile_add_friend": "Добавить в друзья",
+            "login_success": "Успешный вход!",
+            "login_failed": "Неверные учетные данные.",
+            "error_too_many_login_attempts": "Слишком много попыток. Попробуйте через 15 минут.",
+            "error_too_many_profile_updates": "Слишком много обновлений профиля. Попробуйте через 15 минут.",
+            "error_too_many_searches": "Слишком много поисковых запросов. Попробуйте через 5 минут.",
+            "error_too_many_code_attempts": "Слишком много попыток ввода кода. Попробуйте через 15 минут.",
+            "error_too_many_messages": "Слишком много сообщений. Попробуйте через 5 минут.",
+            "error_too_many_requests": "Слишком много запросов. Попробуйте через 5 минут.",
+            "error_invalid_verify_code": "Неверный код подтверждения.",
+            "error_username_taken": "Имя пользователя уже занято.",
+            "error_email_taken": "Email уже зарегистрирован.",
+            "error_invalid_captcha": "Неверный токен капчи."
         },
         uk: {
             // Navigation
@@ -386,7 +420,7 @@
             "feed_updates": "Оновлення",
             "write_post_placeholder": "Напишіть пост...",
             "attach_photo": "Додати фото",
-            "publish_post": "ОПУБЛІКУВАТИ ПОСТ",
+            "publish_post": "Опублікувати пост",
             "publish_update": "Оновлення",
             "load_more": "Завантажити ще",
             "online_now_title": "Зараз онлайн",
@@ -505,7 +539,24 @@
             "admin_users_list": "Список користувачів",
             "admin_ban_user": "Бан",
             "admin_unban_user": "Розбанити",
-            "admin_change_role": "Змінити роль"
+            "admin_change_role": "Змінити роль",
+            "no_info": "Немає інформації",
+            "unsubscribe": "Відписатися",
+            "subscribe": "Підписатися",
+            "profile_no_reviews": "Відгуків поки немає",
+            "profile_add_friend": "Додати в друзі",
+            "login_success": "Успішний вхід!",
+            "login_failed": "Невірні облікові дані.",
+            "error_too_many_login_attempts": "Занадто багато спроб. Спробуйте через 15 хвилин.",
+            "error_too_many_profile_updates": "Занадто багато оновлень профілю. Спробуйте через 15 хвилин.",
+            "error_too_many_searches": "Занадто багато пошукових запитів. Спробуйте через 5 хвилин.",
+            "error_too_many_code_attempts": "Занадто багато спроб введення коду. Спробуйте через 15 хвилин.",
+            "error_too_many_messages": "Занадто багато повідомлень. Спробуйте через 5 хвилин.",
+            "error_too_many_requests": "Занадто багато запитів. Спробуйте через 5 хвилин.",
+            "error_invalid_verify_code": "Невірний код підтвердження.",
+            "error_username_taken": "Ім'я користувача вже зайняте.",
+            "error_email_taken": "Email вже зареєстрований.",
+            "error_invalid_captcha": "Невірний токен капчі."
         }
     };
 
@@ -526,6 +577,32 @@
             return enData[key];
         }
         return fallback || key;
+    };
+
+    window.tErr = function(errText, fallback = '') {
+        if (!errText) return fallback || errText;
+        const cleanErr = errText.trim().replace(/\.$/, '');
+        
+        const errorMap = {
+            'Слишком много попыток. Попробуйте через 15 минут': 'error_too_many_login_attempts',
+            'Слишком много обновлений профиля. Попробуйте через 15 минут': 'error_too_many_profile_updates',
+            'Слишком много поисковых запросов. Попробуйте через 5 минут': 'error_too_many_searches',
+            'Слишком много попыток ввода кода. Попробуйте через 15 минут': 'error_too_many_code_attempts',
+            'Слишком много сообщений. Попробуйте через 5 минут': 'error_too_many_messages',
+            'Слишком много запросов. Попробуйте через 5 минут': 'error_too_many_requests',
+            'Неверные учетные данные': 'login_failed',
+            'Неверный код подтверждения': 'error_invalid_verify_code',
+            'Имя пользователя уже занято': 'error_username_taken',
+            'Email уже зарегистрирован': 'error_email_taken',
+            'Неверный токен капчи': 'error_invalid_captcha',
+            'Пароль не соответствует требованиям безопасности': 'register_error_requirements'
+        };
+
+        const key = errorMap[cleanErr];
+        if (key) {
+            return window.t(key, errText);
+        }
+        return window.t(errText, fallback || errText);
     };
 
     window.changeLanguage = function(lang) {

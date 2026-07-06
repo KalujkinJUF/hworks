@@ -35,7 +35,7 @@ document.addEventListener('spa:navigate', () => {
             } else {
                 if (messageDiv) {
                     messageDiv.style.color = 'red';
-                    messageDiv.textContent = data.error || window.t('login_failed', 'Неверные учетные данные.');
+                    messageDiv.textContent = window.tErr(data.error) || window.t('login_failed', 'Неверные учетные данные.');
                 }
             }
         } catch (error) {

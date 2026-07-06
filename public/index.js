@@ -515,14 +515,14 @@ document.addEventListener('spa:navigate', () => {
                         const isCommentAdmin = currentUserRole === 'admin';
                         const isCommentModerator = currentUserRole === 'moderator' && comment.role !== 'admin';
                         const canDeleteComment = isCommentAuthor || isCommentAdmin || isCommentModerator;
-                        const deleteCommentBtnHtml = canDeleteComment ? `<button class="delete-btn" style="margin-left: 8px;" onclick="deleteComment(${postId}, ${comment.id})">Удалить</button>` : '';
+                        const deleteCommentBtnHtml = canDeleteComment ? `<button class="delete-btn delete-comment-btn" style="margin-left: 8px;" onclick="deleteComment(${postId}, ${comment.id})">Удалить</button>` : '';
 
                         return `
                         <div style="padding-left: 12px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 8px; padding-bottom: 8px; margin-bottom: 8px; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
                                 <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
-                                <span style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
-                        ${currentUserId ? `<button style="color: yellow; cursor: pointer; font-size: 10px; font-weight: bold; margin-left: 8px; background: none; border: none;" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}
+                                <span class="wall-comment-date" style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
+                        ${currentUserId ? `<button class="reply-comment-btn" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}
                                 ${deleteCommentBtnHtml}
                             </div>
                             <div style="font-size: 12px; color: #eee; margin-top: 4px; word-break: break-word; line-height: 1.4;">${escapeHtml(comment.content)}</div>

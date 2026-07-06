@@ -92,7 +92,7 @@ document.addEventListener('spa:navigate', () => {
             if (window.turnstile) window.turnstile.reset();
             if (messageDiv) {
                 messageDiv.style.color = 'red';
-                messageDiv.textContent = data.error || window.t('error_network', 'Произошла ошибка при регистрации.');
+                messageDiv.textContent = window.tErr(data.error) || window.t('error_network', 'Произошла ошибка при регистрации.');
             }
         }
     } catch (error) {

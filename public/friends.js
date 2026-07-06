@@ -285,10 +285,10 @@ function initializeFriends() {
     // Табы
     document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
-            const tab = e.target.dataset.tab;
+            const tab = e.currentTarget.dataset.tab;
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
-            e.target.classList.add("active");
+            e.currentTarget.classList.add("active");
             document.getElementById(tab + "-tab").style.display = "block";
         });
     });

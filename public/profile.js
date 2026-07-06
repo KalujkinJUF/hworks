@@ -38,6 +38,13 @@ function initializeProfile(myData) {
     let isOwnProfile = true;
     let viewingUsername = null;
 
+    // Состояние стены отзывов: объявляем ДО первого вызова loadProfile/loadProfileComments,
+    // иначе default-параметр page = currentWallCommentsPage падает с TDZ ReferenceError.
+    let currentWallCommentsPage = 1;
+    let lastCommentIds = new Set();
+    let initialLoadDone = false;
+    let isPollingStarted = false;
+
     const roleColors = {
         newbie: '#888888', user: '#00ccff', premium: '#ffd700',
         vip: '#9b59b6', moderator: '#ff8c00', admin: '#ff4444', banned: '#333333'
@@ -588,10 +595,6 @@ function initializeProfile(myData) {
         .catch(err => console.error("Error loading mutual friends:", err));
     }
 
-    let lastCommentIds = new Set();
-    let initialLoadDone = false;
-    let isPollingStarted = false;
-
     function showToastNotification(message) {
         let toastContainer = document.getElementById("toast-container");
         if (!toastContainer) {
@@ -626,8 +629,6 @@ function initializeProfile(myData) {
             setTimeout(() => toast.remove(), 500);
         }, 4000);
     }
-
-    let currentWallCommentsPage = 1;
 
     function renderPagination(containerId, currentPage, totalPages, onPageChange) {
         const container = document.getElementById(containerId);

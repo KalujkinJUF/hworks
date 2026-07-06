@@ -16,13 +16,16 @@ const processUploadedImage = async (filePath) => {
 
         // Re-encode во ВРЕМЕННЫЙ файл (нельзя читать и писать один и тот же файл — sharp может его повредить),
         // metadata по умолчанию удаляется (EXIF/XMP/ICC не переносятся)
-        await sharp(filePath, { animated: true })
-            .toFormat(format, {
+        let sharpInst = sharp(filePath, { animated: true });
+        if (format === 'gif') {
+            await sharpInst.toFormat(format).toFile(tmpPath);
+        } else {
+            await sharpInst.toFormat(format, {
                 quality: 90,
                 progressive: true,
                 force: false // не форсируем конвертацию всех кадров, если формат не поддерживает
-            })
-            .toFile(tmpPath);
+            }).toFile(tmpPath);
+        }
 
         // Атомарно заменяем оригинал обработанной версией
         fs.renameSync(tmpPath, filePath);

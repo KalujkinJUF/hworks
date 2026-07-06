@@ -597,22 +597,30 @@
     function applyTheme() {
         const theme = localStorage.getItem('app_theme') || 'default';
         if (theme === 'aero') {
+            document.documentElement.classList.add('theme-aero');
             document.body.classList.add('theme-aero');
         } else {
+            document.documentElement.classList.remove('theme-aero');
             document.body.classList.remove('theme-aero');
         }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+        applyTheme();
         window.applyTranslations();
         bindLanguageButtons();
     });
 
     window.addEventListener("load", () => {
+        applyTheme();
         window.applyTranslations();
         bindLanguageButtons();
     });
 
-    // Применяем тему сразу при чтении скрипта, чтобы избежать моргания
-    applyTheme();
+    // Пытаемся применить сразу (если body уже доступен)
+    if (document.body) {
+        applyTheme();
+    } else {
+        document.documentElement.classList.add('theme-loading');
+    }
 })();

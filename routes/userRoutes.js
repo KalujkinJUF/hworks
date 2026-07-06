@@ -93,7 +93,8 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
-        cb(null, `avatar_${req.user.id}_${Date.now()}${ext}`);
+        const prefix = file.fieldname === 'avatar' ? 'avatar' : 'media';
+        cb(null, `${prefix}_${req.user.id}_${Date.now()}${ext}`);
     }
 });
 const upload = multer({ 

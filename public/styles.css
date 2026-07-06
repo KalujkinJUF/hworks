@@ -2270,6 +2270,11 @@ body.theme-aero {
     background-attachment: fixed;
     color: #2b4561;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+body.theme-aero * {
+    color: #333;
 }
 
 body.theme-aero a {
@@ -2346,12 +2351,25 @@ body.theme-aero .like-btn[style*="color: #fff"] {
    ROLE COLORS
    ========================================================================== */
 .role-moderator {
-    color: #00ccff !important;
+    color: #9b59b6 !important;
+}
+.role-admin {
+    color: #ff3366 !important;
+}
+.role-vip {
+    color: #ffcc00 !important;
+}
+.role-premium {
+    color: #ff99cc !important;
 }
 .role-user {
-    color: #00ff00 !important;
+    color: #3498db !important;
+}
+
+.username, .friend-name {
+    text-decoration: none !important;
 }
 
 a.post-author, a.username-link, a[href^="profile.html"] {
     text-decoration: none !important;
-}
+}

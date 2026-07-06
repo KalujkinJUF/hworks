@@ -58,7 +58,8 @@ app.use(helmet({
             imgSrc: ["'self'", "data:", "blob:"],
             connectSrc: ["'self'", process.env.CLIENT_URL, "https://challenges.cloudflare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            frameSrc: ["https://challenges.cloudflare.com"],
+            frameSrc: ["'self'", "https://challenges.cloudflare.com"],
+            workerSrc: ["'self'", "blob:"],
             objectSrc: ["'none'"]
         }
     },

@@ -1,7 +1,11 @@
-// Подгружаем скрипт Turnstile динамически (в SPA его нет в head при навигации)
 function loadTurnstileScript() {
     return new Promise((resolve) => {
         if (window.turnstile) return resolve();
+        
+        window.onloadTurnstileCallback = () => {
+            resolve();
+        };
+
         const existing = document.getElementById('cf-turnstile-script');
         if (existing) {
             const iv = setInterval(() => { if (window.turnstile) { clearInterval(iv); resolve(); } }, 100);
@@ -10,9 +14,8 @@ function loadTurnstileScript() {
         }
         const s = document.createElement('script');
         s.id = 'cf-turnstile-script';
-        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit';
         s.async = true; s.defer = true;
-        s.onload = () => resolve();
         document.head.appendChild(s);
     });
 }

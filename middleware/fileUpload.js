@@ -16,10 +16,11 @@ const processUploadedImage = async (filePath) => {
 
         // Re-encode во ВРЕМЕННЫЙ файл (нельзя читать и писать один и тот же файл — sharp может его повредить),
         // metadata по умолчанию удаляется (EXIF/XMP/ICC не переносятся)
-        await sharp(filePath)
+        await sharp(filePath, { animated: true })
             .toFormat(format, {
                 quality: 90,
-                progressive: true
+                progressive: true,
+                force: false // не форсируем конвертацию всех кадров, если формат не поддерживает
             })
             .toFile(tmpPath);
 

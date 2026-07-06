@@ -2262,5 +2262,96 @@ select:focus {
     color: black;
 }
 
+/* ==========================================================================
+   FRUTIGER AERO THEME
+   ========================================================================== */
+body.theme-aero {
+    background: linear-gradient(135deg, #c3e6ff 0%, #ffffff 100%);
+    background-attachment: fixed;
+    color: #2b4561;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-
+body.theme-aero a {
+    text-decoration: none;
+}
+
+body.theme-aero .container,
+body.theme-aero header,
+body.theme-aero .post-card,
+body.theme-aero .profile-layout,
+body.theme-aero #updateSection,
+body.theme-aero #verifySection {
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+body.theme-aero button,
+body.theme-aero .user-btn,
+body.theme-aero nav a {
+    background: linear-gradient(180deg, #ffffff 0%, #e0f0ff 100%);
+    border: 1px solid #a0cdeb;
+    border-radius: 6px;
+    color: #1a5682;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-transform: none;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: all 0.2s ease;
+}
+
+body.theme-aero button:hover,
+body.theme-aero .user-btn:hover,
+body.theme-aero nav a:hover {
+    background: linear-gradient(180deg, #f0f8ff 0%, #cce6ff 100%);
+    border-color: #7dbce3;
+    box-shadow: 0 3px 8px rgba(0, 120, 215, 0.3), inset 0 1px 0 rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+}
+
+body.theme-aero input,
+body.theme-aero textarea,
+body.theme-aero select {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid #9cbdd4 !important;
+    border-radius: 4px;
+    color: #2b4561 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+body.theme-aero h1, 
+body.theme-aero h2, 
+body.theme-aero h3 {
+    color: #1a5682 !important;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9);
+    border-bottom-color: #a0cdeb !important;
+}
+
+body.theme-aero .post-content {
+    color: #333;
+}
+
+body.theme-aero .like-btn {
+    text-shadow: none;
+}
+body.theme-aero .like-btn[style*="color: #fff"] {
+    color: #555 !important;
+}
+
+/* ==========================================================================
+   ROLE COLORS
+   ========================================================================== */
+.role-moderator {
+    color: #00ccff !important;
+}
+.role-user {
+    color: #00ff00 !important;
+}
+
+a.post-author, a.username-link, a[href^="profile.html"] {
+    text-decoration: none !important;
+}

@@ -993,6 +993,20 @@ function initializeProfile(myData) {
     if (tabSettingsBtn) {
         tabSettingsBtn.addEventListener("click", () => switchProfileTab("settings"));
     }
+
+    const themeSelector = document.getElementById("themeSelector");
+    if (themeSelector) {
+        themeSelector.value = localStorage.getItem('app_theme') || 'default';
+        themeSelector.addEventListener("change", (e) => {
+            const newTheme = e.target.value;
+            localStorage.setItem('app_theme', newTheme);
+            if (newTheme === 'aero') {
+                document.body.classList.add('theme-aero');
+            } else {
+                document.body.classList.remove('theme-aero');
+            }
+        });
+    }
 }
 
 // Функция для экранирования HTML

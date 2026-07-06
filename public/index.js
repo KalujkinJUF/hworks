@@ -392,10 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.togglePostLike = async function (postId) {
         fetch(`/api/users/posts/${postId}/like`, {
             method: "POST",
-            credentials: 'include',
-            headers: {
-                "X-CSRF-Token": csrfToken
-            }
+            credentials: 'include'
         })
             .then(res => res.json())
             .then(data => {
@@ -431,10 +428,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         fetch(`/api/users/posts/${postId}`, {
             method: "DELETE",
-            credentials: 'include',
-            headers: {
-                "X-CSRF-Token": csrfToken
-            }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(async data => {
@@ -456,10 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         fetch(`/api/users/comments/${commentId}`, {
             method: "DELETE",
-            credentials: 'include',
-            headers: {
-                "X-CSRF-Token": csrfToken
-            }
+            credentials: 'include'
         })
         .then(res => res.json())
         .then(async data => {
@@ -557,8 +548,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(`/api/users/posts/${postId}/comments`, {
             method: "POST",
             headers: { 
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken
+                "Content-Type": "application/json"
             },
             credentials: 'include',
             body: JSON.stringify({ content, parent_id: parentId })
@@ -632,8 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch("/api/users/admin-pin", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-Token": csrfToken
+                    "Content-Type": "application/json"
                 },
                 credentials: 'include',
                 body: JSON.stringify({ content })
@@ -696,9 +685,6 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const uploadRes = await fetch("/api/users/upload-media", {
                     method: "POST",
-                    headers: {
-                        "X-CSRF-Token": csrfToken
-                    },
                     credentials: 'include',
                     body: formData
                 });
@@ -719,8 +705,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/users/posts", {
             method: "POST",
             headers: { 
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken
+                "Content-Type": "application/json"
             },
             credentials: 'include',
             body: JSON.stringify({ content, type, image_url: imageUrl })

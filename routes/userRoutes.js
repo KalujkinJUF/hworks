@@ -55,6 +55,15 @@ const avatarUploadLimiter = rateLimit({
     legacyHeaders: false
 });
 
+// Rate limiter для загрузки медиа
+const mediaUploadLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 час
+    max: 50,
+    message: { error: 'Слишком много загрузок медиа. Попробуйте позже.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 // Rate limiter для поиска
 const searchLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 минут
@@ -560,7 +569,7 @@ router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, upload
 });
 
 // Загрузка медиа-вложений для постов и ЛС (с rate limit)
-router.post('/upload-media', verifyToken, verifyNotBanned, avatarUploadLimiter, upload.single('file'), async (req, res) => {
+router.post('/upload-media', verifyToken, verifyNotBanned, mediaUploadLimiter, upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
 
     // Проверяем реальное содержимое файла (magic bytes)

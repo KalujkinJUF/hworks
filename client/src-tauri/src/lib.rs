@@ -287,7 +287,10 @@ pub fn run() {
 
                     let app = tray.app_handle();
                     if let Some(window) = app.get_webview_window("main") {
-                        if window.is_visible().unwrap_or(false) {
+                        let is_visible = window.is_visible().unwrap_or(false);
+                        let is_focused = window.is_focused().unwrap_or(false);
+                        
+                        if is_visible && is_focused {
                             let _ = window.hide();
                         } else {
                             let _ = window.show();

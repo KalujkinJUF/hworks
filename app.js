@@ -30,6 +30,14 @@ const { setCsrfToken, verifyCsrfToken, getCsrfToken } = require('./middleware/cs
 // Cookie parser для чтения JWT из httpOnly cookie
 app.use(cookieParser());
 
+// Ответы API нельзя кэшировать: они зависят от авторизации и конкретного пользователя.
+// Без этого Express отдаёт ETag, браузер ревалидирует и получает 304, а fetch трактует
+// 304 как res.ok === false → ложный редирект «войдите в систему» на странице профиля.
+app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+});
+
 // CSRF защита: устанавливаем токен в cookie для всех запросов
 app.use(setCsrfToken);
 

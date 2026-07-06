@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const sanitizeHtml = require('sanitize-html');
 const { verifyToken } = require('../middleware/auth');
 const { requireAdmin, requireAdminOrModerator, requireHierarchy } = require('../middleware/rbac');
+const { encrypt, hashValue } = require('../config/crypto');
 const db = require('../config/db');
 
 const sanitize = (dirty) => sanitizeHtml(dirty, {
@@ -41,7 +42,8 @@ router.put('/user/:id/role', verifyToken, requireAdmin, (req, res) => {
 // Редактировать "обо мне" — админ и модератор
 router.put('/user/:id/about', verifyToken, requireAdminOrModerator, requireHierarchy, (req, res) => {
     const { about } = req.body;
-    const sanitizedAbout = about != null ? sanitize(String(about)) : about;
+    // Санитизируем от XSS и шифруем — как в пользовательском пути (config/crypto)
+    const sanitizedAbout = about != null ? encrypt(sanitize(String(about))) : about;
     db.query('UPDATE users SET about = ? WHERE id = ?', [sanitizedAbout, req.params.id], (error, result) => {
         if (error) return res.status(500).json({ error: 'Database error' });
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });
@@ -78,10 +80,14 @@ router.put('/user/:id/username', verifyToken, requireAdminOrModerator, requireHi
 // Изменить email — админ и модератор
 router.put('/user/:id/email', verifyToken, requireAdminOrModerator, requireHierarchy, (req, res) => {
     const { email } = req.body;
-    if (!email || email.trim() === '') {
-        return res.status(400).json({ error: 'Email не может быть пустым' });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Некорректный формат Email' });
     }
-    db.query('UPDATE users SET email = ? WHERE id = ?', [email.trim(), req.params.id], (error, result) => {
+    const cleanEmail = email.trim();
+    // Шифруем email и синхронизируем email_hash (иначе вход по email сломается,
+    // а PII останется в открытом виде — как в userRoutes)
+    db.query('UPDATE users SET email = ?, email_hash = ? WHERE id = ?', [encrypt(cleanEmail), hashValue(cleanEmail), req.params.id], (error, result) => {
         if (error) {
             if (error.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({ error: 'Такой email уже используется' });
@@ -103,6 +109,8 @@ router.put('/user/:id/password', verifyToken, requireAdminOrModerator, requireHi
     db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, req.params.id], (error, result) => {
         if (error) return res.status(500).json({ error: 'Database error' });
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });
+        // Инвалидируем старые JWT-сессии пользователя (no-op, если колонки ещё нет)
+        db.query('UPDATE users SET token_version = token_version + 1 WHERE id = ?', [req.params.id], () => {});
         res.json({ message: 'Пароль изменён' });
     });
 });

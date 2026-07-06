@@ -15,6 +15,9 @@ const sanitize = (dirty) => sanitizeHtml(dirty, {
     disallowedTagsMode: 'discard'
 });
 
+// Разрешаем в image_url только внутренние пути загрузок
+const sanitizeImageUrl = (u) => (typeof u === 'string' && /^\/uploads\/[A-Za-z0-9._-]+$/.test(u)) ? u : null;
+
 // Rate limiter для сообщений
 const messageLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 минут
@@ -174,7 +177,7 @@ router.post('/', messageLimiter, (req, res) => {
 
             const sanitizedContent = sanitize(content.trim());
             const encryptedContent = encrypt(sanitizedContent);
-            const imageUrl = req.body.image_url || null;
+            const imageUrl = sanitizeImageUrl(req.body.image_url);
 
             db.query(
                 'INSERT INTO messages (sender_id, receiver_id, content, image_url) VALUES (?, ?, ?, ?)',

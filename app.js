@@ -2,7 +2,7 @@ require('dotenv').config();
 const logger = require('./config/logger');
 
 // Проверка обязательных переменных окружения
-const requiredEnv = ['DB_PASSWORD', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS', 'TURNSTILE_SECRET', 'CLIENT_URL'];
+const requiredEnv = ['DB_PASSWORD', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS', 'TURNSTILE_SECRET', 'CLIENT_URL', 'DB_ENCRYPTION_KEY'];
 const missingEnv = requiredEnv.filter(key => !process.env[key]);
 if (missingEnv.length > 0) {
     logger.error(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствуют обязательные переменные окружения: ${missingEnv.join(', ')}`);

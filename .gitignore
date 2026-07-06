@@ -8,4 +8,5 @@ xampp/
 public/uploads/
 .agents/
 db-error.log
+crash.log
 backup/

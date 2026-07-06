@@ -24,6 +24,10 @@ const sanitize = (dirty) => sanitizeHtml(dirty, {
     disallowedTagsMode: 'discard'
 });
 
+// Разрешаем в image_url только внутренние пути загрузок — защита от подстановки
+// произвольных внешних URL (трекинг/IP-грабберы) в постах и сообщениях
+const sanitizeImageUrl = (u) => (typeof u === 'string' && /^\/uploads\/[A-Za-z0-9._-]+$/.test(u)) ? u : null;
+
 // Rate limiter для логина и регистрации
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 минут
@@ -268,7 +272,7 @@ router.post('/register', authLimiter, async (req, res) => {
                 return res.status(500).json({ error: 'Ошибка при создании пользователя' });
             }
             const newUserId = result.insertId;
-            const token = jwt.sign({ id: newUserId }, process.env.JWT_SECRET, { expiresIn: '365d' });
+            const token = jwt.sign({ id: newUserId, tv: 0 }, process.env.JWT_SECRET, { expiresIn: '365d' });
 
             // Отправляем код (без логирования кода в консоль)
             sendVerificationCode(email, emailCode)
@@ -378,31 +382,36 @@ router.post('/login', authLimiter, (req, res) => {
             return res.status(401).json({ error: 'Неверные учетные данные' });
         }
         const user = results[0];
-        user.email = decrypt(user.email);
+        // Сначала проверяем пароль, и только потом статус бана —
+        // иначе статус аккаунта утекает без знания учётных данных
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ error: 'Неверные учетные данные' });
         if (user.role === 'banned') {
             return res.status(403).json({ error: 'Ваш аккаунт заблокирован' });
         }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).json({ error: 'Неверные учетные данные' });
 
         // Обновляем last_active и статус при входе
         db.query('UPDATE users SET last_active = NOW(), user_status = custom_status WHERE id = ?', [user.id]);
 
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '365d' });
+        // Версия токена для отзыва сессий (0, если колонка ещё не создана)
+        db.query('SELECT token_version FROM users WHERE id = ?', [user.id], (tvErr, tvRows) => {
+            const tokenVersion = (!tvErr && tvRows.length && typeof tvRows[0].token_version === 'number') ? tvRows[0].token_version : 0;
+            const token = jwt.sign({ id: user.id, tv: tokenVersion }, process.env.JWT_SECRET, { expiresIn: '365d' });
 
-        const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
-        // Устанавливаем httpOnly cookie с JWT (365 дней — выход только при обновлении клиента)
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: isSecure,
-            sameSite: 'lax',
-            maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней
-        });
+            const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
+            // Устанавливаем httpOnly cookie с JWT (365 дней — выход только при обновлении клиента)
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: isSecure,
+                sameSite: 'lax',
+                maxAge: 365 * 24 * 60 * 60 * 1000 // 365 дней
+            });
 
-        // Ротируем CSRF токен после login
-        const { rotateCsrfToken } = require('../middleware/csrf');
-        rotateCsrfToken(req, res, () => {
-            res.json({ message: 'Вход выполнен успешно' });
+            // Ротируем CSRF токен после login
+            const { rotateCsrfToken } = require('../middleware/csrf');
+            rotateCsrfToken(req, res, () => {
+                res.json({ message: 'Вход выполнен успешно' });
+            });
         });
     });
 });
@@ -689,7 +698,7 @@ router.post('/posts', verifyToken, verifyNotBanned, requireAdminOrModerator, (re
             // Санитизация контента поста от XSS
             const sanitizedContent = sanitize(content.trim());
             const encryptedContent = encrypt(sanitizedContent);
-            const imageUrl = req.body.image_url || null;
+            const imageUrl = sanitizeImageUrl(req.body.image_url);
 
             db.query(
                 'INSERT INTO posts (user_id, content, type, image_url) VALUES (?, ?, ?, ?)',
@@ -767,6 +776,18 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
         const result = await updateUser(userId, usernameTrim, password, encryptedAbout);
         if (result.affectedRows === 0) return res.status(404).send('User not found');
         updateLastActive(userId);
+
+        // Если пароль менялся — инвалидируем прочие сессии (bump token_version),
+        // а текущую сохраняем, перевыпустив cookie с новой версией токена.
+        // no-op, если колонки token_version ещё нет (миграция не применена).
+        if (typeof password === 'string' && password.trim() !== '') {
+            await new Promise((resolve) => db.query('UPDATE users SET token_version = token_version + 1 WHERE id = ?', [userId], () => resolve()));
+            const tv = await new Promise((resolve) => db.query('SELECT token_version FROM users WHERE id = ?', [userId], (e, r) => resolve((!e && r.length && typeof r[0].token_version === 'number') ? r[0].token_version : 0)));
+            const newToken = jwt.sign({ id: userId, tv }, process.env.JWT_SECRET, { expiresIn: '365d' });
+            const isSecure = process.env.NODE_ENV === 'production' || req.secure || req.headers['x-forwarded-proto'] === 'https';
+            res.cookie('token', newToken, { httpOnly: true, secure: isSecure, sameSite: 'lax', maxAge: 365 * 24 * 60 * 60 * 1000 });
+        }
+
         res.send('User updated successfully');
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
@@ -1098,9 +1119,10 @@ router.post('/admin-pin', verifyToken, requireAdmin, (req, res) => {
         return res.status(400).json({ error: 'Текст закрепа не может быть пустым' });
     }
 
+    const sanitizedContent = sanitize(content.trim());
     db.query(
         'INSERT INTO admin_pin (id, content) VALUES (1, ?) ON DUPLICATE KEY UPDATE content = ?',
-        [content.trim(), content.trim()],
+        [sanitizedContent, sanitizedContent],
         (err) => {
             if (err) {
                 logger.error('Ошибка БД при обновлении закрепленного сообщения');

@@ -21,11 +21,26 @@ const verifyToken = (req, res, next) => {
 
     if (!token) return res.status(401).send('Access Denied: No Token Provided');
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }, (err, decoded) => {
         if (err) return res.status(403).send('Invalid Token');
-        
+
         req.user = decoded; // Сохраняем id пользователя в запрос (например, req.user.id)
-        next();
+
+        // Отзыв сессий: если в токене есть версия (tv) — сверяем её с БД.
+        // Токены, выпущенные до внедрения tv, пропускаем (обратная совместимость).
+        // Если колонки token_version ещё нет (миграция не применена) — не блокируем вход.
+        if (typeof decoded.tv === 'number') {
+            db.query('SELECT token_version FROM users WHERE id = ?', [decoded.id], (dbErr, results) => {
+                if (dbErr) return next(); // fail-open: колонка ещё не создана
+                if (results.length && typeof results[0].token_version === 'number'
+                    && results[0].token_version !== decoded.tv) {
+                    return res.status(401).send('Session expired: please log in again');
+                }
+                next();
+            });
+        } else {
+            next();
+        }
     });
 };
 
@@ -67,7 +82,7 @@ const optionalVerifyToken = (req, res, next) => {
         return next();
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }, (err, decoded) => {
         if (!err) {
             req.user = decoded; // Сохраняем id пользователя в запрос
         }

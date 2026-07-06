@@ -4,10 +4,11 @@ const ALGORITHM = 'aes-256-cbc';
 
 // Получаем ключ шифрования из .env.
 // Для AES-256 ключ должен быть длиной 32 байта (64 hex-символа).
-let keyString = process.env.DB_ENCRYPTION_KEY;
-if (!keyString) {
-    console.warn('WARNING: DB_ENCRYPTION_KEY не задан в .env! Генерируем временный ключ.');
-    keyString = '8f3d1b72e5a4c6b9d0f1e2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3';
+// Fail-closed: без валидного ключа приложение НЕ должно запускаться, иначе
+// данные будут «зашифрованы» предсказуемым ключом = отсутствие шифрования.
+const keyString = process.env.DB_ENCRYPTION_KEY;
+if (!keyString || !/^[0-9a-fA-F]{64}$/.test(keyString)) {
+    throw new Error('DB_ENCRYPTION_KEY должен быть задан в .env как 64 hex-символа (32 байта). Запуск прерван.');
 }
 const KEY = Buffer.from(keyString, 'hex');
 

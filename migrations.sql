@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     about TEXT DEFAULT NULL,
     user_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'offline',
     custom_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'online',
+    token_version INT NOT NULL DEFAULT 0,
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -111,6 +112,8 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read TINYINT(1) DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_viewed_wall TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS delete_code VARCHAR(255) DEFAULT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'online';
+-- Версия токена для отзыва JWT-сессий (смена пароля инкрементирует значение)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0;
 
 -- Миграция под шифрование почты и добавление медиа
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_hash VARCHAR(255) DEFAULT NULL;

@@ -2068,6 +2068,833 @@ select:focus {
     left: 0;
     width: 100%;
     height: 100%;
+    background-color: rgba(0, 15, 30, 0.4);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.custom-modal-box {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(220, 240, 255, 0.6) 100%);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 25px;
+    width: 90%;
+    max-width: 400px;
+    box-sizing: border-box;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 50, 100, 0.2), inset 0 1px 0 rgba(255, 255, 255, 1);
+    color: #1a5682;
+    font-family: inherit;
+}
+
+.custom-modal-header {
+    font-size: 18px;
+    color: #004488;
+    border-bottom: 1px solid rgba(0, 100, 200, 0.2);
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.custom-modal-content {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    word-break: break-word;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.custom-modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.custom-modal-btn {
+    min-width: 100px;
+}
+
+.custom-modal-btn.btn-no {
+    background: linear-gradient(180deg, #ffffff 0%, #ffdbdb 45%, #ffb3b3 50%, #ffcccc 100%) !important;
+    border: 1px solid #ff6666 !important;
+    color: #cc0000 !important;
+}
+
+.custom-modal-btn.btn-no:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #ffe6e6 45%, #ffcccc 50%, #ffe0e0 100%) !important;
+    box-shadow: 0 4px 10px rgba(255, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+    border-color: #ff3333 !important;
+}
+
+.delete-btn {
+    border: 2px solid #ff4444;
+    color: #ff4444;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 68, 68, 0.2);
+}
+
+.pending-status {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* --- ЧАТ ЛАЙАУТ --- */
+.chat-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    box-sizing: border-box;
+    padding: 10px;
+    /* Добавляем внутренний паддинг, чтобы правая колонка не прилипала к внешней белой стене */
+}
+
+.chat-friends-column {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-main-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.chat-friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.chat-friend-item:hover {
+    background: rgba(255, 255, 0, 0.1);
+    border-color: yellow;
+}
+
+.chat-friend-item.has-unread {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 6px rgba(255, 68, 68, 0.4);
+}
+
+.friend-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.friend-item-name {
+    font-size: 12px;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+.friend-item-status {
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.friends-sidebar h2 {
+    text-align: center;
+    color: white;
+    text-transform: uppercase;
+    font-size: 16px;
+    margin-bottom: 15px;
+    border-bottom: 2px dashed white;
+    padding-bottom: 10px;
+}
+
+.chat-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    border: none;
+    padding: 10px 0;
+    background-color: transparent;
+    box-sizing: border-box;
+    /* Защита от вылетов за границы */
+}
+
+.chat-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 2px dashed white;
+    padding-bottom: 10px;
+    min-height: 50px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.chat-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
+}
+
+.friend-chat-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.friend-chat-info {
+    display: flex;
+    flex-direction: column;
+    /* Изменили на column, чтобы имя и статус не слипались горизонтально */
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+}
+
+.friend-chat-info h2 {
+    font-size: 16px;
+    color: white;
+    margin: 0;
+    text-transform: none;
+    border: none;
+    padding: 0;
+    word-break: break-word;
+}
+
+.friend-chat-info h2 a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.friend-chat-status {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Окно вывода сообщений */
+.messages-container {
+    border: 2px solid white;
+    padding: 15px;
+    height: 500px;
+    /* Увеличили с 380px до 500px, чтобы чат стал заметно выше и просторнее */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Скрываем горизонтальный скролл и предотвращаем вылезание сообщений */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: rgba(0, 0, 0, 0.7);
+    box-sizing: border-box;
+    width: 100%;
+    /* Заставляем коробку держать структуру */
+}
+
+.date-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 15px 0;
+    color: #888888;
+    font-size: 8px;
+    font-family: 'PublicPixel', monospace;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.date-divider::before,
+.date-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px double #555555;
+}
+
+.date-divider::before {
+    margin-right: 15px;
+}
+
+.date-divider::after {
+    margin-left: 15px;
+}
+
+.date-divider-text {
+    padding: 0 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #aaaaaa;
+}
+
+.message {
+    padding: 12px 15px;
+    border-radius: 4px;
+    max-width: 75%;
+    display: block;
+    /* Изменили с flex на block для более надежного расчета ширины и переноса строк */
+    box-sizing: border-box;
+    /* Полная защита от разрыва рамок длинными текстами и ссылками */
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+    /* Разрешаем сжатие в flex-контейнере */
+}
+
+.my-message {
+    align-self: flex-end;
+    color: yellow;
+    padding: 0;
+}
+
+.my-message .chat-bubble {
+    background: rgba(255, 255, 0, 0.08);
+    border: 2px solid yellow;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.friend-message {
+    align-self: flex-start;
+    color: cyan;
+    padding: 0;
+}
+
+.friend-message .chat-bubble {
+    background: rgba(0, 255, 255, 0.08);
+    border: 2px solid cyan;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.message-content {
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.message-time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 6px;
+    display: block;
+    text-align: right;
+    /* Время сообщения прижимается к правому углу внутри облачка */
+}
+
+/* Поле ввода сообщений */
+.chat-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.chat-input-section .input-group {
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    /* Выстраиваем текстареа и кнопку отправки в ровный стек */
+    gap: 10px;
+    width: 100%;
+}
+
+.chat-input-section textarea {
+    width: 100%;
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 12px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 12px;
+    resize: none;
+    /* Убираем ручной ресайз, чтобы юзер не ломал форму */
+    outline: none;
+    box-sizing: border-box;
+    min-height: 60px;
+}
+
+.chat-input-section textarea:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+#sendBtn {
+    width: 100%;
+    padding: 14px;
+    font-size: 14px;
+}
+
+.main-content-wrapper {
+    text-align: left;
+    width: 100%;
+}
+
+.main-content-wrapper h2 {
+    text-align: center;
+}
+
+/* Специальные стили для полноэкранного чата на десктопе (без прокрутки всей страницы) */
+@media (min-width: 769px) {
+    .chat-page {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .chat-page .container {
+        height: 100%;
+        max-height: 100%;
+        overflow: hidden;
+    }
+
+    .chat-page main.chat-layout {
+        flex: 1;
+        min-height: 0;
+        height: 0;
+        /* Предотвращает раздувание flex-элемента в некоторых браузерах */
+    }
+
+    .chat-page .chat-friends-column {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .chat-page .chat-main-column {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .chat-page .chat-section {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .chat-page .messages-container {
+        flex: 1;
+        height: auto;
+        /* Убираем жесткую высоту 500px, контейнер подстроится под свободное место */
+        min-height: 0;
+    }
+}
+
+/* ==========================================================================
+   11. АНИМАЦИИ И ЭФФЕКТЫ (ПЛАВНЫЕ ПЕРЕХОДЫ И МИКРО-АНИМАЦИИ)
+   ========================================================================== */
+
+/* Анимация плавного появления снизу */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация проявления с масштабированием */
+@keyframes fadeInScaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.98) translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Анимации выезда сообщений в чате */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Пульсация индикатора онлайна */
+@keyframes pulseGreen {
+    0% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 12px #00ff00;
+        transform: scale(1.1);
+    }
+
+    100% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+}
+
+/* Пульсация рамки непрочитанного чата */
+@keyframes pulseUnreadBorder {
+    0% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+
+    50% {
+        border-color: #ff6666;
+        box-shadow: 0 0 12px rgba(255, 102, 102, 0.6);
+    }
+
+    100% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+}
+
+/* Эффект металлического блеска для админских бейджей */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Применение анимации появления ко всем основным боксам и карточкам */
+.post-card,
+.post-form-section,
+.profile-layout,
+.bio-group,
+#mutualFriendsSection,
+#profileCommentsSection,
+.update-box,
+.verify-section,
+.friend-card,
+.chat-friend-item,
+.search-result-card,
+.admin-panel,
+.chat-section,
+.animate-fade-in {
+    animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Отдельные анимации выезда для новых сообщений в переписке */
+.message.friend-message.new-message-anim {
+    animation: slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+.message.my-message.new-message-anim {
+    animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+/* Применение пульсации индикатора онлайна */
+.online-dot,
+.friend-status-icon.status-online {
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+/* Применение пульсации непрочитанных чатов */
+.chat-friend-item.has-unread {
+    animation: pulseUnreadBorder 2s infinite ease-in-out !important;
+}
+
+/* Эффект сияния для бейджа администратора */
+.role-badge.role-admin,
+.user-card-role.role-admin {
+    background: linear-gradient(120deg, transparent 30%, rgba(255, 68, 68, 0.15) 40%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 68, 68, 0.15) 60%);
+    background-size: 200% 100%;
+    animation: shimmer 4s infinite linear;
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+.post-card,
+.friend-card,
+.search-result-card,
+.chat-friend-item,
+.auth-btn,
+.tab-btn,
+.user-btn,
+.chat-btn,
+.delete-btn,
+input,
+textarea,
+select,
+nav a {
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Эффект приподнимания и свечения рамок при наведении */
+.post-card:hover,
+.friend-card:hover,
+.search-result-card:hover,
+.chat-friend-item:hover:not(.has-unread) {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.12);
+}
+
+/* Подсветка кнопок свечением при наведении */
+.auth-btn:hover,
+.user-btn:hover,
+.chat-btn:hover,
+.delete-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 12px currentColor;
+}
+
+.tab-btn:hover:not(.active) {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Тактильный клик (сжатие кнопок) */
+button:active,
+.auth-btn:active,
+.user-btn:active,
+.tab-btn:active,
+.chat-btn:active,
+.delete-btn:active,
+nav a:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.05s ease !important;
+}
+
+/* Мягкое неоновое свечение фокуса для полей ввода */
+input:focus,
+textarea:focus,
+select:focus {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    border-color: yellow !important;
+}
+
+/* Анимация плавного появления ТОЛЬКО для свежеприбывших постов */
+.just-created-post {
+    animation: fadeInNewPost 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes fadeInNewPost {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        border-color: yellow;
+        /* Вспыхивает жёлтым при появлении */
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        border-color: white;
+    }
+}
+
+/* Пульсация индикаторов DND и Away */
+@keyframes pulseYellow {
+    0% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ffcc00;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulseRed {
+    0% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ff3333;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+}
+
+.online-dot.status-online {
+    background: #00ff00;
+    box-shadow: 0 0 6px #00ff00;
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+.online-dot.status-away,
+.friend-status-icon.status-away {
+    background: #ffcc00;
+    box-shadow: 0 0 6px #ffcc00;
+    animation: pulseYellow 2s infinite ease-in-out;
+}
+
+.online-dot.status-dnd,
+.friend-status-icon.status-dnd {
+    background: #ff3333;
+    box-shadow: 0 0 6px #ff3333;
+    animation: pulseRed 2s infinite ease-in-out;
+}
+
+/* Анимация раскрытия комментариев */
+@keyframes expandComments {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+}
+
+/* Анимация скрытия комментариев */
+@keyframes collapseComments {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+}
+
+.comments-wrapper {
+    animation: collapseComments 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.comments-wrapper.open {
+    animation: expandComments 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Анимация появления формы нового поста */
+.post-form-section {
+    animation: fadeInDown 0.4s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимации для админ-панели */
+@keyframes adminPanelOpen {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) rotate(-1deg);
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 204, 255, 0.3);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.admin-panel {
+    animation: adminPanelOpen 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+@keyframes slideDownContainer {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 2000px;
+        overflow: visible;
+    }
+}
+
+.users-container.open {
+    display: block !important;
+    animation: slideDownContainer 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* ==========================================================================
+   8. CUSTOM DOS MODAL OVERLAYS & DELETE BUTTONS
+   ========================================================================== */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.85);
     display: flex;
     justify-content: center;

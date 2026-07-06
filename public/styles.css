@@ -2283,14 +2283,32 @@ body.theme-aero a {
 
 body.theme-aero .container,
 body.theme-aero header,
+body.theme-aero main,
+body.theme-aero .main-layout,
 body.theme-aero .post-card,
+body.theme-aero .post-form-section,
 body.theme-aero .profile-layout,
+body.theme-aero .bio-group,
+body.theme-aero #profileCommentsSection,
 body.theme-aero #updateSection,
-body.theme-aero #verifySection {
-    background: rgba(255, 255, 255, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+body.theme-aero #verifySection,
+body.theme-aero #appearanceSection,
+body.theme-aero #deleteAccountSection,
+body.theme-aero .admin-panel,
+body.theme-aero .user-card,
+body.theme-aero .chat-container,
+body.theme-aero .chat-sidebar,
+body.theme-aero .chat-main,
+body.theme-aero .friends-container,
+body.theme-aero .friend-card,
+body.theme-aero .sidebar-section,
+body.theme-aero .profile-section > div,
+body.theme-aero .users-container,
+body.theme-aero .search-section {
+    background: linear-gradient(135deg, rgba(200, 235, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%);
+    border: 1px solid rgba(160, 205, 235, 0.6);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 15px rgba(0, 50, 100, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
 }
 

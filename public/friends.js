@@ -5,16 +5,15 @@ document.addEventListener('spa:unload', () => {
 document.addEventListener('spa:navigate', () => {
     if (!document.getElementById('friendsList')) return;
 
-    // Проверка авторизации через cookie (httpOnly)
+    // Инициализируем страницу и запускаем загрузку данных сразу
+    initializeFriends();
+
+    // Проверяем авторизацию параллельно в фоновом режиме
     fetch("/api/users/profile", {
         credentials: 'include'
     })
     .then(res => {
         if (!res.ok) throw new Error('Not authorized');
-        return res.json();
-    })
-    .then(data => {
-        initializeFriends(data);
     })
     .catch(() => {
         window.showCustomAlert(window.t('login_required', 'Пожалуйста, войдите в систему.')).then(() => {
@@ -23,7 +22,7 @@ document.addEventListener('spa:navigate', () => {
     });
 });
 
-function initializeFriends(myData) {
+function initializeFriends() {
 
     const roleColors = {
         newbie: '#888888', user: '#00ccff', premium: '#ffd700',
@@ -31,8 +30,6 @@ function initializeFriends(myData) {
     };
 
     let currentFriendsPage = 1;
-    let currentUserId = myData.id;
-    let currentUserRole = myData.role;
 
     function renderPagination(containerId, currentPage, totalPages, onPageChange) {
         const container = document.getElementById(containerId);

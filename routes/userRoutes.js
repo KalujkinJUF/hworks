@@ -9,7 +9,7 @@ const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
 const { verifyToken, verifyNotBanned, optionalVerifyToken } = require('../middleware/auth');
 const { encrypt, decrypt, hashValue } = require('../config/crypto');
-const { requireRole, requireAdmin, requireAdminOrModerator } = require('../middleware/rbac');
+const { requireRole, requireAdmin, requireAdminOrModerator, loadRole } = require('../middleware/rbac');
 const { processUploadedImage } = require('../middleware/fileUpload');
 const router = express.Router();
 const db = require('../config/db');
@@ -694,7 +694,9 @@ router.get('/posts', optionalVerifyToken, (req, res) => {
 });
 
 // Посты — создать (только admin и moderator)
-router.post('/posts', verifyToken, verifyNotBanned, requireAdminOrModerator, (req, res) => {
+// Создание поста: news — любой авторизованный не-забаненный пользователь,
+// patch_note (обновления) — только admin/moderator (проверка внутри по req.user.role).
+router.post('/posts', verifyToken, verifyNotBanned, loadRole, (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
     const { content, type } = req.body;

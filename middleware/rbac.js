@@ -47,6 +47,21 @@ const requireRole = (allowedRoles) => {
     };
 };
 
+// Middleware: подгружает роль пользователя в req.user.role БЕЗ ограничения доступа.
+// Нужен для маршрутов, где доступ открыт всем авторизованным, но логика зависит от роли
+// (например, создание поста: news — всем, patch_note — только admin/moderator).
+const loadRole = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+        req.user.role = await getUserRole(userId);
+        next();
+    } catch (error) {
+        logger.error('Error loading user role:', error);
+        res.status(500).json({ error: 'Error checking permissions' });
+    }
+};
+
 // Middleware: проверка на админа или модератора
 const requireAdminOrModerator = requireRole(['admin', 'moderator']);
 
@@ -104,5 +119,6 @@ module.exports = {
     requireAdmin,
     requireAdminOrModerator,
     requireHierarchy,
+    loadRole,
     ROLE_HIERARCHY
 };

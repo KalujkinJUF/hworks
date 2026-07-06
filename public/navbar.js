@@ -135,7 +135,7 @@ window.showCustomConfirm = function(message) {
 };
 
 
-if (window._navbarInitialized) return;
+if (!window._navbarInitialized) {
 window._navbarInitialized = true;
 let _navbarInterval1 = null;
 let _navbarInterval2 = null;

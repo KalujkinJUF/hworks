@@ -3,6 +3,8 @@
         en: {
             // Navigation
             "nav_home": "Home",
+            "about_source": "Source code",
+            "version_label": "Version",
             "friends_add": "Add friend",
             "friends_delete": "Remove friend",
             "friends_delete_confirm": "Are you sure you want to remove this user from your friends?",
@@ -222,6 +224,8 @@
         ru: {
             // Navigation
             "nav_home": "Главная",
+            "about_source": "Исходный код",
+            "version_label": "Версия",
             "friends_add": "Добавить в друзья",
             "friends_delete": "Удалить друга",
             "friends_delete_confirm": "Вы уверены, что хотите удалить этого пользователя из друзей?",
@@ -441,6 +445,8 @@
         uk: {
             // Navigation
             "nav_home": "Головна",
+            "about_source": "Вихідний код",
+            "version_label": "Версія",
             "friends_add": "Додати в друзі",
             "friends_delete": "Видалити друга",
             "friends_delete_confirm": "Ви впевнені, що хочете видалити цього користувача з друзів?",

@@ -25,6 +25,32 @@ document.addEventListener('error', (e) => {
     }
 })();
 
+// #25 Версия сервиса в нижнем колонтитуле
+(function() {
+    function setFooterVersion() {
+        const footer = document.querySelector('footer');
+        if (!footer || footer.querySelector('.app-version')) return;
+        const apply = (ver) => {
+            if (!ver || footer.querySelector('.app-version')) return;
+            const span = document.createElement('span');
+            span.className = 'app-version';
+            span.style.display = 'block';
+            span.style.marginTop = '4px';
+            span.style.fontSize = '10px';
+            const label = (window.t ? window.t('version_label', 'Версия') : 'Версия');
+            span.textContent = `${label}: ${ver}`;
+            footer.appendChild(span);
+        };
+        if (window.__appVersion) return apply(window.__appVersion);
+        fetch('/api/version').then(r => r.json()).then(d => {
+            window.__appVersion = d.version || '';
+            apply(window.__appVersion);
+        }).catch(() => {});
+    }
+    document.addEventListener('DOMContentLoaded', setFooterVersion);
+    document.addEventListener('spa:navigate', setFooterVersion);
+})();
+
 // Воспроизведение мягкого 8-битного ретро-звука уведомления (chiptune blip)
 function playRetroNotificationSound() {
     try {

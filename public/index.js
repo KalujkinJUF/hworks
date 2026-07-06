@@ -215,7 +215,7 @@ document.addEventListener('spa:navigate', () => {
                         ${deletePostBtnHtml}
                     </div>
                     <div class="post-content">${postContentMarkup}</div>
-                    ${post.image_url ? `<div class="post-media-box" style="margin-top: 10px; border: 2px solid white; padding: 2px; max-width: 100%; max-height: 400px; display: inline-block; background: black;"><img src="${escapeHtml(post.image_url)}" style="max-width: 100%; max-height: 380px; display: block; object-fit: contain;"></div>` : ''}
+                    ${post.image_url ? `<div class="post-media-box" style="margin-top: 10px; border: 2px solid white; padding: 2px; max-width: 100%; max-height: 400px; display: inline-block; background: black;">${window.mediaTag(post.image_url, 380)}</div>` : ''}
                     
                     <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
                         <button class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</button>
@@ -664,7 +664,7 @@ document.addEventListener('spa:navigate', () => {
     const postClearAttachBtn = document.getElementById("postClearAttachBtn");
 
     if (postAttachBtn && postFileInput) {
-        postAttachBtn.addEventListener("click", () => postFileInput.click());
+        postAttachBtn.addEventListener("click", () => window.attachMediaMenu(postAttachBtn, postFileInput));
         postFileInput.addEventListener("change", () => {
             if (postFileInput.files && postFileInput.files[0]) {
                 postAttachedFileName.textContent = postFileInput.files[0].name;

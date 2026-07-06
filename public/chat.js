@@ -316,7 +316,7 @@ function initializeChat(myData) {
                          msgNode.innerHTML = `
                              <div class="chat-bubble">
                                  <div class="message-content">${contentHtml}</div>
-                                 ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;"><img src="${escapeHtml(msg.image_url)}" style="max-width: 100%; max-height: 200px; display: block; object-fit: contain;"></div>` : ''}
+                                 ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;">${window.mediaTag(msg.image_url, 200)}</div>` : ''}
                              </div>
                              <div class="message-time">${timeStr}${deleteBtn}</div>
                          `;
@@ -363,7 +363,7 @@ function initializeChat(myData) {
     const clearAttachBtn = document.getElementById("clearAttachBtn");
 
     if (attachBtn && chatFileInput) {
-        attachBtn.addEventListener("click", () => chatFileInput.click());
+        attachBtn.addEventListener("click", () => window.attachMediaMenu(attachBtn, chatFileInput));
         chatFileInput.addEventListener("change", () => {
             if (chatFileInput.files && chatFileInput.files[0]) {
                 attachedFileName.textContent = chatFileInput.files[0].name;

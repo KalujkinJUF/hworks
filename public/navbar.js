@@ -41,6 +41,52 @@ document.addEventListener('error', (e) => {
     });
 })();
 
+// #16 Рендер медиа (img/video/audio) по расширению
+window.mediaTag = function(url, maxHeight) {
+    if (!url) return '';
+    const esc = String(url).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const ext = (String(url).split('.').pop() || '').toLowerCase();
+    const mh = maxHeight || 380;
+    if (ext === 'mp4' || ext === 'webm') {
+        return `<video src="${esc}" controls preload="metadata" style="max-width:100%; max-height:${mh}px; display:block;"></video>`;
+    }
+    if (ext === 'mp3') {
+        return `<audio src="${esc}" controls preload="metadata" style="width:100%; min-width:220px;"></audio>`;
+    }
+    return `<img src="${esc}" style="max-width:100%; max-height:${mh}px; display:block; object-fit:contain;">`;
+};
+
+// #16 Меню выбора типа вложения (фото/видео/аудио) рядом с кнопкой прикрепления
+window.attachMediaMenu = function(anchorBtn, fileInput) {
+    document.querySelectorAll('.attach-menu').forEach(m => m.remove());
+    const menu = document.createElement('div');
+    menu.className = 'attach-menu';
+    menu.style.cssText = 'position:absolute; z-index:100001; background:#141414; border:1px solid #888; border-radius:6px; padding:4px; display:flex; flex-direction:column; min-width:150px; box-shadow:0 6px 18px rgba(0,0,0,0.6);';
+    const opts = [
+        { label: window.t('attach_photo', 'Фото'), accept: 'image/jpeg,image/png,image/gif,image/webp' },
+        { label: window.t('attach_video', 'Видео'), accept: 'video/mp4,video/webm' },
+        { label: window.t('attach_audio', 'Аудио'), accept: 'audio/mpeg' }
+    ];
+    opts.forEach(o => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = o.label;
+        b.style.cssText = 'background:none; border:none; color:#eee; text-align:left; padding:8px 10px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:4px;';
+        b.addEventListener('mouseenter', () => { b.style.background = 'rgba(255,255,255,0.12)'; });
+        b.addEventListener('mouseleave', () => { b.style.background = 'none'; });
+        b.addEventListener('click', () => { fileInput.accept = o.accept; menu.remove(); fileInput.click(); });
+        menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+    const r = anchorBtn.getBoundingClientRect();
+    menu.style.left = (window.scrollX + r.left) + 'px';
+    menu.style.top = (window.scrollY + r.bottom + 4) + 'px';
+    setTimeout(() => {
+        const close = (e) => { if (!menu.contains(e.target) && e.target !== anchorBtn) { menu.remove(); document.removeEventListener('click', close); } };
+        document.addEventListener('click', close);
+    }, 0);
+};
+
 // Обработка clear_session от Tauri-клиента (при обновлении версии)
 (function() {
     const params = new URLSearchParams(window.location.search);

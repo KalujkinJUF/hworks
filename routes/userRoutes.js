@@ -111,12 +111,19 @@ const upload = multer({
     fileFilter: imageFileFilter
 });
 
-// Отдельный конфиг для медиа постов/чатов: больший лимит, т.к. анимированные GIF тяжёлые.
+// #16 Медиа постов/чатов: изображения + видео (mp4, webm) + аудио (mp3).
+const mediaFileFilter = (req, file, cb) => {
+    const extOk = /\.(jpe?g|png|gif|webp|mp4|webm|mp3)$/i.test(file.originalname);
+    const mimeOk = /^(image\/(jpeg|png|gif|webp)|video\/(mp4|webm)|audio\/(mpeg|mp3))$/i.test(file.mimetype);
+    if (extOk && mimeOk) return cb(null, true);
+    cb(new Error('Разрешены: изображения, видео (mp4, webm), аудио (mp3)'));
+};
+
 // Хранилище то же — имя файла становится media_... по fieldname='file'.
 const uploadMedia = multer({
     storage,
-    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB — медиа (GIF/анимации)
-    fileFilter: imageFileFilter
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB — медиа (видео/аудио)
+    fileFilter: mediaFileFilter
 });
 
 // Обёртка multer с обработкой ошибок: возвращаем JSON, а не HTML-500.
@@ -542,13 +549,19 @@ router.get('/profile/:username', verifyToken, (req, res) => {
 });
 
 // Проверка реального типа файла по magic bytes
-const checkRealFileType = async (filePath) => {
+// #16 Определяем реальный тип медиа по magic bytes: 'image' | 'video' | 'audio' | null
+const MEDIA_MIMES = {
+    'image/jpeg': 'image', 'image/png': 'image', 'image/gif': 'image', 'image/webp': 'image',
+    'video/mp4': 'video', 'video/webm': 'video',
+    'audio/mpeg': 'audio'
+};
+const detectMediaType = async (filePath) => {
     const { fileTypeFromFile } = await import('file-type');
     const type = await fileTypeFromFile(filePath);
-    if (!type) return false;
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    return allowedMimes.includes(type.mime);
+    if (!type) return null;
+    return MEDIA_MIMES[type.mime] || null;
 };
+const checkRealFileType = async (filePath) => (await detectMediaType(filePath)) === 'image';
 
 // Загрузка аватарки (с rate limit)
 router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, uploadAvatarMw, async (req, res) => {
@@ -599,21 +612,23 @@ router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, upload
 router.post('/upload-media', verifyToken, verifyNotBanned, mediaUploadLimiter, uploadMediaMw, async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
 
-    // Проверяем реальное содержимое файла (magic bytes)
-    const isValidImage = await checkRealFileType(req.file.path);
-    if (!isValidImage) {
+    // Проверяем реальный тип по magic bytes
+    const mediaType = await detectMediaType(req.file.path);
+    if (!mediaType) {
         try { fs.unlinkSync(req.file.path); } catch (e) {}
-        return res.status(400).json({ error: 'Недопустимый формат файла. Разрешены только изображения (jpeg, png, gif, webp).' });
+        return res.status(400).json({ error: 'Недопустимый формат файла. Разрешены: изображения, видео (mp4, webm), аудио (mp3).' });
     }
 
-    // Re-encoding изображения для удаления метаданных/EXIF/XSS
-    const processed = await processUploadedImage(req.file.path);
-    if (!processed) {
-        return res.status(400).json({ error: 'Не удалось обработать изображение' });
+    // Только изображения перекодируем через sharp (чистим EXIF); видео/аудио сохраняем как есть
+    if (mediaType === 'image') {
+        const processed = await processUploadedImage(req.file.path);
+        if (!processed) {
+            return res.status(400).json({ error: 'Не удалось обработать изображение' });
+        }
     }
 
     const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl });
+    res.json({ url: fileUrl, type: mediaType });
 });
 
 // Посты — получить все с учетом лайков и подписок (публично доступно)

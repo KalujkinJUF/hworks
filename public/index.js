@@ -650,7 +650,6 @@ document.addEventListener('spa:navigate', () => {
         });
     }
 
-    loadPosts();
     loadOnline();
     _spaInterval_0 = setInterval(loadOnline, 30000);
 

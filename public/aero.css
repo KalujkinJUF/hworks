@@ -57,7 +57,10 @@ body.theme-aero footer {
 /* 3. СТЕКЛЯННЫЕ КОНТЕЙНЕРЫ (GLASSMORPHISM) */
 body.theme-aero .post-card,
 body.theme-aero .post-form-section,
+body.theme-aero .profile-layout,
 body.theme-aero .bio-group,
+body.theme-aero .page-container,
+body.theme-aero .sidebar,
 body.theme-aero #profileCommentsSection,
 body.theme-aero #updateSection,
 body.theme-aero #verifySection,
@@ -65,13 +68,12 @@ body.theme-aero #appearanceSection,
 body.theme-aero #deleteAccountSection,
 body.theme-aero .admin-panel,
 body.theme-aero .user-card,
-body.theme-aero .chat-container,
+body.theme-aero .chat-layout,
 body.theme-aero .friends-container,
 body.theme-aero .friend-card,
 body.theme-aero .sidebar-section,
 body.theme-aero .profile-section > div,
 body.theme-aero .users-container,
-body.theme-aero .search-section,
 body.theme-aero .admin-pin-box,
 body.theme-aero .online-box,
 body.theme-aero .comments-wrapper,
@@ -228,7 +230,12 @@ body.theme-aero .about-section *,
 body.theme-aero .friends-list *,
 body.theme-aero .loading-text,
 body.theme-aero .friends-tabs *,
-body.theme-aero #mutualFriendsSection * {
+body.theme-aero #mutualFriendsSection *,
+body.theme-aero .auth-form *,
+body.theme-aero #appearanceSection *,
+body.theme-aero #updateSection *,
+body.theme-aero #deleteAccountSection *,
+body.theme-aero .comment-date {
     color: #333 !important;
 }
 
@@ -269,8 +276,14 @@ body.theme-aero .chat-input-section {
 
 body.theme-aero .messages-container,
 body.theme-aero .chat-friends-column,
-body.theme-aero .chat-section,
-body.theme-aero .chat-layout {
+body.theme-aero .chat-section {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+body.theme-aero .profile-tabs {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;

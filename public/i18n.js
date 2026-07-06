@@ -596,14 +596,32 @@
     // Функция применения темы
     function applyTheme() {
         const theme = localStorage.getItem('app_theme') || 'default';
+        let themeLink = document.getElementById('theme-stylesheet');
+        
+        if (!themeLink) {
+            themeLink = document.createElement('link');
+            themeLink.id = 'theme-stylesheet';
+            themeLink.rel = 'stylesheet';
+            if (document.head) {
+                document.head.appendChild(themeLink);
+            }
+        }
+        
         if (theme === 'aero') {
             document.documentElement.classList.add('theme-aero');
-            document.body.classList.add('theme-aero');
+            if (document.body) document.body.classList.add('theme-aero');
+            if (!themeLink.href.endsWith('aero.css')) {
+                themeLink.href = 'aero.css';
+            }
         } else {
             document.documentElement.classList.remove('theme-aero');
-            document.body.classList.remove('theme-aero');
+            if (document.body) document.body.classList.remove('theme-aero');
+            themeLink.href = '';
         }
     }
+
+    // Применяем тему сразу для предотвращения FOUC
+    applyTheme();
 
     document.addEventListener("DOMContentLoaded", () => {
         applyTheme();
@@ -616,11 +634,4 @@
         window.applyTranslations();
         bindLanguageButtons();
     });
-
-    // Пытаемся применить сразу (если body уже доступен)
-    if (document.body) {
-        applyTheme();
-    } else {
-        document.documentElement.classList.add('theme-loading');
-    }
 })();

@@ -51,6 +51,9 @@ document.addEventListener('spa:navigate', () => {
                 if (postFormSection) postFormSection.style.display = 'none';
                 const feedSubsBtn = document.getElementById("feedSubsBtn");
                 if (feedSubsBtn) feedSubsBtn.style.display = 'none';
+            })
+            .finally(() => {
+                loadPosts();
             });
 
     let currentFeed = 'global';

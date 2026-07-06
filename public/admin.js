@@ -3,7 +3,7 @@ document.addEventListener('spa:unload', () => {
     if (_spaInterval_4) clearInterval(_spaInterval_4);
 });
 document.addEventListener('spa:navigate', () => {
-    if (!document.querySelector('.adminMain') && !document.getElementById('adminMain')) return;
+    if (!document.getElementById('usersContainer')) return;
 
     // Проверка авторизации через cookie (httpOnly)
     fetch("/api/users/profile", {

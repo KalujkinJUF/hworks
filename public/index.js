@@ -133,6 +133,7 @@ document.addEventListener('spa:navigate', () => {
 
     // Умная загрузка постов БЕЗ перезапуска анимаций
     function updateFeedInPlace(container, postsList, emptyMsg) {
+        if (!container) return;
         const isFirstLoad = container.innerHTML.includes("loading-text") ||
             container.innerHTML.includes(emptyMsg);
 
@@ -337,6 +338,7 @@ document.addEventListener('spa:navigate', () => {
             .then(res => res.json())
             .then(users => {
                 const list = document.getElementById("onlineList");
+                if (!list) return;
                 if (users.length === 0) {
                     list.innerHTML = `<p class="loading-text">${window.t('nobody_online', 'Никого нет в сети')}</p>`;
                     return;

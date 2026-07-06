@@ -3,7 +3,7 @@ document.addEventListener('spa:unload', () => {
     if (_spaInterval_5) clearInterval(_spaInterval_5);
 });
 document.addEventListener('spa:navigate', () => {
-    if (!document.querySelector('.searchSection') && !document.getElementById('searchSection')) return;
+    if (!document.getElementById('searchResults')) return;
 
 
     const searchInput = document.getElementById("searchInput");

@@ -1540,23 +1540,28 @@ textarea#aboutMe:focus {
 
 .my-message {
     align-self: flex-end;
-    background: rgba(0, 255, 0, 0.08);
-    /* Чуть приглушили фон */
-    border: 2px solid #00ff00;
-    /* Вместо border-left делаем полноценную аккуратную рамку */
-    color: #00ff00;
+    color: yellow;
+    padding: 0;
+}
+
+.my-message .chat-bubble {
+    background: rgba(255, 255, 0, 0.08);
+    border: 2px solid yellow;
     padding: 10px 15px;
+    border-radius: 4px;
 }
 
 .friend-message {
     align-self: flex-start;
-    background: transparent;
-    /* Убрали серый фон */
-    border-left: 3px solid white;
-    /* Оставляем только аккуратную левую полоску для стиля */
-    color: white;
-    padding: 5px 10px;
-    /* Уменьшаем внутренние паддинги, раз рамки больше нет */
+    color: cyan;
+    padding: 0;
+}
+
+.friend-message .chat-bubble {
+    background: rgba(0, 255, 255, 0.08);
+    border: 2px solid cyan;
+    padding: 10px 15px;
+    border-radius: 4px;
 }
 
 .message-content {
@@ -2288,4 +2293,22 @@ select:focus {
 
 a.post-author, a.username-link, a[href^="profile.html"] {
     text-decoration: none !important;
+}
+
+.about-section {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: left;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.01);
+    box-sizing: border-box;
+}
+
+.search-result-card {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.01);
+    margin-bottom: 15px;
 }

@@ -284,8 +284,10 @@ function initializeChat(myData) {
                          msgNode.className = `message ${msgClass}${shouldAnimate ? ' new-message-anim' : ''}`;
                          msgNode.dataset.msgId = msgId;
                          msgNode.innerHTML = `
-                             <div class="message-content">${contentHtml}</div>
-                             ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;"><img src="${escapeHtml(msg.image_url)}" style="max-width: 100%; max-height: 200px; display: block; object-fit: contain;"></div>` : ''}
+                             <div class="chat-bubble">
+                                 <div class="message-content">${contentHtml}</div>
+                                 ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;"><img src="${escapeHtml(msg.image_url)}" style="max-width: 100%; max-height: 200px; display: block; object-fit: contain;"></div>` : ''}
+                             </div>
                              <div class="message-time">${timeStr}${deleteBtn}</div>
                          `;
                          container.appendChild(msgNode);

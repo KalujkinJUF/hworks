@@ -1,7 +1,44 @@
+// Подгружаем скрипт Turnstile динамически (в SPA его нет в head при навигации)
+function loadTurnstileScript() {
+    return new Promise((resolve) => {
+        if (window.turnstile) return resolve();
+        const existing = document.getElementById('cf-turnstile-script');
+        if (existing) {
+            const iv = setInterval(() => { if (window.turnstile) { clearInterval(iv); resolve(); } }, 100);
+            setTimeout(() => { clearInterval(iv); resolve(); }, 5000);
+            return;
+        }
+        const s = document.createElement('script');
+        s.id = 'cf-turnstile-script';
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+        s.async = true; s.defer = true;
+        s.onload = () => resolve();
+        document.head.appendChild(s);
+    });
+}
+
+// Рендерим виджет вручную: авто-рендер не срабатывает при innerHTML-вставке в SPA
+function renderTurnstile() {
+    const tsEl = document.querySelector('.cf-turnstile');
+    if (!tsEl || !window.turnstile || tsEl.dataset.rendered) return;
+    try {
+        window.turnstile.render(tsEl, {
+            sitekey: tsEl.getAttribute('data-sitekey'),
+            theme: tsEl.getAttribute('data-theme') || 'dark'
+        });
+        tsEl.dataset.rendered = '1';
+    } catch (e) {
+        console.error('Turnstile render error:', e);
+    }
+}
+
 document.addEventListener('spa:navigate', () => {
     const registerForm = document.getElementById('register-form');
     if (!registerForm) return;
-    
+
+    // Грузим Turnstile и рендерим капчу (SPA не выполняет head-скрипты страницы)
+    loadTurnstileScript().then(renderTurnstile);
+
     registerForm.addEventListener('submit', async (e) => {
     e.preventDefault(); // Предотвращаем перезагрузку страницы
 

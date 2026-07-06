@@ -97,17 +97,43 @@ const storage = multer.diskStorage({
         cb(null, `${prefix}_${req.user.id}_${Date.now()}${ext}`);
     }
 });
-const upload = multer({ 
+const imageFileFilter = (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif|webp/;
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowed.test(file.mimetype);
+    if (ext && mime) return cb(null, true);
+    cb(new Error('Только изображения (jpeg, png, gif, webp)'));
+};
+
+const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (req, file, cb) => {
-        const allowed = /jpeg|jpg|png|gif|webp/;
-        const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-        const mime = allowed.test(file.mimetype);
-        if (ext && mime) return cb(null, true);
-        cb(new Error('Только изображения (jpeg, png, gif, webp)'));
-    }
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB — аватары
+    fileFilter: imageFileFilter
 });
+
+// Отдельный конфиг для медиа постов/чатов: больший лимит, т.к. анимированные GIF тяжёлые.
+// Хранилище то же — имя файла становится media_... по fieldname='file'.
+const uploadMedia = multer({
+    storage,
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB — медиа (GIF/анимации)
+    fileFilter: imageFileFilter
+});
+
+// Обёртка multer с обработкой ошибок: возвращаем JSON, а не HTML-500.
+// Иначе при превышении лимита фронт получает не-JSON ответ и показывает «ошибка сети».
+const handleUpload = (mw) => (req, res, next) => {
+    mw(req, res, (err) => {
+        if (err) {
+            const msg = err.code === 'LIMIT_FILE_SIZE'
+                ? 'Файл слишком большой'
+                : (err.message || 'Ошибка загрузки файла');
+            return res.status(400).json({ error: msg });
+        }
+        next();
+    });
+};
+const uploadAvatarMw = handleUpload(upload.single('avatar'));
+const uploadMediaMw = handleUpload(uploadMedia.single('file'));
 
 // Функция для поиска пользователя по ID (только нужные поля)
 const findUser = (id) => {
@@ -525,7 +551,7 @@ const checkRealFileType = async (filePath) => {
 };
 
 // Загрузка аватарки (с rate limit)
-router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, upload.single('avatar'), async (req, res) => {
+router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, uploadAvatarMw, async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
 
     // Проверяем реальное содержимое файла (magic bytes)
@@ -570,7 +596,7 @@ router.post('/avatar', verifyToken, verifyNotBanned, avatarUploadLimiter, upload
 });
 
 // Загрузка медиа-вложений для постов и ЛС (с rate limit)
-router.post('/upload-media', verifyToken, verifyNotBanned, mediaUploadLimiter, upload.single('file'), async (req, res) => {
+router.post('/upload-media', verifyToken, verifyNotBanned, mediaUploadLimiter, uploadMediaMw, async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
 
     // Проверяем реальное содержимое файла (magic bytes)

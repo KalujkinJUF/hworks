@@ -55,10 +55,8 @@ body.theme-aero footer {
 }
 
 /* 3. СТЕКЛЯННЫЕ КОНТЕЙНЕРЫ (GLASSMORPHISM) */
-body.theme-aero .main-layout,
 body.theme-aero .post-card,
 body.theme-aero .post-form-section,
-body.theme-aero .profile-layout,
 body.theme-aero .bio-group,
 body.theme-aero #profileCommentsSection,
 body.theme-aero #updateSection,
@@ -79,7 +77,9 @@ body.theme-aero .online-box,
 body.theme-aero .comments-wrapper,
 body.theme-aero .auth-form,
 body.theme-aero .about-section,
-body.theme-aero .search-result-card {
+body.theme-aero .search-result-card,
+body.theme-aero #mutualFriendsSection,
+body.theme-aero .chat-friend-item {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(200, 230, 255, 0.35) 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 12px !important;
@@ -216,8 +216,8 @@ body.theme-aero .messages-container *,
 body.theme-aero .admin-pin-content,
 body.theme-aero .online-box,
 body.theme-aero .online-box *,
-body.theme-aero .profile-info-block,
-body.theme-aero .bio-group label,
+body.theme-aero .profile-info-block *,
+body.theme-aero .bio-group *,
 body.theme-aero .user-field label,
 body.theme-aero .user-field-value,
 body.theme-aero .news-feed *,
@@ -227,7 +227,8 @@ body.theme-aero .search-result-card *,
 body.theme-aero .about-section *,
 body.theme-aero .friends-list *,
 body.theme-aero .loading-text,
-body.theme-aero .friends-tabs * {
+body.theme-aero .friends-tabs *,
+body.theme-aero #mutualFriendsSection * {
     color: #333 !important;
 }
 
@@ -264,6 +265,16 @@ body.theme-aero .chat-header h2 {
 body.theme-aero .chat-input-section {
     background: transparent !important;
     border-top: 1px solid rgba(255,255,255,0.6) !important;
+}
+
+body.theme-aero .messages-container,
+body.theme-aero .chat-friends-column,
+body.theme-aero .chat-section,
+body.theme-aero .chat-layout {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
 }
 
 body.theme-aero .my-message {

@@ -8,8 +8,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return res.json();
     })
     .then(data => {
-        // Пользователь авторизован, продолжаем загрузку
-        initializeProfile(data);
+        // Пользователь авторизован. Ошибки отрисовки НЕ должны редиректить на логин —
+        // ловим их отдельно, иначе баг рендера ошибочно трактуется как «не авторизован».
+        try {
+            initializeProfile(data);
+        } catch (e) {
+            console.error('Ошибка инициализации профиля:', e);
+        }
     })
     .catch(() => {
         const params = new URLSearchParams(window.location.search);

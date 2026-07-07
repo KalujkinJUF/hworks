@@ -215,6 +215,10 @@ footer {
     outline: none;
 }
 
+.input-group input[type="password"]::-ms-reveal {
+    filter: invert(100%);
+}
+
 .input-group input:focus {
     border-color: yellow;
     color: yellow;

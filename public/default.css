@@ -385,6 +385,8 @@ textarea#aboutMe:focus {
     border: 2px solid rgba(255, 255, 255, 0.3);
     padding: 20px;
     margin-top: 20px;
+    margin-left: auto !important;
+    margin-right: auto !important;
     max-width: 400px;
     text-align: left;
 }

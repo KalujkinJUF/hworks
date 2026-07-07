@@ -151,8 +151,10 @@ router.post('/', messageLimiter, (req, res) => {
     const senderId = req.user.id;
     const { receiver_id, content } = req.body;
     const receiverId = parseInt(receiver_id);
+    const imageUrl = sanitizeImageUrl(req.body.image_url);
+    const replyTo = parseInt(req.body.reply_to) || null;
 
-    if (!content || content.trim() === '') {
+    if ((!content || content.trim() === '') && !imageUrl) {
         return res.status(400).json({ error: 'Сообщение не может быть пустым' });
     }
 
@@ -175,13 +177,12 @@ router.post('/', messageLimiter, (req, res) => {
                 return res.status(403).json({ error: 'Вы не друзья' });
             }
 
-            const sanitizedContent = sanitize(content.trim());
+            const sanitizedContent = content ? sanitize(content.trim()) : '';
             const encryptedContent = encrypt(sanitizedContent);
-            const imageUrl = sanitizeImageUrl(req.body.image_url);
 
             db.query(
-                'INSERT INTO messages (sender_id, receiver_id, content, image_url) VALUES (?, ?, ?, ?)',
-                [senderId, receiverId, encryptedContent, imageUrl],
+                'INSERT INTO messages (sender_id, receiver_id, content, image_url, reply_to) VALUES (?, ?, ?, ?, ?)',
+                [senderId, receiverId, encryptedContent, imageUrl, replyTo],
                 (err, result) => {
                     if (err) {
                         logger.error('Ошибка БД при отправке сообщения');

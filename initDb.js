@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS messages (
     receiver_id INT NOT NULL,
     content TEXT NOT NULL,
     image_url VARCHAR(255) DEFAULT NULL,
+    reply_to INT DEFAULT NULL,
     is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -120,6 +121,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS delete_code VARCHAR(255) DEFAULT NULL
 ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'online';
 -- Версия токена для отзыва JWT-сессий (смена пароля инкрементирует значение)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0;
+-- #22 Ответы в ЛС: ссылка на сообщение, на которое отвечают
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to INT DEFAULT NULL;
 
 -- Миграция под шифрование почты и добавление медиа
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_hash VARCHAR(255) DEFAULT NULL;

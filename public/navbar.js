@@ -168,6 +168,9 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
                 }});
             }
         } else if (message) {
+            if (window.setChatReply) {
+                items.push({ label: window.t('ctx_reply', 'Ответить'), action: () => window.setChatReply(message.dataset.msgId) });
+            }
             if (message.dataset.canDelete === '1' && window.deleteMessage) {
                 items.push({ label: window.t('delete', 'Удалить'), danger: true, action: () => window.deleteMessage(message.dataset.msgId, { stopPropagation() {} }) });
             }

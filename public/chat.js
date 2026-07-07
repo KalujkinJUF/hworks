@@ -31,6 +31,37 @@ function initializeChat(myData) {
     window.currentFriendId = null;
     let currentFriendName = null;
     let currentFriendRole = null;
+    let replyToId = null;
+    let currentMessages = [];
+
+    // #22 Ответы в стиле Telegram
+    window.setChatReply = function(msgId) {
+        const m = currentMessages.find(x => String(x.id) === String(msgId));
+        if (!m) return;
+        replyToId = m.id;
+        const preview = document.getElementById("chatReplyPreview");
+        if (!preview) return;
+        const who = (m.sender_id === currentUserId) ? window.t('you', 'Вы') : currentFriendName;
+        const snippet = (m.content && m.content.trim()) ? m.content : (m.image_url ? '📎 ' + window.t('attach_file', 'Вложение') : '');
+        preview.innerHTML = `
+            <div style="flex:1; min-width:0; border-left:3px solid #4a90d9; padding-left:8px;">
+                <div style="font-weight:bold; color:#4a90d9; font-size:11px;">${escapeHtml(who || '')}</div>
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; opacity:0.85;">${escapeHtml(snippet)}</div>
+            </div>
+            <button id="cancelReplyBtn" type="button" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size:16px; padding:0 6px;">✕</button>
+        `;
+        preview.style.display = 'flex';
+        const cancel = document.getElementById("cancelReplyBtn");
+        if (cancel) cancel.addEventListener("click", clearChatReply);
+        const input = document.getElementById("messageInput");
+        if (input) input.focus();
+    };
+    function clearChatReply() {
+        replyToId = null;
+        const preview = document.getElementById("chatReplyPreview");
+        if (preview) { preview.style.display = 'none'; preview.innerHTML = ''; }
+    }
+    window.clearChatReply = clearChatReply;
 
     // Функция для экранирования HTML
     function escapeHtml(text) {
@@ -260,6 +291,7 @@ function initializeChat(myData) {
         .then(res => res.json())
         .then(messages => {
             if (currentFriendId !== fetchFriendId) return;
+            currentMessages = messages;
             const container = document.getElementById("messagesContainer");
             if (window.updateNavbarNotifications) {
                 window.updateNavbarNotifications();
@@ -305,7 +337,17 @@ function initializeChat(myData) {
 
                          const timeStr = dateObj.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit' });
                          const contentHtml = escapeHtml(msg.content);
-                         
+
+                         let replyQuoteHtml = '';
+                         if (msg.reply_to) {
+                             const rm = messages.find(x => String(x.id) === String(msg.reply_to));
+                             if (rm) {
+                                 const who = (rm.sender_id === currentUserId) ? window.t('you', 'Вы') : currentFriendName;
+                                 const snip = (rm.content && rm.content.trim()) ? rm.content : (rm.image_url ? '📎' : '');
+                                 replyQuoteHtml = `<div style="border-left:3px solid #4a90d9; padding:2px 8px; margin-bottom:4px; font-size:11px; background:rgba(255,255,255,0.06); border-radius:4px;"><div style="font-weight:bold; color:#4a90d9;">${escapeHtml(who || '')}</div><div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; opacity:0.85;">${escapeHtml(snip)}</div></div>`;
+                             }
+                         }
+
                          const canDelete = isMine || currentUserRole === 'admin' || (currentUserRole === 'moderator' && currentFriendRole !== 'admin');
 
                          const msgNode = document.createElement("div");
@@ -315,6 +357,7 @@ function initializeChat(myData) {
                          msgNode.dataset.canDelete = canDelete ? '1' : '0';
                          msgNode.innerHTML = `
                              <div class="chat-bubble">
+                                 ${replyQuoteHtml}
                                  <div class="message-content">${contentHtml}</div>
                                  ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;">${window.mediaTag(msg.image_url, 200)}</div>` : ''}
                              </div>
@@ -385,7 +428,8 @@ function initializeChat(myData) {
         }
 
         const content = document.getElementById("messageInput").value.trim();
-        if (!content) {
+        const hasFile = chatFileInput && chatFileInput.files && chatFileInput.files[0];
+        if (!content && !hasFile) {
             document.getElementById("sendMessage").textContent = window.t('chat_message_empty', 'Напишите сообщение');
             document.getElementById("sendMessage").style.color = "#ff4444";
             return;
@@ -430,7 +474,8 @@ function initializeChat(myData) {
             body: JSON.stringify({
                 receiver_id: currentFriendId,
                 content: content,
-                image_url: imageUrl
+                image_url: imageUrl,
+                reply_to: replyToId
             })
         })
         .then(res => res.json())
@@ -441,6 +486,7 @@ function initializeChat(myData) {
                 if (chatFileInput) chatFileInput.value = "";
                 if (attachedFileName) attachedFileName.textContent = "";
                 if (clearAttachBtn) clearAttachBtn.style.display = "none";
+                clearChatReply();
                 loadMessages();
             } else {
                 document.getElementById("sendMessage").textContent = data.error || window.t('error_network', 'Ошибка отправки');

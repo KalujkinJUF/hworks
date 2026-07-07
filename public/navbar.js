@@ -310,7 +310,14 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
     document.querySelectorAll('.attach-menu').forEach(m => m.remove());
     const menu = document.createElement('div');
     menu.className = 'attach-menu';
-    menu.style.cssText = 'position:absolute; z-index:100001; background:#141414; border:1px solid #888; border-radius:6px; padding:4px; display:flex; flex-direction:column; min-width:150px; box-shadow:0 6px 18px rgba(0,0,0,0.6);';
+    
+    const isAero = (localStorage.getItem('app_theme') === 'aero');
+    if (isAero) {
+        menu.style.cssText = 'position:absolute; z-index:100001; background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(220, 240, 255, 0.5) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.7); border-radius: 12px; padding: 6px; display:flex; flex-direction:column; min-width:150px; box-shadow: 0 10px 30px rgba(0, 100, 200, 0.15); gap: 4px;';
+    } else {
+        menu.style.cssText = 'position:absolute; z-index:100001; background:#141414; border:1px solid #888; border-radius:6px; padding:4px; display:flex; flex-direction:column; min-width:150px; box-shadow:0 6px 18px rgba(0,0,0,0.6);';
+    }
+
     const opts = [
         { label: window.t('attach_photo', 'Фото'), accept: 'image/jpeg,image/png,image/gif,image/webp' },
         { label: window.t('attach_video', 'Видео'), accept: 'video/mp4,video/webm' },
@@ -320,9 +327,15 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
         const b = document.createElement('button');
         b.type = 'button';
         b.textContent = o.label;
-        b.style.cssText = 'background:none; border:none; color:#eee; text-align:left; padding:8px 10px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:4px;';
-        b.addEventListener('mouseenter', () => { b.style.background = 'rgba(255,255,255,0.12)'; });
-        b.addEventListener('mouseleave', () => { b.style.background = 'none'; });
+        if (isAero) {
+            b.style.cssText = 'background: linear-gradient(180deg, #ffffff 0%, #d0e8ff 45%, #a8d4ff 50%, #cce4ff 100%) !important; border: 1px solid #4a90d9 !important; color:#004488 !important; text-align:left; padding:8px 12px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:8px; white-space:nowrap; box-shadow: 0 2px 4px rgba(0, 50, 100, 0.1), inset 0 1px 1px rgba(255, 255, 255, 1) !important; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) !important;';
+            b.addEventListener('mouseenter', () => { b.style.background = 'linear-gradient(180deg, #ffffff 0%, #e6f3ff 45%, #c2e0ff 50%, #dbf0ff 100%)'; });
+            b.addEventListener('mouseleave', () => { b.style.background = 'linear-gradient(180deg, #ffffff 0%, #d0e8ff 45%, #a8d4ff 50%, #cce4ff 100%)'; });
+        } else {
+            b.style.cssText = 'background:none; border:none; color:#eee; text-align:left; padding:8px 10px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:4px;';
+            b.addEventListener('mouseenter', () => { b.style.background = 'rgba(255,255,255,0.12)'; });
+            b.addEventListener('mouseleave', () => { b.style.background = 'none'; });
+        }
         b.addEventListener('click', () => { fileInput.accept = o.accept; fileInput.multiple = true; menu.remove(); fileInput.click(); });
         menu.appendChild(b);
     });

@@ -386,10 +386,8 @@ textarea#aboutMe:focus {
     background: transparent !important;
     padding: 0 !important;
     margin-top: 10px;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    max-width: 500px !important;
-    text-align: center !important;
+    max-width: 400px;
+    text-align: left;
 }
 
 /* ==========================================================================
@@ -3435,8 +3433,8 @@ a:hover {
 /* Цвета ролей */
 .role-moderator { color: #3498db !important; border-color: #3498db !important; }
 .role-admin { color: #e74c3c !important; border-color: #e74c3c !important; }
-.role-vip { color: #f39c12 !important; border-color: #f39c12 !important; }
-.role-premium { color: #ff66cc !important; border-color: #ff66cc !important; }
+.role-vip { color: #9b59b6 !important; border-color: #9b59b6 !important; }
+.role-premium { color: #ffd700 !important; border-color: #ffd700 !important; }
 .role-user { color: #2ecc71 !important; border-color: #2ecc71 !important; }
 .role-newbie { color: #888888 !important; border-color: #888888 !important; }
 .role-banned { color: #333333 !important; border-color: #333333 !important; }

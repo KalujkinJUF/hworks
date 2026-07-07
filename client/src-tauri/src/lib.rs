@@ -154,6 +154,51 @@ fn auto_connect(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+async fn save_file_to_disk(app: AppHandle, url: String) -> Result<String, String> {
+    use tauri_plugin_dialog::DialogExt;
+    
+    let filename = url.split('/').last().unwrap_or("file").to_string();
+    let (tx, rx) = std::sync::mpsc::channel();
+    
+    let filename_clone = filename.clone();
+    let app_clone = app.clone();
+    
+    let _ = app.run_on_main_thread(move || {
+        app_clone.dialog()
+            .file()
+            .set_file_name(&filename_clone)
+            .save_file(move |file_path| {
+                let _ = tx.send(file_path);
+            });
+    });
+    
+    let chosen_path = rx.recv()
+        .map_err(|e| e.to_string())?;
+        
+    if let Some(file_path) = chosen_path {
+        let path_buf = match file_path {
+            tauri_plugin_dialog::FilePath::Path(p) => p,
+            _ => return Err("Неподдерживаемый формат пути".to_string()),
+        };
+        
+        let response = ureq::get(&url)
+            .call()
+            .map_err(|e| format!("Ошибка скачивания: {}", e.to_string()))?;
+            
+        let mut reader = response.into_reader();
+        let mut file = std::fs::File::create(&path_buf)
+            .map_err(|e| format!("Не удалось создать файл: {}", e.to_string()))?;
+            
+        std::io::copy(&mut reader, &mut file)
+            .map_err(|e| format!("Ошибка записи: {}", e.to_string()))?;
+            
+        Ok(format!("Файл сохранен: {}", path_buf.to_string_lossy()))
+    } else {
+        Err("Отменено пользователем".to_string())
+    }
+}
+
 fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
     let version_url = format!("{}/api/version", server_url.trim_end_matches('/'));
     let agent = ureq::AgentBuilder::new()
@@ -377,7 +422,7 @@ pub fn run() {
             api.prevent_close();
         }
     })
-    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window, open_url, auto_connect])
+    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window, open_url, auto_connect, save_file_to_disk])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

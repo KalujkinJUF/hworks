@@ -359,7 +359,7 @@ function initializeChat(myData) {
                              <div class="chat-bubble">
                                  ${replyQuoteHtml}
                                  <div class="message-content">${contentHtml}</div>
-                                 ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;">${window.mediaTag(msg.image_url, 200)}</div>` : ''}
+                                 ${window.mediaListHtml(msg.media, msg.image_url, 200, 'message-media-box')}
                              </div>
                              <div class="message-time">${timeStr}</div>
                          `;
@@ -409,7 +409,7 @@ function initializeChat(myData) {
         attachBtn.addEventListener("click", () => window.attachMediaMenu(attachBtn, chatFileInput));
         chatFileInput.addEventListener("change", () => {
             if (chatFileInput.files && chatFileInput.files[0]) {
-                attachedFileName.textContent = chatFileInput.files[0].name;
+                attachedFileName.textContent = chatFileInput.files.length > 1 ? (chatFileInput.files.length + ' 📎') : chatFileInput.files[0].name;
                 clearAttachBtn.style.display = "inline-block";
             }
         });
@@ -439,29 +439,31 @@ function initializeChat(myData) {
         msgStatus.textContent = window.t('loading', 'Отправка...');
         msgStatus.style.color = "#aaa";
 
-        let imageUrl = null;
+        let mediaUrls = [];
 
-        if (chatFileInput && chatFileInput.files && chatFileInput.files[0]) {
-            const formData = new FormData();
-            formData.append("file", chatFileInput.files[0]);
-
-            try {
-                const uploadRes = await fetch("/api/users/upload-media", {
-                    method: "POST",
-                    credentials: 'include',
-                    body: formData
-                });
-                const uploadData = await uploadRes.json();
-                if (uploadData.error) {
-                    msgStatus.textContent = uploadData.error;
+        // #19 Загружаем все прикреплённые файлы
+        if (chatFileInput && chatFileInput.files && chatFileInput.files.length) {
+            for (const f of chatFileInput.files) {
+                const formData = new FormData();
+                formData.append("file", f);
+                try {
+                    const uploadRes = await fetch("/api/users/upload-media", {
+                        method: "POST",
+                        credentials: 'include',
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.error) {
+                        msgStatus.textContent = uploadData.error;
+                        msgStatus.style.color = "#ff4444";
+                        return;
+                    }
+                    mediaUrls.push(uploadData.url);
+                } catch (err) {
+                    msgStatus.textContent = window.t('error_network', 'Ошибка загрузки медиа');
                     msgStatus.style.color = "#ff4444";
                     return;
                 }
-                imageUrl = uploadData.url;
-            } catch (err) {
-                msgStatus.textContent = window.t('error_network', 'Ошибка загрузки медиа');
-                msgStatus.style.color = "#ff4444";
-                return;
             }
         }
 
@@ -474,7 +476,7 @@ function initializeChat(myData) {
             body: JSON.stringify({
                 receiver_id: currentFriendId,
                 content: content,
-                image_url: imageUrl,
+                media: mediaUrls,
                 reply_to: replyToId
             })
         })

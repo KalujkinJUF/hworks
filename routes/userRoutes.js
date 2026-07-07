@@ -715,7 +715,9 @@ router.post('/posts', verifyToken, verifyNotBanned, loadRole, (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
     const { content, type } = req.body;
-    const imageUrl = sanitizeImageUrl(req.body.image_url);
+    const mediaArr = Array.isArray(req.body.media) ? req.body.media.map(sanitizeImageUrl).filter(Boolean).slice(0, 10) : [];
+    const imageUrl = mediaArr[0] || sanitizeImageUrl(req.body.image_url);
+    const mediaJson = mediaArr.length ? JSON.stringify(mediaArr) : null;
 
     // #4 разрешаем пост без текста, если приложено изображение
     if ((!content || content.trim() === '') && !imageUrl) {
@@ -756,8 +758,8 @@ router.post('/posts', verifyToken, verifyNotBanned, loadRole, (req, res) => {
             const encryptedContent = encrypt(sanitizedContent);
 
             db.query(
-                'INSERT INTO posts (user_id, content, type, image_url) VALUES (?, ?, ?, ?)',
-                [userId, encryptedContent, postType, imageUrl],
+                'INSERT INTO posts (user_id, content, type, image_url, media) VALUES (?, ?, ?, ?, ?)',
+                [userId, encryptedContent, postType, imageUrl, mediaJson],
                 (err, result) => {
                     if (err) {
                         logger.error('Ошибка БД при создании поста');

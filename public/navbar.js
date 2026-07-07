@@ -56,6 +56,21 @@ window.mediaTag = function(url, maxHeight) {
     return `<img src="${esc}" style="max-width:100%; max-height:${mh}px; display:block; object-fit:contain;">`;
 };
 
+// #19 Рендер нескольких медиа (JSON-массив URL, с фолбэком на image_url)
+window.mediaListHtml = function(mediaField, imageUrl, maxHeight, boxClass) {
+    let urls = [];
+    if (mediaField) {
+        try {
+            const arr = typeof mediaField === 'string' ? JSON.parse(mediaField) : mediaField;
+            if (Array.isArray(arr)) urls = arr.filter(Boolean);
+        } catch (e) {}
+    }
+    if (!urls.length && imageUrl) urls = [imageUrl];
+    if (!urls.length) return '';
+    const cls = boxClass || 'post-media-box';
+    return urls.map(u => `<div class="${cls}" style="margin-top:8px; margin-right:6px; border:2px solid white; padding:2px; max-width:100%; display:inline-block; background:black; vertical-align:top;">${window.mediaTag(u, maxHeight)}</div>`).join('');
+};
+
 // #16 Меню выбора типа вложения (фото/видео/аудио) рядом с кнопкой прикрепления
 window.attachMediaMenu = function(anchorBtn, fileInput) {
     document.querySelectorAll('.attach-menu').forEach(m => m.remove());
@@ -74,7 +89,7 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
         b.style.cssText = 'background:none; border:none; color:#eee; text-align:left; padding:8px 10px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:4px;';
         b.addEventListener('mouseenter', () => { b.style.background = 'rgba(255,255,255,0.12)'; });
         b.addEventListener('mouseleave', () => { b.style.background = 'none'; });
-        b.addEventListener('click', () => { fileInput.accept = o.accept; menu.remove(); fileInput.click(); });
+        b.addEventListener('click', () => { fileInput.accept = o.accept; fileInput.multiple = true; menu.remove(); fileInput.click(); });
         menu.appendChild(b);
     });
     document.body.appendChild(menu);

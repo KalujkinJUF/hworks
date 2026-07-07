@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS posts (
     content TEXT NOT NULL,
     type ENUM('news', 'patch_note') DEFAULT 'news',
     image_url VARCHAR(255) DEFAULT NULL,
+    media TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id),
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS messages (
     content TEXT NOT NULL,
     image_url VARCHAR(255) DEFAULT NULL,
     reply_to INT DEFAULT NULL,
+    media TEXT DEFAULT NULL,
     is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -117,6 +119,9 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_status ENUM('online', 'offline
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0;
 -- #22 Ответы в ЛС: ссылка на сообщение, на которое отвечают
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to INT DEFAULT NULL;
+-- #19 Несколько медиа в одном сообщении/посте (JSON-массив URL)
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS media TEXT DEFAULT NULL;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS media TEXT DEFAULT NULL;
 
 -- Миграция под шифрование почты и добавление медиа
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_hash VARCHAR(255) DEFAULT NULL;

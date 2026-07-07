@@ -151,7 +151,9 @@ router.post('/', messageLimiter, (req, res) => {
     const senderId = req.user.id;
     const { receiver_id, content } = req.body;
     const receiverId = parseInt(receiver_id);
-    const imageUrl = sanitizeImageUrl(req.body.image_url);
+    const mediaArr = Array.isArray(req.body.media) ? req.body.media.map(sanitizeImageUrl).filter(Boolean).slice(0, 10) : [];
+    const imageUrl = mediaArr[0] || sanitizeImageUrl(req.body.image_url);
+    const mediaJson = mediaArr.length ? JSON.stringify(mediaArr) : null;
     const replyTo = parseInt(req.body.reply_to) || null;
 
     if ((!content || content.trim() === '') && !imageUrl) {
@@ -181,8 +183,8 @@ router.post('/', messageLimiter, (req, res) => {
             const encryptedContent = encrypt(sanitizedContent);
 
             db.query(
-                'INSERT INTO messages (sender_id, receiver_id, content, image_url, reply_to) VALUES (?, ?, ?, ?, ?)',
-                [senderId, receiverId, encryptedContent, imageUrl, replyTo],
+                'INSERT INTO messages (sender_id, receiver_id, content, image_url, reply_to, media) VALUES (?, ?, ?, ?, ?, ?)',
+                [senderId, receiverId, encryptedContent, imageUrl, replyTo, mediaJson],
                 (err, result) => {
                     if (err) {
                         logger.error('Ошибка БД при отправке сообщения');

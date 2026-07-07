@@ -214,7 +214,7 @@ document.addEventListener('spa:navigate', () => {
                         <span class="post-date">${dateStr}</span>
                     </div>
                     <div class="post-content">${postContentMarkup}</div>
-                    ${post.image_url ? `<div class="post-media-box" style="margin-top: 10px; border: 2px solid white; padding: 2px; max-width: 100%; max-height: 400px; display: inline-block; background: black;">${window.mediaTag(post.image_url, 380)}</div>` : ''}
+                    ${window.mediaListHtml(post.media, post.image_url, 380, 'post-media-box')}
                     
                     <div class="post-footer" style="display: flex; gap: 15px; margin-top: 12px; border-top: 1px dashed white; padding-top: 8px; font-size: 11px;">
                         <button class="like-btn" style="color: ${likeColor}; cursor: pointer; font-weight: bold; background: none; border: none;" onclick="togglePostLike(${post.id})">${likeText} (${post.likes_count || 0})</button>
@@ -663,7 +663,7 @@ document.addEventListener('spa:navigate', () => {
         postAttachBtn.addEventListener("click", () => window.attachMediaMenu(postAttachBtn, postFileInput));
         postFileInput.addEventListener("change", () => {
             if (postFileInput.files && postFileInput.files[0]) {
-                postAttachedFileName.textContent = postFileInput.files[0].name;
+                postAttachedFileName.textContent = postFileInput.files.length > 1 ? (postFileInput.files.length + ' 📎') : postFileInput.files[0].name;
                 postClearAttachBtn.style.display = "inline-block";
             }
         });
@@ -688,34 +688,35 @@ document.addEventListener('spa:navigate', () => {
         msg.textContent = window.t('loading', 'Публикация...');
         msg.style.color = "#aaa";
 
-        let imageUrl = null;
+        let mediaUrls = [];
 
-        // Если прикреплен файл, сначала загрузим его
-        if (postFileInput && postFileInput.files && postFileInput.files[0]) {
-            const formData = new FormData();
-            formData.append("file", postFileInput.files[0]);
-
-            try {
-                const uploadRes = await fetch("/api/users/upload-media", {
-                    method: "POST",
-                    credentials: 'include',
-                    body: formData
-                });
-                const uploadData = await uploadRes.json();
-                if (uploadData.error) {
+        // #19 Загружаем все прикреплённые файлы
+        if (postFileInput && postFileInput.files && postFileInput.files.length) {
+            for (const f of postFileInput.files) {
+                const formData = new FormData();
+                formData.append("file", f);
+                try {
+                    const uploadRes = await fetch("/api/users/upload-media", {
+                        method: "POST",
+                        credentials: 'include',
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.error) {
+                        if (newsBtn) newsBtn.disabled = false;
+                        if (patchBtn) patchBtn.disabled = false;
+                        msg.textContent = uploadData.error;
+                        msg.style.color = "#ff4444";
+                        return;
+                    }
+                    mediaUrls.push(uploadData.url);
+                } catch (err) {
                     if (newsBtn) newsBtn.disabled = false;
                     if (patchBtn) patchBtn.disabled = false;
-                    msg.textContent = uploadData.error;
+                    msg.textContent = window.t('error_network', 'Ошибка загрузки медиа');
                     msg.style.color = "#ff4444";
                     return;
                 }
-                imageUrl = uploadData.url;
-            } catch (err) {
-                if (newsBtn) newsBtn.disabled = false;
-                if (patchBtn) patchBtn.disabled = false;
-                msg.textContent = window.t('error_network', 'Ошибка загрузки медиа');
-                msg.style.color = "#ff4444";
-                return;
             }
         }
 
@@ -725,7 +726,7 @@ document.addEventListener('spa:navigate', () => {
                 "Content-Type": "application/json"
             },
             credentials: 'include',
-            body: JSON.stringify({ content, type, image_url: imageUrl })
+            body: JSON.stringify({ content, type, media: mediaUrls })
         })
             .then(res => res.json())
             .then(data => {

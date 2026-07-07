@@ -2371,6 +2371,10 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     box-sizing: border-box;
     padding: 10px;
 }
+.groups-layout.main-layout {
+    /* Сбрасываем flex от main-layout, чтобы группы управляли своей раскладкой */
+    display: block;
+}
 
 /* Список групп */
 .groups-list-view {
@@ -2436,13 +2440,19 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
 /* Открытая группа: 3 колонки */
 .group-view {
     display: flex;
-    gap: 20px;
-    align-items: flex-start;
+    gap: 15px;
+    align-items: stretch;
     box-sizing: border-box;
+    width: 100%;
 }
-.group-channels-column,
+.group-channels-column {
+    width: 190px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
 .group-members-column {
-    width: 220px;
+    width: 210px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -2452,6 +2462,12 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     min-width: 0;
     display: flex;
     flex-direction: column;
+}
+
+/* Заголовок левой колонки: кнопка + название группы в одну линию */
+.group-channels-column .chat-header {
+    min-height: auto;
+    padding-bottom: 8px;
 }
 
 /* Каналы */
@@ -2537,4 +2553,8 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     .group-view { flex-direction: column; }
     .group-channels-column,
     .group-members-column { width: 100%; }
+}
+@media (max-width: 1024px) {
+    .group-channels-column { width: 160px; }
+    .group-members-column { width: 180px; }
 }

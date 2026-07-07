@@ -22,7 +22,11 @@ document.addEventListener('spa:navigate', () => {
         }
         initializeAdmin(data);
     })
-    .catch(() => {
+    .catch((err) => {
+        if (err && (err instanceof TypeError || err instanceof ReferenceError || err.stack)) {
+            console.error("Admin initialization error:", err);
+            return;
+        }
         window.showCustomAlert(window.t('login_required', 'Пожалуйста, войдите в систему.')).then(() => {
             window.location.href = "login.html";
         });
@@ -37,6 +41,7 @@ function initializeAdmin(myData) {
     let usersData = [];
     let currentRole = myData.role;
     let currentUserId = myData.id;
+    const isAdmin = currentRole === 'admin';
 
     // Цвета для ролей
     const roleColors = {
@@ -79,7 +84,6 @@ function initializeAdmin(myData) {
 
     function renderUsers() {
         usersList.innerHTML = "";
-        const isAdmin = currentRole === 'admin';
 
         const q = (document.getElementById("adminSearchInput")?.value || '').trim().toLowerCase();
         const filtered = q ? usersData.filter(u => (u.username || '').toLowerCase().includes(q)) : usersData;
@@ -174,7 +178,6 @@ function initializeAdmin(myData) {
     }
 
     function attachEventHandlers() {
-        const isAdmin = currentRole === 'admin';
 
         // Смена роли — только админ
         if (isAdmin) {

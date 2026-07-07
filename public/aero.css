@@ -3533,7 +3533,9 @@ h3 {
 
 /* Ограничение ширины вкладок друзей до 600px, как в поиске */
 .friends-tabs,
-.tab-content {
+#friends-tab,
+#requests-tab,
+#outgoing-tab {
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;

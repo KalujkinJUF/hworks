@@ -11,6 +11,9 @@ static LAST_CLICK_MS: AtomicU64 = AtomicU64::new(0);
 struct AppConfig {
     server_url: Option<String>,
     last_version: Option<String>,
+    auto_update: Option<bool>,
+    autostart: Option<bool>,
+    scale: Option<String>,
 }
 
 fn get_config_path(app: &AppHandle) -> Option<PathBuf> {
@@ -39,6 +42,69 @@ fn write_config(app: &AppHandle, config: &AppConfig) {
             let _ = fs::write(path, content);
         }
     }
+}
+
+fn set_autostart(enabled: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        let exe_path = std::env::current_exe()
+            .map_err(|e| format!("Не удалось получить путь к exe: {}", e.to_string()))?;
+        let exe_path_str = format!("\"{}\"", exe_path.to_string_lossy());
+        
+        if enabled {
+            let status = std::process::Command::new("reg")
+                .args([
+                    "add",
+                    r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run",
+                    "/v", "voidtree",
+                    "/t", "REG_SZ",
+                    "/d", &exe_path_str,
+                    "/f"
+                ])
+                .status()
+                .map_err(|e| format!("Не удалось запустить reg: {}", e.to_string()))?;
+                
+            if !status.success() {
+                return Err("Ошибка при записи в реестр".to_string());
+            }
+        } else {
+            let _ = std::process::Command::new("reg")
+                .args([
+                    "delete",
+                    r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run",
+                    "/v", "voidtree",
+                    "/f"
+                ])
+                .status();
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn get_app_config(app: AppHandle) -> AppConfig {
+    let mut config = read_config(&app);
+    if config.auto_update.is_none() {
+        config.auto_update = Some(true);
+    }
+    if config.autostart.is_none() {
+        config.autostart = Some(false);
+    }
+    if config.scale.is_none() {
+        config.scale = Some("1.0".to_string());
+    }
+    config
+}
+
+#[tauri::command]
+fn update_app_config(app: AppHandle, auto_update: bool, autostart: bool, scale: String) -> Result<(), String> {
+    let mut config = read_config(&app);
+    config.auto_update = Some(auto_update);
+    config.autostart = Some(autostart);
+    config.scale = Some(scale);
+    write_config(&app, &config);
+    set_autostart(autostart)?;
+    Ok(())
 }
 
 fn normalize_url(url: &str) -> String {
@@ -95,10 +161,10 @@ fn try_connect(app: AppHandle, window: WebviewWindow, url: String) -> Result<Str
     match test_connection(&normalized) {
         Ok(()) => {
             let current_ver = get_version();
-            write_config(&app, &AppConfig {
-                server_url: Some(normalized.clone()),
-                last_version: Some(current_ver),
-            });
+            let mut config = read_config(&app);
+            config.server_url = Some(normalized.clone());
+            config.last_version = Some(current_ver);
+            write_config(&app, &config);
             let target_url = tauri::Url::parse(&normalized).map_err(|e| e.to_string())?;
             let _ = window.navigate(target_url);
             
@@ -114,7 +180,7 @@ fn try_connect(app: AppHandle, window: WebviewWindow, url: String) -> Result<Str
 }
 
 #[tauri::command]
-fn auto_connect(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+fn auto_connect(app: AppHandle) -> Result<String, String> {
     let mut config = read_config(&app);
     let mut version_changed = false;
     let current_ver = get_version();
@@ -140,15 +206,7 @@ fn auto_connect(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
                 clean_url.clone()
             };
             
-            let target_url = tauri::Url::parse(&target_url_str).map_err(|e| e.to_string())?;
-            let _ = window.navigate(target_url);
-            
-            let check_url = clean_url.clone();
-            let app_clone = app.clone();
-            std::thread::spawn(move || {
-                let _ = check_for_updates(&app_clone, &check_url);
-            });
-            Ok(())
+            Ok(target_url_str)
         }
         Err(err) => Err(err)
     }
@@ -310,6 +368,46 @@ fn download_and_update(app: &AppHandle, server_url: &str) -> Result<(), String> 
     Ok(())
 }
 
+#[derive(Serialize)]
+struct UpdateCheckResult {
+    update_available: bool,
+    current_version: String,
+    latest_version: String,
+}
+
+#[tauri::command]
+async fn check_for_updates_api(app: AppHandle) -> Result<UpdateCheckResult, String> {
+    let config = read_config(&app);
+    let url = config.server_url.clone().unwrap_or_else(|| "https://hworks.space".to_string());
+    let clean_url = normalize_url(&url);
+    
+    let version_url = format!("{}/api/version", clean_url.trim_end_matches('/'));
+    let agent = ureq::AgentBuilder::new()
+        .timeout(std::time::Duration::from_secs(3))
+        .build();
+        
+    let response = agent.get(&version_url).call()
+        .map_err(|e| e.to_string())?;
+        
+    if response.status() == 200 {
+        if let Ok(json) = response.into_json::<serde_json::Value>() {
+            if let Some(srv_ver) = json["version"].as_str() {
+                let current_ver = get_version();
+                return Ok(UpdateCheckResult {
+                    update_available: srv_ver != current_ver,
+                    current_version: current_ver,
+                    latest_version: srv_ver.to_string(),
+                });
+            }
+        }
+    }
+    Ok(UpdateCheckResult {
+        update_available: false,
+        current_version: get_version(),
+        latest_version: get_version(),
+    })
+}
+
 #[tauri::command]
 fn start_update(app: AppHandle) -> Result<(), String> {
     let config = read_config(&app);
@@ -422,7 +520,18 @@ pub fn run() {
             api.prevent_close();
         }
     })
-    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window, open_url, auto_connect, save_file_to_disk])
+    .invoke_handler(tauri::generate_handler![
+        get_version,
+        try_connect,
+        start_update,
+        close_window,
+        open_url,
+        auto_connect,
+        save_file_to_disk,
+        get_app_config,
+        update_app_config,
+        check_for_updates_api
+    ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

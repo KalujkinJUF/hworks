@@ -77,12 +77,12 @@ nav a {
     color: yellow;
     background-color: black;
     border: 2px solid yellow;
-    padding: 10px 20px;
+    padding: 8px 16px;
     margin: 5px;
     display: inline-block;
     text-align: center;
-    font-size: 18px;
-    width: 200px;
+    font-size: 13px;
+    width: auto;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -230,9 +230,9 @@ footer {
     background-color: black;
     color: rgb(0, 255, 0);
     border: 2px solid rgb(0, 255, 0);
-    padding: 15px;
+    padding: 10px 20px;
     font-family: 'PublicPixel-rv0pA', monospace;
-    font-size: 16px;
+    font-size: 12px;
     cursor: pointer;
     text-transform: uppercase;
     transition: background-color 0.2s;
@@ -2349,4 +2349,12 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
 .wall-comment-date {
     font-size: 10px;
     color: rgba(255, 255, 255, 0.5);
+}
+
+/* Ограничение ширины вкладок друзей до 600px, как в поиске */
+.friends-tabs,
+.tab-content {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }

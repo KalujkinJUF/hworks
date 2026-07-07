@@ -18,6 +18,18 @@
             },
             autoConnect: async () => {
                 return await window.__TAURI__.core.invoke('auto_connect');
+            },
+            getAppConfig: async () => {
+                return await window.__TAURI__.core.invoke('get_app_config');
+            },
+            updateAppConfig: async (autoUpdate, autostart, scale) => {
+                return await window.__TAURI__.core.invoke('update_app_config', { autoUpdate, autostart, scale });
+            },
+            checkForUpdatesApi: async () => {
+                return await window.__TAURI__.core.invoke('check_for_updates_api');
+            },
+            startUpdate: async () => {
+                return await window.__TAURI__.core.invoke('start_update');
             }
         };
     </script>

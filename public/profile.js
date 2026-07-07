@@ -1059,6 +1059,60 @@ function initializeProfile(myData) {
             }
         });
     }
+
+    const scaleSelector = document.getElementById("scaleSelector");
+    if (scaleSelector) {
+        scaleSelector.value = localStorage.getItem('app_scale') || '1.0';
+        scaleSelector.addEventListener("change", (e) => {
+            const newScale = e.target.value;
+            localStorage.setItem('app_scale', newScale);
+            if (window.applyScale) {
+                window.applyScale();
+            }
+            if (window.__TAURI__) {
+                saveTauriSettings();
+            }
+        });
+    }
+
+    if (window.__TAURI__) {
+        const tauriGroup = document.getElementById("tauriSettingsGroup");
+        if (tauriGroup) tauriGroup.style.display = "flex";
+        
+        loadTauriSettings();
+        
+        const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
+        const autostartCheckbox = document.getElementById("autostartCheckbox");
+        if (autoUpdateCheckbox) autoUpdateCheckbox.addEventListener("change", saveTauriSettings);
+        if (autostartCheckbox) autostartCheckbox.addEventListener("change", saveTauriSettings);
+    }
+
+    async function loadTauriSettings() {
+        if (window.api && window.api.getAppConfig) {
+            try {
+                const config = await window.api.getAppConfig();
+                const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
+                const autostartCheckbox = document.getElementById("autostartCheckbox");
+                if (autoUpdateCheckbox) autoUpdateCheckbox.checked = config.auto_update !== false;
+                if (autostartCheckbox) autostartCheckbox.checked = config.autostart === true;
+            } catch (e) {
+                console.error("Ошибка загрузки настроек клиента:", e);
+            }
+        }
+    }
+
+    async function saveTauriSettings() {
+        if (window.api && window.api.updateAppConfig) {
+            try {
+                const autoUpdate = document.getElementById("autoUpdateCheckbox").checked;
+                const autostart = document.getElementById("autostartCheckbox").checked;
+                const scale = document.getElementById("scaleSelector").value;
+                await window.api.updateAppConfig(autoUpdate, autostart, scale);
+            } catch (e) {
+                console.error("Ошибка сохранения настроек клиента:", e);
+            }
+        }
+    }
 }
 
 // Функция для экранирования HTML

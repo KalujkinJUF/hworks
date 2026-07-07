@@ -3528,3 +3528,11 @@ h3 {
     -webkit-backdrop-filter: none !important;
     padding: 0 !important;
 }
+
+/* Ограничение ширины вкладок друзей до 600px, как в поиске */
+.friends-tabs,
+.tab-content {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}

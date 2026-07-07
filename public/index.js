@@ -226,11 +226,9 @@ document.addEventListener('spa:navigate', () => {
                             <p class="loading-text" style="font-size: 10px;">${window.t('loading', 'Загрузка...')}</p>
                         </div>
                         <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                            <div style="display: flex; gap: 8px; width: 100%;">
-                                <input type="text" id="commentInput-${post.id}" placeholder="${window.t('write_comment_placeholder', 'Напишите комментарий...')}" style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;" maxlength="1000">
-                                <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">${window.t('send', 'Отправить')}</button>
-                            </div>
+                            <input type="text" id="commentInput-${post.id}" placeholder="${window.t('write_comment_placeholder', 'Напишите комментарий...')}" style="width: 100%; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none; box-sizing: border-box;" maxlength="1000">
                             <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; width: 100%; margin-top: 2px;">
+                                <button type="submit" class="auth-btn" style="padding: 4px 8px; font-size: 9px; width: auto; margin: 0; cursor: pointer;">${window.t('send', 'Отправить')}</button>
                                 <input type="file" id="commentFileInput-${post.id}" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="commentFileChanged(${post.id})">
                                 <button type="button" class="user-btn" style="width: auto; padding: 4px 8px; font-size: 9px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" onclick="document.getElementById('commentFileInput-${post.id}').click()">${window.t('attach_file', 'Прикрепить файл')}</button>
                                 <span id="commentAttachedFileName-${post.id}" style="font-size: 10px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>

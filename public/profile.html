@@ -125,18 +125,18 @@
                                     СТЕНА</h3>
 
                                 <form id="commentForm"
-                                    style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; width: 100%;">
+                                    style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-start; width: 100%;">
                                     <textarea id="commentContent" data-i18n-placeholder="write_comment_placeholder" placeholder="Оставьте отзыв о пользователе..."
                                         rows="3" maxlength="1000"
                                         style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; resize: none; outline: none; margin-bottom: 5px;"></textarea>
-                                    <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; width: 100%; margin-top: 2px; margin-bottom: 10px; box-sizing: border-box;">
+                                    <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; width: 100%; margin-top: 2px; box-sizing: border-box;">
+                                        <button type="submit" class="auth-btn"
+                                            style="width: auto; padding: 4px 8px; font-size: 9px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase; margin: 0;" data-i18n="profile_write_btn">НАПИСАТЬ</button>
                                         <input type="file" id="profileCommentFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
                                         <button type="button" id="profileCommentAttachBtn" class="user-btn" style="width: auto; padding: 4px 8px; font-size: 9px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" data-i18n="attach_file">Прикрепить файл</button>
                                         <span id="profileCommentAttachedFileName" style="font-size: 10px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>
                                         <button type="button" id="profileCommentClearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 4px 8px; font-size: 9px; border-color: red; color: red; margin: 0; cursor: pointer;" data-i18n="delete">Удалить</button>
                                     </div>
-                                    <button type="submit" class="auth-btn"
-                                        style="width: auto; padding: 8px 25px; font-size: 11px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;" data-i18n="profile_write_btn">НАПИСАТЬ</button>
                                 </form>
 
                                 <div id="commentList">
@@ -166,11 +166,34 @@
                                 </div>
 
                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_scale_label">Масштаб интерфейса:</span>
+                                    <select id="scaleSelector" style="background: black; color: white; border: 2px solid white; padding: 5px; outline: none; font-family: inherit; font-size: 10px;">
+                                        <option value="0.75">75%</option>
+                                        <option value="0.85">85%</option>
+                                        <option value="1.0" selected>100%</option>
+                                        <option value="1.15">115%</option>
+                                        <option value="1.25">125%</option>
+                                        <option value="1.5">150%</option>
+                                    </select>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                     <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_lang_label">Язык:</span>
                                     <div class="lang-selector" style="margin: 0; padding: 0; border: none; display: flex; gap: 5px;">
                                         <button class="lang-btn" data-lang="en">EN</button>
                                         <button class="lang-btn" data-lang="ru">RU</button>
                                         <button class="lang-btn" data-lang="uk">UK</button>
+                                    </div>
+                                </div>
+
+                                <div id="tauriSettingsGroup" style="display: none; flex-direction: column; gap: 15px; width: 100%; margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_auto_update_label">Автообновления:</span>
+                                        <input type="checkbox" id="autoUpdateCheckbox" style="cursor: pointer;">
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_autostart_label">Запускать при старте системы:</span>
+                                        <input type="checkbox" id="autostartCheckbox" style="cursor: pointer;">
                                     </div>
                                 </div>
                             </div>

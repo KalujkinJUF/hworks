@@ -90,7 +90,7 @@
             "feed_subs": "My Subscriptions",
             "feed_updates": "Updates",
             "write_post_placeholder": "Write a post...",
-            "attach_photo": "Attach photo",
+            "attach_photo": "Photo",
             "publish_post": "Publish post",
             "publish_update": "Update",
             "load_more": "Load more",
@@ -227,7 +227,10 @@
             "error_invalid_verify_code": "Invalid verification code.",
             "error_username_taken": "Username is already taken.",
             "error_email_taken": "Email is already registered.",
-            "error_invalid_captcha": "Invalid captcha token."
+            "error_invalid_captcha": "Invalid captcha token.",
+            "profile_scale_label": "UI Scale:",
+            "profile_auto_update_label": "Auto Updates:",
+            "profile_autostart_label": "Run at Windows Startup:"
         },
         ru: {
             // Navigation
@@ -319,7 +322,7 @@
             "feed_subs": "Мои подписки",
             "feed_updates": "Обновления",
             "write_post_placeholder": "Напишите пост...",
-            "attach_photo": "Прикрепить фото",
+            "attach_photo": "Фото",
             "publish_post": "Опубликовать пост",
             "publish_update": "Обновление",
             "load_more": "Загрузить ещё",
@@ -456,7 +459,10 @@
             "error_invalid_verify_code": "Неверный код подтверждения.",
             "error_username_taken": "Имя пользователя уже занято.",
             "error_email_taken": "Email уже зарегистрирован.",
-            "error_invalid_captcha": "Неверный токен капчи."
+            "error_invalid_captcha": "Неверный токен капчи.",
+            "profile_scale_label": "Масштаб интерфейса:",
+            "profile_auto_update_label": "Автообновления:",
+            "profile_autostart_label": "Запускать при старте системы:"
         },
         uk: {
             // Navigation
@@ -548,7 +554,7 @@
             "feed_subs": "Мої підписки",
             "feed_updates": "Оновлення",
             "write_post_placeholder": "Напишіть пост...",
-            "attach_photo": "Додати фото",
+            "attach_photo": "Фото",
             "publish_post": "Опублікувати пост",
             "publish_update": "Оновлення",
             "load_more": "Завантажити ще",
@@ -685,7 +691,10 @@
             "error_invalid_verify_code": "Невірний код підтвердження.",
             "error_username_taken": "Ім'я користувача вже зайняте.",
             "error_email_taken": "Email вже зареєстрований.",
-            "error_invalid_captcha": "Невірний токен капчі."
+            "error_invalid_captcha": "Невірний токен капчі.",
+            "profile_scale_label": "Масштаб інтерфейсу:",
+            "profile_auto_update_label": "Автооновлення:",
+            "profile_autostart_label": "Запускати при старті системи:"
         }
     };
 
@@ -829,10 +838,17 @@
         if (document.body) document.body.classList.remove('theme-aero');
     }
 
+    window.applyScale = function applyScale() {
+        const scale = localStorage.getItem('app_scale') || '1.0';
+        document.documentElement.style.zoom = scale;
+    };
+    applyScale();
+
     // Применяем тему сразу для предотвращения FOUC
     applyTheme();
 
     document.addEventListener("DOMContentLoaded", () => {
+        applyScale();
         applyTheme();
         window.applyTranslations();
         bindLanguageButtons();
@@ -840,6 +856,7 @@
     
     // При навигации через SPA (например, при переходе в профиль) появляются новые кнопки смены языка, их нужно биндить
     document.addEventListener("spa:navigate", () => {
+        applyScale();
         applyTheme();
         window.applyTranslations();
         bindLanguageButtons();
@@ -847,6 +864,7 @@
 
 
     window.addEventListener("load", () => {
+        applyScale();
         applyTheme();
         window.applyTranslations();
         bindLanguageButtons();

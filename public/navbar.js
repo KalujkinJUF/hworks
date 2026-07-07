@@ -13,7 +13,10 @@ document.addEventListener('error', (e) => {
 // #15 Просмотрщик фото (lightbox) для изображений в постах и чате
 (function() {
     const style = document.createElement('style');
-    style.textContent = '.message-media-box img, .post-media-box img, .comment-media-box img, .media-gallery img { cursor: zoom-in; }';
+    style.textContent = '.message-media-box img, .post-media-box img, .comment-media-box img, .media-gallery img { cursor: zoom-in; }'
+        // #4 Анимация появления всех контекстных/всплывающих меню
+        + '.ctx-menu, .attach-menu { animation: ctxMenuPop 0.15s cubic-bezier(0.25,0.8,0.25,1); transform-origin: top left; }'
+        + '@keyframes ctxMenuPop { from { opacity: 0; transform: scale(0.92) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }';
     document.head.appendChild(style);
 
     function openLightbox(src, mediaElements, initialIndex) {
@@ -494,6 +497,18 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
             items.push({ label: window.t('delete', 'Удалить'), danger: true, action: () => window.deletePost(post.dataset.postId) });
         }
 
+        // #18 Закрепление диалогов ЛС и групп
+        const chatItem = e.target.closest('.chat-friend-item[data-id]');
+        const groupCard = e.target.closest('.group-card[data-id]');
+        if (chatItem && window.togglePinChat) {
+            const pinned = window.isChatPinned && window.isChatPinned(chatItem.dataset.id);
+            items.push({ label: pinned ? window.t('group_unpin', 'Открепить') : window.t('group_pin', 'Закрепить'), action: () => window.togglePinChat(chatItem.dataset.id) });
+        }
+        if (groupCard && window.togglePinGroup) {
+            const pinned = window.isGroupPinned && window.isGroupPinned(groupCard.dataset.id);
+            items.push({ label: pinned ? window.t('group_unpin', 'Открепить') : window.t('group_pin', 'Закрепить'), action: () => window.togglePinGroup(groupCard.dataset.id) });
+        }
+
         if (mediaEl && mediaEl.getAttribute('src')) {
             const url = mediaEl.getAttribute('src');
             const abs = url.startsWith('http') ? url : (window.location.origin + url);
@@ -899,20 +914,63 @@ function initializeNavbar(myData) {
         })
         .catch(err => console.error("Ошибка при получении непрочитанных отзывов на стене:", err));
 
-        // Получаем количество непрочитанных приглашений в группы
-        fetch("/api/groups/unread", {
+        // Уведомления групп: приглашения + новые сообщения (строго из групп пользователя).
+        // Мьют каналов (localStorage gMute_<id>) подавляет звук/уведомление по каналу.
+        fetch("/api/groups/notifications", {
             credentials: 'include'
         })
         .then(res => res.json())
         .then(data => {
-            const count = data.count || 0;
+            const invites = data.invites || 0;
+            const channels = Array.isArray(data.channels) ? data.channels : [];
+
+            const isGroupsPage = window.location.pathname.split('/').pop() === 'groups.html';
+            const isAppVisible = !document.hidden && document.hasFocus();
+            let newChannels = 0;
+            let gotNew = false;
+
+            channels.forEach(ch => {
+                const seenKey = 'gSeen_' + ch.channel_id;
+                const muted = localStorage.getItem('gMute_' + ch.channel_id) === '1';
+                const seenRaw = localStorage.getItem(seenKey);
+                const last = parseInt(ch.last_message_id) || 0;
+                if (seenRaw === null) {
+                    // Первое знакомство с каналом — помечаем как просмотренный без уведомления
+                    localStorage.setItem(seenKey, String(last));
+                    return;
+                }
+                const seen = parseInt(seenRaw) || 0;
+                if (last > seen && !muted) {
+                    newChannels++;
+                    gotNew = true;
+                    // Десктоп-уведомление (если приложение не на виду)
+                    if (!(isGroupsPage && isAppVisible) && typeof Notification !== 'undefined' && Notification.permission === "granted") {
+                        new Notification(`${window.t('nav_groups', 'Группы')}: ${ch.group_name}`, {
+                            body: `# ${ch.channel_name}`,
+                            tag: `group-${ch.channel_id}`
+                        });
+                    }
+                }
+            });
+
             const btnGroups = document.getElementById("nav-groups");
             if (btnGroups) {
                 const groupsText = window.t('nav_groups', 'Группы');
-                btnGroups.textContent = count > 0 ? `${groupsText} (+${count})` : groupsText;
+                const total = invites + newChannels;
+                btnGroups.textContent = total > 0 ? `${groupsText} (+${total})` : groupsText;
+            }
+
+            // Звук на новые сообщения групп (троттлинг общий с ЛС)
+            if (gotNew) {
+                const now = Date.now();
+                if (typeof window.lastNotificationSoundTime === 'undefined') window.lastNotificationSoundTime = 0;
+                if (now - window.lastNotificationSoundTime > 4000) {
+                    playRetroNotificationSound();
+                    window.lastNotificationSoundTime = now;
+                }
             }
         })
-        .catch(err => console.error("Ошибка при получении приглашений в группы:", err));
+        .catch(err => console.error("Ошибка при получении уведомлений групп:", err));
     }
 
     window.updateNavbarNotifications = updateNavbarNotifications;

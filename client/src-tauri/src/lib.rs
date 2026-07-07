@@ -455,6 +455,13 @@ pub fn run() {
         }
     }))
     .setup(|app| {
+        // Синхронизируем автозапуск Windows с конфигом при каждом старте.
+        // Иначе запись в реестре не создаётся до первого переключения тумблера,
+        // и приложение не стартует вместе с системой (баг #2).
+        let cfg = read_config(app.handle());
+        let autostart_enabled = cfg.autostart.unwrap_or(true);
+        let _ = set_autostart(autostart_enabled);
+
         // Создаем системный трей
         let tray_menu = tauri::menu::Menu::with_items(app.handle(), &[
             &tauri::menu::MenuItem::with_id(app.handle(), "show", "Показать", true, None::<&str>).unwrap(),

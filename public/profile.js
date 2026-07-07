@@ -732,7 +732,7 @@ function initializeProfile(myData) {
 
     function loadProfileComments(targetId, page = currentWallCommentsPage) {
         currentWallCommentsPage = page;
-        fetch(`/api/users/comments/profile/${targetId}?page=${page}&limit=15`)
+        fetch(`/api/users/comments/profile/${targetId}?page=${page}&limit=7`)
         .then(res => res.json())
         .then(data => {
             const comments = data.comments || [];
@@ -936,8 +936,12 @@ function initializeProfile(myData) {
 
     const requestDeleteBtn = document.getElementById("requestDeleteBtn");
     if (requestDeleteBtn) {
-        requestDeleteBtn.addEventListener("click", () => {
+        requestDeleteBtn.addEventListener("click", async () => {
             if (!isOwnProfile) return;
+            // Плашка подтверждения перед запросом кода на удаление
+            const sure = await window.showCustomConfirm(window.t('profile_delete_confirm_sure', 'Вы точно хотите удалить аккаунт? Это действие необратимо — все данные будут стёрты навсегда.'));
+            if (!sure) return;
+
             const deleteMessage = document.getElementById("deleteMessage");
             if (deleteMessage) deleteMessage.textContent = "";
 

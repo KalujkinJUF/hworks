@@ -3422,6 +3422,12 @@ a:hover {
     margin-bottom: 10px !important;
 }
 
+/* #9 Вертикальная полоса вложенных (ответных) комментариев — чёрная в Aero.
+   Инлайновый border-left задаёт только цвет через шорткат; переопределяем цвет. */
+[data-ctx="comment"] {
+    border-left-color: rgba(0, 0, 0, 0.55) !important;
+}
+
 /* Фикс текста в карточках */
 .user-card-login,
 .username,
@@ -3479,7 +3485,9 @@ h2 {
 h3 {
     font-size: 18px !important;
 }
-.post-content, .comment-content, .message-text, .about-section p {
+.post-content, .comment-content, .message-text, .message-content, .chat-bubble,
+.about-section p, #aboutMe, .bio-group textarea, .profile-info-block p,
+#messageInput, #groupMessageInput, #commentContent {
     font-size: 15px !important;
     line-height: 1.5 !important;
 }
@@ -3606,6 +3614,8 @@ h3 {
 .channel-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .channel-del, .member-kick { color: #e74c3c; cursor: pointer; font-size: 12px; padding: 0 4px; opacity: 0.7; }
 .channel-del:hover, .member-kick:hover { opacity: 1; }
+.channel-mute { cursor: pointer; font-size: 11px; padding: 0 2px; opacity: 0.7; }
+.channel-mute:hover { opacity: 1; }
 
 .members-list { display: flex; flex-direction: column; gap: 8px; }
 .member-item { display: flex; align-items: center; gap: 10px; padding: 6px; }
@@ -3637,3 +3647,41 @@ h3 {
     .group-channels-column,
     .group-members-column { width: 100%; }
 }
+
+/* Модальные окна (#17 приглашение и т.п.) — тема Aero */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 50, 100, 0.35);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: modalFadeIn 0.2s ease;
+}
+.modal-box {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(220,235,255,0.82)) !important;
+    border: 1px solid rgba(255,255,255,0.9) !important;
+    border-radius: 14px !important;
+    padding: 20px;
+    width: 90%;
+    max-width: 360px;
+    box-sizing: border-box;
+    color: #1a5682 !important;
+    box-shadow: 0 12px 40px rgba(0, 50, 100, 0.3) !important;
+    animation: modalPopIn 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.modal-box h3 { color: #1a5682 !important; }
+
+/* #18 Закреплённые диалоги/группы */
+.chat-friend-item.pinned, .group-card.pinned { border-left: 3px solid #ffb300 !important; }
+
+/* #2 Тумблеры настроек клиента — тема Aero */
+.toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.8); border-radius: 24px; transition: 0.25s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15); }
+.toggle-slider::before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.35); }
+.toggle-switch input:checked + .toggle-slider { background: linear-gradient(180deg, #6db3f2 0%, #2f80ed 100%); border-color: rgba(255,255,255,0.9); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }

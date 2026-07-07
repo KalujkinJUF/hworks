@@ -17,18 +17,39 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// Тексты письма по назначению кода
+const templates = {
+    verify: {
+        subject: 'Подтверждение почты',
+        title: 'Подтверждение регистрации',
+        note: 'Введите его в профиле, чтобы подтвердить почту.'
+    },
+    delete: {
+        subject: 'Удаление аккаунта',
+        title: 'Запрос на удаление аккаунта',
+        note: 'Введите этот код, чтобы подтвердить удаление аккаунта. Если это были не вы — просто проигнорируйте письмо.'
+    },
+    reset: {
+        subject: 'Сброс пароля',
+        title: 'Запрос на сброс пароля',
+        note: 'Введите этот код, чтобы подтвердить сброс пароля. Если это были не вы — просто проигнорируйте письмо.'
+    }
+};
+
 /**
  * Отправляет код подтверждения на почту
- * @param {string} to - Email получателя
+ * @param {string} to - Email получателя (расшифрованный!)
  * @param {string} code - 6-значный код
+ * @param {'verify'|'delete'|'reset'} [purpose='verify'] - назначение кода (определяет текст письма)
  */
-const sendVerificationCode = async (to, code) => {
+const sendVerificationCode = async (to, code, purpose = 'verify') => {
+    const t = templates[purpose] || templates.verify;
     const mailOptions = {
         from: mailFrom,
         to,
-        subject: 'Подтверждение почты',
-        text: `Ваш код подтверждения: ${code}`,
-        html: `<h2>Подтверждение регистрации</h2><p>Ваш код подтверждения: <b>${code}</b></p><p>Введите его в профиле, чтобы подтвердить почту.</p>`
+        subject: t.subject,
+        text: `${t.title}. Ваш код подтверждения: ${code}`,
+        html: `<h2>${t.title}</h2><p>Ваш код подтверждения: <b>${code}</b></p><p>${t.note}</p>`
     };
 
     await transporter.sendMail(mailOptions);

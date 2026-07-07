@@ -34,6 +34,19 @@ function initializeChat(myData) {
     let replyToId = null;
     let currentMessages = [];
 
+    // #18 Закрепление диалогов ЛС (клиентское, localStorage)
+    function getPinnedChats() {
+        try { return JSON.parse(localStorage.getItem('pinnedChats') || '[]'); } catch (e) { return []; }
+    }
+    window.isChatPinned = (id) => getPinnedChats().includes(String(id));
+    window.togglePinChat = (id) => {
+        id = String(id);
+        let pins = getPinnedChats();
+        pins = pins.includes(id) ? pins.filter(x => x !== id) : [id, ...pins];
+        localStorage.setItem('pinnedChats', JSON.stringify(pins));
+        loadFriendsList();
+    };
+
     // #22 Ответы в стиле Telegram
     window.setChatReply = function(msgId) {
         const m = currentMessages.find(x => String(x.id) === String(msgId));
@@ -233,6 +246,19 @@ function initializeChat(myData) {
                         }
                     }
                 }
+            });
+
+            // #18 Закреплённые диалоги: помечаем 📌 и поднимаем вверх
+            const pins = getPinnedChats();
+            Array.from(list.querySelectorAll('.chat-friend-item')).forEach(el => {
+                const isPin = pins.includes(el.dataset.id);
+                el.classList.toggle('pinned', isPin);
+                const nameEl = el.querySelector('.friend-item-name');
+                if (nameEl && el.dataset.username) nameEl.textContent = (isPin ? '📌 ' : '') + el.dataset.username;
+            });
+            pins.slice().reverse().forEach(id => {
+                const el = list.querySelector(`.chat-friend-item[data-id="${id}"]`);
+                if (el) list.prepend(el);
             });
         })
         .catch(err => console.error('Ошибка загрузки друзей и уведомлений:', err));

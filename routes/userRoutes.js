@@ -1083,8 +1083,8 @@ router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res
 // Получить все отзывы профиля
 router.get('/comments/profile/:userId', (req, res) => {
     const targetId = parseInt(req.params.userId);
-    const page = parseInt(req.query.page || '1', 10);
-    const limit = parseInt(req.query.limit || '15', 10);
+    const page = Math.max(1, parseInt(req.query.page || '1', 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '15', 10) || 15));
     const offset = (page - 1) * limit;
 
     // Считаем общее количество отзывов
@@ -1375,13 +1375,20 @@ router.post('/delete-account/request', verifyToken, verifyNotBanned, (req, res) 
 
     db.query('SELECT email FROM users WHERE id = ?', [userId], (err, results) => {
         if (err || results.length === 0) return res.status(404).json({ error: 'Пользователь не найден' });
-        const email = results[0].email;
+        // Email в БД хранится зашифрованным — расшифровываем перед отправкой
+        let email;
+        try {
+            email = decrypt(results[0].email);
+        } catch (e) {
+            logger.error('Ошибка расшифровки почты при удалении аккаунта');
+            return res.status(500).json({ error: 'Не удалось отправить код подтверждения' });
+        }
 
         db.query('UPDATE users SET delete_code = ? WHERE id = ?', [code, userId], (err2) => {
             if (err2) return res.status(500).json({ error: 'Ошибка БД при сохранении кода' });
 
             // Отправляем код (без логирования в консоль)
-            sendVerificationCode(email, code)
+            sendVerificationCode(email, code, 'delete')
                 .then(() => {
                     res.json({ message: 'Код подтверждения отправлен на почту' });
                 })
@@ -1414,6 +1421,102 @@ router.post('/delete-account/confirm', codeLimiter, verifyToken, verifyNotBanned
             if (err2) return res.status(500).json({ error: 'Ошибка при удалении аккаунта' });
             res.json({ message: 'Аккаунт успешно удален' });
         });
+    });
+});
+
+// ─────────── Сброс пароля (после неудачных попыток входа) ───────────
+// Коды хранятся в памяти, короткоживущие (15 минут) — без изменения схемы БД.
+const passwordResetCodes = new Map(); // userId -> { code, expires, attempts }
+
+function findUserForReset(identifier, cb) {
+    const id = (identifier || '').trim();
+    if (!id) return cb(null, null);
+    if (id.includes('@')) {
+        db.query('SELECT id, email FROM users WHERE email_hash = ?', [hashValue(id)], (e, r) => cb(e, r && r[0]));
+    } else {
+        db.query('SELECT id, email FROM users WHERE username = ?', [id], (e, r) => cb(e, r && r[0]));
+    }
+}
+
+function validatePasswordPolicy(password) {
+    if (!password || password.length < 8) return 'Пароль должен быть не менее 8 символов';
+    if (password.length > 128) return 'Пароль не должен превышать 128 символов';
+    if (!/[A-Z]/.test(password)) return 'Пароль должен содержать хотя бы одну заглавную букву';
+    if (!/[a-z]/.test(password)) return 'Пароль должен содержать хотя бы одну строчную букву';
+    if (!/[0-9]/.test(password)) return 'Пароль должен содержать хотя бы одну цифру';
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Пароль должен содержать хотя бы один специальный символ (!@#$%^&* и т.д.)';
+    return null;
+}
+
+// Проверка кода из памяти. Возвращает null при успехе, иначе строку-причину.
+function checkResetCode(userId, code) {
+    const entry = passwordResetCodes.get(userId);
+    if (!entry) return 'no_request';
+    if (Date.now() > entry.expires) { passwordResetCodes.delete(userId); return 'expired'; }
+    entry.attempts = (entry.attempts || 0) + 1;
+    if (entry.attempts > 6) { passwordResetCodes.delete(userId); return 'too_many'; }
+    if (String(code).trim() !== entry.code) return 'mismatch';
+    return null;
+}
+
+// 1. Запрос кода сброса пароля
+router.post('/reset-password/request', authLimiter, (req, res) => {
+    const { username } = req.body;
+    const generic = { message: 'Если аккаунт существует, код отправлен на почту' };
+    findUserForReset(username, (err, user) => {
+        // Не раскрываем, существует ли пользователь (защита от энумерации)
+        if (err || !user) return res.json(generic);
+        let email;
+        try { email = decrypt(user.email); } catch (e) { return res.json(generic); }
+        const code = crypto.randomInt(100000, 1000000).toString();
+        passwordResetCodes.set(user.id, { code, expires: Date.now() + 15 * 60 * 1000, attempts: 0 });
+        sendVerificationCode(email, code, 'reset')
+            .then(() => res.json(generic))
+            .catch(() => {
+                logger.error('Ошибка отправки письма сброса пароля');
+                res.status(500).json({ error: 'Не удалось отправить код подтверждения' });
+            });
+    });
+});
+
+// 2. Проверка кода (подтверждение личности перед вводом нового пароля)
+router.post('/reset-password/verify', codeLimiter, (req, res) => {
+    const { username, code } = req.body;
+    if (!code) return res.status(400).json({ error: 'Введите код подтверждения' });
+    findUserForReset(username, (err, user) => {
+        if (err || !user) return res.status(400).json({ error: 'Неверный или устаревший код' });
+        if (checkResetCode(user.id, code)) return res.status(400).json({ error: 'Неверный или устаревший код' });
+        res.json({ ok: true });
+    });
+});
+
+// 3. Установка нового пароля
+router.post('/reset-password/confirm', codeLimiter, (req, res) => {
+    const { username, code, newPassword } = req.body;
+    if (!code) return res.status(400).json({ error: 'Введите код подтверждения' });
+    const pwErr = validatePasswordPolicy(newPassword);
+    if (pwErr) return res.status(400).json({ error: pwErr });
+    findUserForReset(username, async (err, user) => {
+        if (err || !user) return res.status(400).json({ error: 'Неверный или устаревший код' });
+        if (checkResetCode(user.id, code)) return res.status(400).json({ error: 'Неверный или устаревший код' });
+        try {
+            const hashed = await bcrypt.hash(newPassword, 10);
+            // Инкремент token_version отзывает старые сессии; если колонки нет — ставим только пароль
+            db.query('UPDATE users SET password = ?, token_version = token_version + 1 WHERE id = ?', [hashed, user.id], (e2) => {
+                if (e2) {
+                    db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id], (e3) => {
+                        if (e3) return res.status(500).json({ error: 'Ошибка при смене пароля' });
+                        passwordResetCodes.delete(user.id);
+                        res.json({ message: 'Пароль успешно изменён' });
+                    });
+                    return;
+                }
+                passwordResetCodes.delete(user.id);
+                res.json({ message: 'Пароль успешно изменён' });
+            });
+        } catch (e) {
+            res.status(500).json({ error: 'Ошибка при смене пароля' });
+        }
     });
 });
 

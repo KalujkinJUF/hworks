@@ -77,11 +77,11 @@ nav a {
     color: yellow;
     background-color: black;
     border: 2px solid yellow;
-    padding: 8px 16px;
+    padding: 10px 20px;
     margin: 5px;
     display: inline-block;
     text-align: center;
-    font-size: 13px;
+    font-size: 14px;
     width: auto;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -232,7 +232,7 @@ footer {
     border: 2px solid rgb(0, 255, 0);
     padding: 10px 20px;
     font-family: 'PublicPixel-rv0pA', monospace;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     text-transform: uppercase;
     transition: background-color 0.2s;
@@ -2496,6 +2496,8 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
 }
 .channel-del:hover,
 .member-kick:hover { opacity: 1; }
+.channel-mute { cursor: pointer; font-size: 11px; padding: 0 2px; opacity: 0.7; }
+.channel-mute:hover { opacity: 1; }
 
 /* Участники */
 .members-list { display: flex; flex-direction: column; gap: 8px; }
@@ -2558,3 +2560,37 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     .group-channels-column { width: 160px; }
     .group-members-column { width: 180px; }
 }
+
+/* Модальные окна (#17 приглашение и т.п.) — тема DOS */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: modalFadeIn 0.2s ease;
+}
+.modal-box {
+    background: #000;
+    border: 2px solid white;
+    padding: 20px;
+    width: 90%;
+    max-width: 360px;
+    box-sizing: border-box;
+    animation: modalPopIn 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalPopIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* #18 Закреплённые диалоги/группы */
+.chat-friend-item.pinned, .group-card.pinned { border-left: 3px solid #ffd700 !important; }
+
+/* #2 Тумблеры настроек клиента — тема DOS */
+.toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #000; border: 2px solid #555; transition: 0.25s; }
+.toggle-slider::before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #888; transition: 0.25s; }
+.toggle-switch input:checked + .toggle-slider { border-color: #00ff00; box-shadow: 0 0 6px rgba(0,255,0,0.4); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); background: #00ff00; }

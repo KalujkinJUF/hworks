@@ -30,6 +30,7 @@ function initializeGroups(myData) {
     let groupOwnerId = null;
     let currentMembers = [];
     let currentMessages = [];
+    let replyToId = null;
 
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';
@@ -47,10 +48,51 @@ function initializeGroups(myData) {
         vip: '#9b59b6', moderator: '#3498db', admin: '#ff4444', banned: '#333333'
     };
 
+    // #13 Ответ на сообщение (вызывается из глобального контекстного меню navbar.js).
+    // Работает для сообщений любого пользователя, не только своих.
+    window.setChatReply = function (msgId) {
+        const m = currentMessages.find(x => String(x.id) === String(msgId));
+        if (!m || m.type === 'system') return;
+        replyToId = m.id;
+        const preview = document.getElementById('groupReplyPreview');
+        if (!preview) return;
+        const who = (m.sender_id === myUserId) ? window.t('you', 'Вы') : (m.username || '');
+        const snippet = (m.content && m.content.trim()) ? m.content : (m.image_url ? '📎 ' + window.t('attach_file', 'Вложение') : '');
+        preview.innerHTML = `
+            <div style="flex:1; min-width:0; border-left:3px solid #4a90d9; padding-left:8px;">
+                <div style="font-weight:bold; color:#4a90d9; font-size:11px;">${escapeHtml(who)}</div>
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; opacity:0.85;">${escapeHtml(snippet)}</div>
+            </div>
+            <button id="groupCancelReplyBtn" type="button" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size:16px; padding:0 6px;">✕</button>`;
+        preview.style.display = 'flex';
+        const cancel = document.getElementById('groupCancelReplyBtn');
+        if (cancel) cancel.addEventListener('click', window.clearChatReply);
+        const input = document.getElementById('groupMessageInput');
+        if (input) input.focus();
+    };
+    window.clearChatReply = function () {
+        replyToId = null;
+        const preview = document.getElementById('groupReplyPreview');
+        if (preview) { preview.style.display = 'none'; preview.innerHTML = ''; }
+    };
+
     const listView = document.getElementById('groupsListView');
     const groupView = document.getElementById('groupView');
 
     // ─────────────── список групп ───────────────
+
+    // #18 Закрепление групп (клиентское, localStorage)
+    function getPinnedGroups() {
+        try { return JSON.parse(localStorage.getItem('pinnedGroups') || '[]'); } catch (e) { return []; }
+    }
+    window.isGroupPinned = (id) => getPinnedGroups().includes(String(id));
+    window.togglePinGroup = (id) => {
+        id = String(id);
+        let pins = getPinnedGroups();
+        pins = pins.includes(id) ? pins.filter(x => x !== id) : [id, ...pins];
+        localStorage.setItem('pinnedGroups', JSON.stringify(pins));
+        loadGroups();
+    };
 
     function loadGroups() {
         fetch("/api/groups", { credentials: 'include' })
@@ -62,17 +104,26 @@ function initializeGroups(myData) {
                     list.innerHTML = `<p class="loading-text">${window.t('groups_empty', 'У вас пока нет групп. Создайте свою!')}</p>`;
                     return;
                 }
+                // Закреплённые — вперёд
+                const pins = getPinnedGroups();
+                groups.sort((a, b) => {
+                    const pa = pins.includes(String(a.id)) ? 1 : 0;
+                    const pb = pins.includes(String(b.id)) ? 1 : 0;
+                    return pb - pa;
+                });
                 list.innerHTML = '';
                 groups.forEach(g => {
                     const card = document.createElement('div');
-                    card.className = 'group-card';
+                    const pinned = pins.includes(String(g.id));
+                    card.className = 'group-card' + (pinned ? ' pinned' : '');
                     card.dataset.id = g.id;
                     const adminBadge = g.is_admin
                         ? `<span class="group-admin-badge" data-i18n="group_admin_badge">АДМИН</span>` : '';
+                    const pin = pinned ? '📌 ' : '';
                     card.innerHTML = `
                         <div class="group-card-avatar">${escapeHtml(g.name.charAt(0).toUpperCase())}</div>
                         <div class="group-card-info">
-                            <div class="group-card-name">${escapeHtml(g.name)} ${adminBadge}</div>
+                            <div class="group-card-name">${pin}${escapeHtml(g.name)} ${adminBadge}</div>
                             <div class="group-card-meta">${window.t('group_members', 'Участники')}: ${g.member_count}/10</div>
                         </div>
                     `;
@@ -137,9 +188,11 @@ function initializeGroups(myData) {
             item.className = 'channel-item' + (String(c.id) === String(currentChannelId) ? ' active' : '');
             item.dataset.id = c.id;
             item.dataset.name = c.name;
+            const muted = localStorage.getItem('gMute_' + c.id) === '1';
+            const muteBtn = `<span class="channel-mute" data-id="${c.id}" title="${muted ? window.t('group_unmute', 'Включить уведомления') : window.t('group_mute', 'Отключить уведомления')}">${muted ? '🔕' : '🔔'}</span>`;
             const delBtn = (isGroupAdmin && channels.length > 1)
                 ? `<span class="channel-del" data-id="${c.id}" title="${window.t('delete', 'Удалить')}">✕</span>` : '';
-            item.innerHTML = `<span class="channel-hash">#</span><span class="channel-name">${escapeHtml(c.name)}</span>${delBtn}`;
+            item.innerHTML = `<span class="channel-hash">#</span><span class="channel-name">${escapeHtml(c.name)}</span>${muteBtn}${delBtn}`;
             list.appendChild(item);
         });
         document.getElementById('channelAdminBox').style.display = isGroupAdmin ? 'block' : 'none';
@@ -187,31 +240,34 @@ function initializeGroups(myData) {
     }
 
     function setupControls() {
-        const inviteBox = document.getElementById('groupInviteBox');
-        const adminPanel = document.getElementById('groupAdminPanel');
-        const leaveBox = document.getElementById('groupLeaveBox');
-
-        // Приглашать может любой участник, но не в закрытой группе
-        inviteBox.style.display = currentGroupLocked ? 'none' : 'block';
-        if (!currentGroupLocked) populateFriendSelect();
-
-        // Переименование/удаление — только админ
-        adminPanel.style.display = isGroupAdmin ? 'block' : 'none';
+        // Все действия группы теперь в меню (☰ / ПКМ по названию). Здесь только сброс формы.
         const renameForm = document.getElementById('renameForm');
         if (renameForm) renameForm.style.display = 'none';
-
-        // Выйти может любой участник (в т.ч. админ — группа не удалится, а закроется)
-        leaveBox.style.display = 'block';
     }
 
-    // Список друзей, которых можно пригласить (не участники)
+    // #16/#17 Контекстное меню действий группы (☰ и ПКМ по названию)
+    function openGroupActionsMenu(x, y) {
+        const items = [];
+        // Приглашать может любой участник (но не в закрытой группе)
+        if (!currentGroupLocked) {
+            items.push({ label: window.t('group_action_invite', 'Пригласить друга'), action: openInviteModal });
+        }
+        if (isGroupAdmin) {
+            items.push({ label: window.t('group_rename', 'Переименовать группу'), action: showRenameForm });
+            items.push({ label: window.t('group_delete', 'Удалить группу'), danger: true, action: deleteGroup });
+        }
+        items.push({ label: window.t('group_leave', 'Покинуть группу'), danger: true, action: leaveGroup });
+        if (items.length && window.showContextMenu) window.showContextMenu(x, y, items);
+    }
+
+    // Список друзей, которых можно пригласить (не участники) — для модалки
     function populateFriendSelect() {
         fetch("/api/friends?limit=1000", { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
                 const friends = data.friends || data;
                 const memberIds = new Set(currentMembers.map(m => m.id));
-                const select = document.getElementById('addMemberSelect');
+                const select = document.getElementById('modalInviteSelect');
                 const candidates = (friends || []).filter(f => !memberIds.has(f.id));
                 if (!candidates.length) {
                     select.innerHTML = `<option value="">${window.t('group_no_friends_to_add', 'Нет друзей для приглашения')}</option>`;
@@ -220,6 +276,42 @@ function initializeGroups(myData) {
                 select.innerHTML = candidates.map(f => `<option value="${f.id}">${escapeHtml(f.username)}</option>`).join('');
             })
             .catch(err => console.error('Ошибка загрузки друзей:', err));
+    }
+
+    // Модалка приглашения (#17)
+    function openInviteModal() {
+        const modal = document.getElementById('groupInviteModal');
+        document.getElementById('modalInviteMessage').textContent = '';
+        populateFriendSelect();
+        modal.style.display = 'flex';
+    }
+    function closeInviteModal() {
+        document.getElementById('groupInviteModal').style.display = 'none';
+    }
+
+    function showRenameForm() {
+        const renameForm = document.getElementById('renameForm');
+        renameForm.style.display = 'flex';
+        const input = document.getElementById('renameGroupInput');
+        input.value = document.getElementById('groupNameTitle').textContent;
+        input.focus();
+    }
+
+    async function deleteGroup() {
+        if (!await window.showCustomConfirm(window.t('group_delete_confirm', 'Удалить группу навсегда? Это действие необратимо.'))) return;
+        fetch(`/api/groups/${currentGroupId}`, { method: 'DELETE', credentials: 'include' })
+            .then(res => res.json())
+            .then(data => { if (data.message) backToGroups(); else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка')); });
+    }
+
+    async function leaveGroup() {
+        const confirmMsg = isGroupAdmin
+            ? window.t('group_admin_leave_confirm', 'Вы админ. После вашего выхода группа будет закрыта для общения. Продолжить?')
+            : window.t('group_leave_confirm', 'Покинуть группу?');
+        if (!await window.showCustomConfirm(confirmMsg)) return;
+        fetch(`/api/groups/${currentGroupId}/members/${myUserId}`, { method: 'DELETE', credentials: 'include' })
+            .then(res => res.json())
+            .then(data => { if (data.message) backToGroups(); else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка')); });
     }
 
     // ─────────────── сообщения ───────────────
@@ -314,6 +406,17 @@ function initializeGroups(myData) {
                     const authorHtml = (!isMine && msg.username)
                         ? `<div class="message-author" style="color:${authorColor};">${escapeHtml(msg.username)}</div>` : '';
 
+                    // #13 Цитата отвечаемого сообщения
+                    let replyQuoteHtml = '';
+                    if (msg.reply_to) {
+                        const rm = messages.find(x => String(x.id) === String(msg.reply_to));
+                        if (rm) {
+                            const who = (rm.sender_id === myUserId) ? window.t('you', 'Вы') : (rm.username || '');
+                            const snip = (rm.content && rm.content.trim()) ? rm.content : (rm.image_url ? '📎' : '');
+                            replyQuoteHtml = `<div style="border-left:3px solid #4a90d9; padding:2px 8px; margin-bottom:4px; font-size:11px; background:rgba(255,255,255,0.06); border-radius:4px;"><div style="font-weight:bold; color:#4a90d9;">${escapeHtml(who)}</div><div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; opacity:0.85;">${escapeHtml(snip)}</div></div>`;
+                        }
+                    }
+
                     const shouldAnimate = !isFirstLoad && (index === messages.length - 1);
                     const node = document.createElement('div');
                     node.className = `message ${msgClass}${shouldAnimate ? ' new-message-anim' : ''}`;
@@ -322,6 +425,7 @@ function initializeGroups(myData) {
                     node.innerHTML = `
                         <div class="chat-bubble">
                             ${authorHtml}
+                            ${replyQuoteHtml}
                             <div class="message-content">${contentHtml}</div>
                             ${window.mediaListHtml(msg.media, msg.image_url, 200, 'message-media-box')}
                         </div>
@@ -329,6 +433,10 @@ function initializeGroups(myData) {
                     `;
                     container.appendChild(node);
                 });
+
+                // Отмечаем канал как просмотренный (подавляет уведомления по нему)
+                const maxId = messages.reduce((mx, m) => Math.max(mx, m.id), 0);
+                if (maxId) localStorage.setItem('gSeen_' + fetchChannelId, String(maxId));
 
                 if (isFirstLoad || isCloseToBottom) {
                     scrollToBottom(container);
@@ -387,7 +495,7 @@ function initializeGroups(myData) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ content, media: mediaUrls })
+            body: JSON.stringify({ content, media: mediaUrls, reply_to: replyToId })
         })
             .then(res => res.json())
             .then(data => {
@@ -397,6 +505,7 @@ function initializeGroups(myData) {
                     if (fileInput) fileInput.value = '';
                     document.getElementById('groupAttachedFileName').textContent = '';
                     document.getElementById('groupClearAttachBtn').style.display = 'none';
+                    window.clearChatReply();
                     loadMessages(true);
                 } else {
                     status.textContent = data.error || window.t('error_network', 'Ошибка отправки');
@@ -451,8 +560,19 @@ function initializeGroups(myData) {
 
     document.getElementById('backToGroupsBtn').addEventListener('click', backToGroups);
 
-    // Клики по каналам (выбор / удаление)
+    // Клики по каналам (выбор / мьют / удаление)
     document.getElementById('channelsList').addEventListener('click', async (e) => {
+        const mute = e.target.closest('.channel-mute');
+        if (mute) {
+            e.stopPropagation();
+            const id = mute.dataset.id;
+            const isMuted = localStorage.getItem('gMute_' + id) === '1';
+            if (isMuted) localStorage.removeItem('gMute_' + id);
+            else localStorage.setItem('gMute_' + id, '1');
+            mute.textContent = isMuted ? '🔔' : '🔕';
+            mute.title = isMuted ? window.t('group_mute', 'Отключить уведомления') : window.t('group_unmute', 'Включить уведомления');
+            return;
+        }
         const del = e.target.closest('.channel-del');
         if (del) {
             e.stopPropagation();
@@ -501,9 +621,20 @@ function initializeGroups(myData) {
         });
     }
 
-    // Пригласить друга
-    document.getElementById('addMemberBtn').addEventListener('click', () => {
-        const select = document.getElementById('addMemberSelect');
+    // #16 Меню действий группы: кнопка ☰ и ПКМ по названию группы
+    document.getElementById('groupActionsBtn').addEventListener('click', (e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        openGroupActionsMenu(r.left, r.bottom);
+    });
+    document.getElementById('groupNameTitle').addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        openGroupActionsMenu(e.clientX, e.clientY);
+    });
+
+    // #17 Модалка приглашения друга
+    document.getElementById('modalInviteBtn').addEventListener('click', () => {
+        const select = document.getElementById('modalInviteSelect');
+        const msg = document.getElementById('modalInviteMessage');
         const inviteeId = parseInt(select.value);
         if (!inviteeId) return;
         fetch(`/api/groups/${currentGroupId}/invite`, {
@@ -512,9 +643,15 @@ function initializeGroups(myData) {
         })
             .then(res => res.json())
             .then(data => {
-                window.showCustomAlert(data.message || data.error || window.t('error_network', 'Ошибка'));
+                msg.style.color = data.message ? '#2ecc71' : '#ff6b6b';
+                msg.textContent = data.message || data.error || window.t('error_network', 'Ошибка');
+                if (data.message) setTimeout(closeInviteModal, 900);
             })
-            .catch(() => window.showCustomAlert(window.t('error_network', 'Ошибка сети')));
+            .catch(() => { msg.style.color = '#ff6b6b'; msg.textContent = window.t('error_network', 'Ошибка сети'); });
+    });
+    document.getElementById('modalInviteCloseBtn').addEventListener('click', closeInviteModal);
+    document.getElementById('groupInviteModal').addEventListener('click', (e) => {
+        if (e.target.id === 'groupInviteModal') closeInviteModal();
     });
 
     // Кик участника
@@ -530,17 +667,8 @@ function initializeGroups(myData) {
             });
     });
 
-    // Переименовать группу — inline-форма
+    // Переименование — форма открывается из меню действий (showRenameForm)
     const renameForm = document.getElementById('renameForm');
-    document.getElementById('renameGroupBtn').addEventListener('click', () => {
-        const showing = renameForm.style.display === 'flex';
-        renameForm.style.display = showing ? 'none' : 'flex';
-        if (!showing) {
-            const input = document.getElementById('renameGroupInput');
-            input.value = document.getElementById('groupNameTitle').textContent;
-            input.focus();
-        }
-    });
     document.getElementById('cancelRenameBtn').addEventListener('click', () => {
         renameForm.style.display = 'none';
     });
@@ -563,30 +691,7 @@ function initializeGroups(myData) {
             });
     });
 
-    // Удалить группу (админ)
-    document.getElementById('deleteGroupBtn').addEventListener('click', async () => {
-        if (!await window.showCustomConfirm(window.t('group_delete_confirm', 'Удалить группу навсегда? Это действие необратимо.'))) return;
-        fetch(`/api/groups/${currentGroupId}`, { method: 'DELETE', credentials: 'include' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.message) backToGroups();
-                else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
-            });
-    });
-
-    // Покинуть группу (любой участник; для админа — предупреждаем о закрытии группы)
-    document.getElementById('leaveGroupBtn').addEventListener('click', async () => {
-        const confirmMsg = isGroupAdmin
-            ? window.t('group_admin_leave_confirm', 'Вы админ. После вашего выхода группа будет закрыта для общения. Продолжить?')
-            : window.t('group_leave_confirm', 'Покинуть группу?');
-        if (!await window.showCustomConfirm(confirmMsg)) return;
-        fetch(`/api/groups/${currentGroupId}/members/${myUserId}`, { method: 'DELETE', credentials: 'include' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.message) backToGroups();
-                else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
-            });
-    });
+    // Удаление группы и выход теперь вызываются из меню действий (deleteGroup / leaveGroup)
 
     // Отправка сообщения
     document.getElementById('groupSendBtn').addEventListener('click', sendGroupMessage);

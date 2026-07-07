@@ -88,6 +88,7 @@
                         <div id="groupLockedNotice" style="display: none; text-align: center; color: #ff8888; padding: 14px; font-size: 12px; font-style: italic;" data-i18n="group_locked_notice">Группа закрыта: админ покинул её. Общение недоступно.</div>
 
                         <div id="groupInputSection" class="chat-input-section" style="display: none;">
+                            <div id="groupReplyPreview" style="display:none; align-items:center; gap:8px; margin-bottom:8px; padding:6px 8px; background:rgba(255,255,255,0.06); border-radius:6px;"></div>
                             <div class="input-group" style="display: flex; flex-direction: column; gap: 8px;">
                                 <textarea id="groupMessageInput" data-i18n-placeholder="chat_message_placeholder" placeholder="Напишите сообщение..." rows="3" maxlength="2000"></textarea>
                                 <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; width: 100%; margin-top: 5px; flex-wrap: wrap;">
@@ -106,37 +107,34 @@
                 <!-- Правая колонка: участники -->
                 <div class="group-members-column">
                     <div class="chat-section">
-                        <div class="chat-header" style="justify-content: center;">
+                        <div class="chat-header" style="justify-content: space-between; align-items: center;">
                             <h2 style="margin: 0; padding: 0; border: none; font-size: 15px; color: white; text-transform: uppercase;" data-i18n="group_members">Участники</h2>
+                            <button id="groupActionsBtn" class="user-btn" title="" style="width: auto; padding: 4px 10px; font-size: 14px; margin: 0; cursor: pointer;">☰</button>
                         </div>
                         <div id="membersList" class="members-list" style="margin-top: 12px;"></div>
 
-                        <!-- Приглашение друзей: доступно любому участнику -->
-                        <div id="groupInviteBox" style="display: none; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.25); padding-top: 12px;">
-                            <div style="display: flex; flex-direction: column; gap: 6px;">
-                                <select id="addMemberSelect" style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;"></select>
-                                <button id="addMemberBtn" class="auth-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer;" data-i18n="group_add_member">Пригласить друга</button>
+                        <!-- Скрытая форма переименования (открывается из меню действий) -->
+                        <div id="renameForm" style="display: none; flex-direction: column; gap: 6px; margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.25); padding-top: 12px;">
+                            <input type="text" id="renameGroupInput" maxlength="60" data-i18n-placeholder="groups_name_placeholder" placeholder="Название группы"
+                                style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                            <div style="display: flex; gap: 6px;">
+                                <button id="submitRenameBtn" class="auth-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer;" data-i18n="save">Сохранить</button>
+                                <button id="cancelRenameBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer; border-color:#aaa; color:#aaa;" data-i18n="cancel">Отмена</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Управление: только админ -->
-                        <div id="groupAdminPanel" style="display: none; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.25); padding-top: 12px;">
-                            <div id="renameForm" style="display: none; flex-direction: column; gap: 6px; margin-bottom: 8px;">
-                                <input type="text" id="renameGroupInput" maxlength="60" data-i18n-placeholder="groups_name_placeholder" placeholder="Название группы"
-                                    style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
-                                <div style="display: flex; gap: 6px;">
-                                    <button id="submitRenameBtn" class="auth-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer;" data-i18n="save">Сохранить</button>
-                                    <button id="cancelRenameBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer; border-color:#aaa; color:#aaa;" data-i18n="cancel">Отмена</button>
-                                </div>
-                            </div>
-                            <button id="renameGroupBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0 0 6px 0; cursor: pointer;" data-i18n="group_rename">Переименовать группу</button>
-                            <button id="deleteGroupBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer; border-color: red; color: red;" data-i18n="group_delete">Удалить группу</button>
-                        </div>
-
-                        <!-- Выход: доступен всем участникам -->
-                        <div id="groupLeaveBox" style="display: none; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.25); padding-top: 12px;">
-                            <button id="leaveGroupBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer; border-color: red; color: red;" data-i18n="group_leave">Покинуть группу</button>
-                        </div>
+            <!-- Модальное окно приглашения друга (#17) -->
+            <div id="groupInviteModal" class="modal-overlay" style="display: none;">
+                <div class="modal-box">
+                    <h3 style="margin-top: 0;" data-i18n="group_invite_modal_title">Пригласить друга</h3>
+                    <select id="modalInviteSelect" style="width: 100%; background: black; color: white; border: 2px solid white; padding: 8px; font-family: inherit; font-size: 12px; outline: none; box-sizing: border-box;"></select>
+                    <div id="modalInviteMessage" style="font-size: 11px; margin-top: 8px; min-height: 14px;"></div>
+                    <div style="display: flex; gap: 8px; margin-top: 14px;">
+                        <button id="modalInviteBtn" class="auth-btn" style="flex:1; padding: 8px; font-size: 12px; margin: 0; cursor: pointer;" data-i18n="group_action_invite">Пригласить друга</button>
+                        <button id="modalInviteCloseBtn" class="user-btn" style="flex:1; padding: 8px; font-size: 12px; margin: 0; cursor: pointer; border-color:#aaa; color:#aaa;" data-i18n="cancel">Отмена</button>
                     </div>
                 </div>
             </div>

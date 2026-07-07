@@ -130,6 +130,35 @@ router.get('/unread', (req, res) => {
     );
 });
 
+// Уведомления о новых сообщениях в группах пользователя.
+// Строго member-scoped (JOIN group_members) — сообщения из чужих групп не утекают.
+// Возвращает по каналу id последнего НЕ своего сообщения; клиент сам сверяет с
+// «просмотренным» (localStorage) и учитывает мьют. Плюс количество pending-инвайтов.
+router.get('/notifications', (req, res) => {
+    const userId = req.user.id;
+    db.query(
+        `SELECT gc.id AS channel_id, gc.group_id, cg.name AS group_name, gc.name AS channel_name,
+                MAX(msg.id) AS last_message_id
+         FROM group_members gm
+         JOIN group_channels gc ON gc.group_id = gm.group_id
+         JOIN chat_groups cg ON cg.id = gm.group_id
+         JOIN group_messages msg ON msg.channel_id = gc.id AND msg.type = 'user' AND msg.sender_id <> ?
+         WHERE gm.user_id = ?
+         GROUP BY gc.id, gc.group_id, cg.name, gc.name`,
+        [userId, userId],
+        (err, channels) => {
+            if (err) return res.status(500).json({ error: 'Ошибка БД' });
+            db.query(
+                "SELECT COUNT(*) AS c FROM group_invites WHERE invitee_id = ? AND status = 'pending'",
+                [userId],
+                (e2, inv) => {
+                    res.json({ channels: channels || [], invites: e2 ? 0 : inv[0].c });
+                }
+            );
+        }
+    );
+});
+
 // Создать группу
 router.post('/', groupActionLimiter, (req, res) => {
     const userId = req.user.id;
@@ -494,6 +523,7 @@ router.post('/channels/:channelId/messages', groupMessageLimiter, (req, res) => 
     const mediaArr = Array.isArray(req.body.media) ? req.body.media.map(sanitizeImageUrl).filter(Boolean).slice(0, 10) : [];
     const imageUrl = mediaArr[0] || sanitizeImageUrl(req.body.image_url);
     const mediaJson = mediaArr.length ? JSON.stringify(mediaArr) : null;
+    const replyTo = parseInt(req.body.reply_to) || null;
 
     if ((!content || content.trim() === '') && !imageUrl) {
         return res.status(400).json({ error: 'Сообщение не может быть пустым' });
@@ -514,8 +544,8 @@ router.post('/channels/:channelId/messages', groupMessageLimiter, (req, res) => 
 
             const encrypted = encrypt(content ? sanitize(content.trim()) : '');
             db.query(
-                "INSERT INTO group_messages (channel_id, sender_id, type, content, image_url, media) VALUES (?, ?, 'user', ?, ?, ?)",
-                [channelId, userId, encrypted, imageUrl, mediaJson],
+                "INSERT INTO group_messages (channel_id, sender_id, type, content, image_url, media, reply_to) VALUES (?, ?, 'user', ?, ?, ?, ?)",
+                [channelId, userId, encrypted, imageUrl, mediaJson, replyTo],
                 (e, r) => {
                     if (e) { logger.error('Ошибка БД при отправке группового сообщения'); return res.status(500).json({ error: 'Внутренняя ошибка сервера' }); }
                     res.status(201).json({ message: 'Сообщение отправлено', id: r.insertId });

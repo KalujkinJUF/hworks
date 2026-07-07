@@ -405,37 +405,71 @@ document.addEventListener('spa:navigate', () => {
             });
     }
 
+    // Обновление счётчика комментариев на кнопке-переключателе без перерисовки ленты
+    function adjustCommentCount(postId, delta) {
+        const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+        if (!card) return;
+        const btn = card.querySelector('.comments-toggle-btn');
+        if (!btn) return;
+        btn.textContent = btn.textContent.replace(/\((\d+)\)\s*$/, (m, n) => {
+            const val = Math.max(0, parseInt(n) + delta);
+            return `(${val})`;
+        });
+    }
+
     window.togglePostLike = async function (postId) {
+        const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+        const btn = card && card.querySelector('.like-btn');
         fetch(`/api/users/posts/${postId}/like`, {
             method: "POST",
             credentials: 'include'
         })
             .then(res => res.json())
             .then(data => {
-                if (data.message) {
-                    loadPosts();
-                }
+                if (!data.message || !btn) return;
+                // Обновляем кнопку лайка на месте — без перезагрузки/прыжка страницы
+                const liked = data.liked;
+                const m = btn.textContent.match(/\((\d+)\)\s*$/);
+                let count = m ? parseInt(m[1]) : 0;
+                count = Math.max(0, count + (liked ? 1 : -1));
+                const likeText = liked ? `♥ ${window.t('liked_btn', 'Понравилось')}` : `♡ ${window.t('like_btn', 'Мне нравится')}`;
+                btn.style.color = liked ? '#ff3333' : '#fff';
+                btn.textContent = `${likeText} (${count})`;
             })
             .catch(err => console.error(err));
     };
 
     window.toggleCommentsSection = function (postId) {
         const wrapper = document.getElementById(`commentsWrapper-${postId}`);
-        if (wrapper) {
-            if (wrapper.classList.contains('open')) {
-                wrapper.classList.remove('open');
-                setTimeout(() => {
-                    if (!wrapper.classList.contains('open')) {
-                        wrapper.style.display = 'none';
-                    }
-                }, 350);
-            } else {
-                wrapper.style.display = 'block';
-                setTimeout(() => {
-                    wrapper.classList.add('open');
-                }, 10);
-                loadPostComments(postId);
-            }
+        if (!wrapper) return;
+
+        // Плавное открытие/закрытие: max-height берём из реальной высоты содержимого
+        // (иначе фикс. max-height:2000px даёт «рывок» и паузу перед схлопыванием).
+        if (wrapper.classList.contains('open')) {
+            // Закрытие: фиксируем текущую высоту → на следующем кадре к нулю
+            wrapper.style.maxHeight = wrapper.scrollHeight + 'px';
+            void wrapper.offsetHeight; // форс-рефлоу
+            wrapper.classList.remove('open');
+            wrapper.style.maxHeight = '0px';
+            setTimeout(() => {
+                if (!wrapper.classList.contains('open')) {
+                    wrapper.style.display = 'none';
+                    wrapper.style.maxHeight = '';
+                }
+            }, 360);
+        } else {
+            wrapper.style.display = 'block';
+            wrapper.classList.add('open');
+            loadPostComments(postId);
+            // Анимируем к высоте контента, затем снимаем ограничение, чтобы список мог расти
+            requestAnimationFrame(() => {
+                wrapper.style.maxHeight = wrapper.scrollHeight + 'px';
+            });
+            setTimeout(() => {
+                if (wrapper.classList.contains('open')) {
+                    wrapper.style.maxHeight = 'none';
+                }
+            }, 400);
         }
     };
 
@@ -472,7 +506,7 @@ document.addEventListener('spa:navigate', () => {
         .then(async data => {
             if (data.message) {
                 loadPostComments(postId);
-                loadPosts(); // to update comment counts
+                adjustCommentCount(postId, -1); // обновляем счётчик без перезагрузки ленты
             } else {
                 await window.showCustomAlert(data.error || window.t('error_delete_comment', 'Ошибка удаления комментария'));
             }
@@ -620,6 +654,7 @@ document.addEventListener('spa:navigate', () => {
                     delete input.dataset.parentId;
                     window.clearCommentAttachment(postId);
                     loadPostComments(postId);
+                    adjustCommentCount(postId, +1); // счётчик обновляем на месте, без перезагрузки
                 } else if (data.error) {
                     await window.showCustomAlert(data.error);
                 }

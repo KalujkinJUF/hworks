@@ -13,6 +13,7 @@
     ]
   },
   "permissions": [
-    "core:default"
+    "core:default",
+    "allow-app-commands"
   ]
 }

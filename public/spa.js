@@ -65,12 +65,32 @@
                 if (main && newMain) {
                     main.innerHTML = newMain.innerHTML;
                     main.className = newMain.className;
+                    main.id = newMain.id || '';
                     document.body.className = doc.body.className;
                     document.body.id = doc.body.id;
                 }
                 
                 if (!isPopState) {
                     history.pushState({}, '', url);
+                }
+                
+                // Динамическая подгрузка скриптов, которых нет на текущей странице
+                const existingSrcs = new Set(
+                    Array.from(document.querySelectorAll('script[src]'))
+                        .map(s => s.getAttribute('src'))
+                );
+                const newScripts = Array.from(doc.querySelectorAll('script[src]'))
+                    .map(s => s.getAttribute('src'))
+                    .filter(src => !existingSrcs.has(src));
+                
+                for (const src of newScripts) {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = src;
+                        script.onload = resolve;
+                        script.onerror = () => { console.warn('SPA: Failed to load script:', src); resolve(); };
+                        document.body.appendChild(script);
+                    });
                 }
                 
                 // Перевод и обновление элементов шапки

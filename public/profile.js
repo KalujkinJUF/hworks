@@ -1093,37 +1093,58 @@ function initializeProfile(myData) {
     }
 
     async function loadTauriSettings() {
+        console.log("loadTauriSettings: starting...");
         const hasTauri = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
         if (hasTauri || (window.api && window.api.getAppConfig)) {
             try {
                 const config = hasTauri 
                     ? await window.__TAURI__.core.invoke('get_app_config') 
                     : await window.api.getAppConfig();
+                console.log("loadTauriSettings: retrieved config:", config);
                 const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
                 const autostartCheckbox = document.getElementById("autostartCheckbox");
-                if (autoUpdateCheckbox) autoUpdateCheckbox.checked = config.auto_update !== false;
-                if (autostartCheckbox) autostartCheckbox.checked = config.autostart !== false;
+                if (autoUpdateCheckbox) {
+                    autoUpdateCheckbox.checked = (config.auto_update !== false && config.autoUpdate !== false);
+                    console.log("loadTauriSettings: autoUpdateCheckbox checked =", autoUpdateCheckbox.checked);
+                }
+                if (autostartCheckbox) {
+                    autostartCheckbox.checked = config.autostart !== false;
+                    console.log("loadTauriSettings: autostartCheckbox checked =", autostartCheckbox.checked);
+                }
             } catch (e) {
                 console.error("Ошибка загрузки настроек клиента:", e);
             }
+        } else {
+            console.log("loadTauriSettings: Tauri API not found");
         }
     }
 
     async function saveTauriSettings() {
+        console.log("saveTauriSettings: starting...");
         const hasTauri = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
         if (hasTauri || (window.api && window.api.updateAppConfig)) {
             try {
                 const autoUpdate = document.getElementById("autoUpdateCheckbox").checked;
                 const autostart = document.getElementById("autostartCheckbox").checked;
                 const scale = document.getElementById("scaleSelector").value;
+                console.log("saveTauriSettings: saving config:", { autoUpdate, autostart, scale });
                 if (hasTauri) {
-                    await window.__TAURI__.core.invoke('update_app_config', { autoUpdate, autostart, scale });
+                    // Передаем оба варианта ключей для совместимости
+                    await window.__TAURI__.core.invoke('update_app_config', { 
+                        autoUpdate, 
+                        auto_update: autoUpdate, 
+                        autostart, 
+                        scale 
+                    });
                 } else {
                     await window.api.updateAppConfig(autoUpdate, autostart, scale);
                 }
+                console.log("saveTauriSettings: successfully saved");
             } catch (e) {
                 console.error("Ошибка сохранения настроек клиента:", e);
             }
+        } else {
+            console.log("saveTauriSettings: Tauri API not found");
         }
     }
 

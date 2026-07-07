@@ -98,7 +98,7 @@ function initializeAdmin(myData) {
             card.innerHTML = `
                 <div class="user-card-header">
                     <span class="user-card-login" style="color: ${user.role === 'banned' ? '#555555; text-decoration: line-through' : color};">${escapeHtml(user.username)}</span>
-                    <span class="user-card-role" style="color: ${color}; border-color: ${color};">${escapeHtml(label)}</span>
+                    <span class="user-card-role role-${user.role}" style="color: ${color}; border-color: ${color};">${escapeHtml(label)}</span>
                 </div>
                 <div class="user-card-body">
                     <div class="user-field">

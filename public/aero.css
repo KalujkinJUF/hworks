@@ -282,8 +282,8 @@ footer {
 
 .profile-section {
     width: 100%;
-    max-width: 1000px;
-    margin: 0;
+    max-width: 1200px;
+    margin: 0 auto;
     text-align: left;
 }
 
@@ -3430,12 +3430,14 @@ a:hover {
     font-weight: 700 !important;
 }
 
-/* Цвета ролей (убираем жесткие обводки, оставляем только цвет текста) */
-.role-moderator { color: #3498db !important; border-color: transparent !important; }
-.role-admin { color: #e74c3c !important; border-color: transparent !important; }
-.role-vip { color: #f39c12 !important; border-color: transparent !important; }
-.role-premium { color: #ff66cc !important; border-color: transparent !important; }
-.role-user { color: #2ecc71 !important; border-color: transparent !important; }
+/* Цвета ролей */
+.role-moderator { color: #3498db !important; border-color: #3498db !important; }
+.role-admin { color: #e74c3c !important; border-color: #e74c3c !important; }
+.role-vip { color: #f39c12 !important; border-color: #f39c12 !important; }
+.role-premium { color: #ff66cc !important; border-color: #ff66cc !important; }
+.role-user { color: #2ecc71 !important; border-color: #2ecc71 !important; }
+.role-newbie { color: #888888 !important; border-color: #888888 !important; }
+.role-banned { color: #333333 !important; border-color: #333333 !important; }
 
 /* Убираем пунктирные линии */
 .profile-section h2,

@@ -133,7 +133,7 @@ document.addEventListener('spa:navigate', () => {
                                 <div class="result-header">
                                     ${u.avatar ? `<img src="${escapeHtml(u.avatar)}" class="result-avatar"><div style="display:none; width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>` : '<div style="width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: inline-block;"></div>'}
                                     <span class="result-username" style="color: ${color};">${escapeHtml(u.username)}</span>
-                                    <span class="result-role" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
+                                    <span class="result-role role-${u.role}" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
                                 </div>
                                 <p class="result-about">${escapeHtml(u.about) || window.t('no_info', 'Нет информации')}</p>
                             </a>

@@ -52,7 +52,7 @@ function initializeFriends() {
                     <div class="result-header">
                         ${avatar}
                         <span class="result-username" style="color: ${color};">${escapeHtml(user.username)}</span>
-                        <span class="result-role" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
+                        <span class="result-role role-${user.role}" style="color: ${color}; border-color: ${color};">${escapeHtml(roleLabel)}</span>
                         <span class="result-status" style="font-size: 11px; display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; opacity: 0.85;"><span class="friend-status-icon status-${st}"></span>${statusText}</span>
                     </div>
                 </a>

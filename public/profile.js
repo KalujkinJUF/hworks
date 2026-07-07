@@ -136,6 +136,7 @@ function initializeProfile(myData) {
             const color = roleColors[role] || '#ffffff';
             const label = roleLabels[role] || `[${role.toUpperCase()}]`;
             roleBadge.textContent = label;
+            roleBadge.className = `role-badge role-${role}`;
             roleBadge.style.color = color;
             roleBadge.style.borderColor = color;
             if (role === 'banned') {

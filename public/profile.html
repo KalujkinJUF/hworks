@@ -45,7 +45,7 @@
 
                         <!-- Левая колонка: Аватарка + Инфо блок + Общие друзья -->
                         <div class="profile-left-col"
-                            style="flex: 1; min-width: 320px; max-width: 600px; display: flex; flex-direction: column; gap: 20px;">
+                            style="flex: 1; min-width: 320px; max-width: 500px; display: flex; flex-direction: column; gap: 20px;">
                             <!-- Бокс 1: Основная информация -->
                             <div class="profile-layout"
                                 style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 20px; background: rgba(255, 255, 255, 0.01); display: flex; gap: 20px; align-items: center; justify-content: flex-start; width: 100%; box-sizing: border-box;">
@@ -149,150 +149,158 @@
 
                 <!-- Вкладка 2: Настройки профиля -->
                 <div id="tabSettings" class="tab-content" style="width: 100%;">
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 25px; width: 100%;">
-                        <!-- Внешний вид / Язык -->
-                        <div id="appearanceSection" class="animate-fade-in"
-                            style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
-                            <div class="profile-section-title" data-i18n="profile_appearance_title" style="border-bottom: 2px dashed white; padding-bottom: 5px; color: #00ff00; text-transform: uppercase;">ВНЕШНИЙ ВИД</div>
-                            
-                            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 15px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_theme_label">Тема оформления:</span>
-                                    <select id="themeSelector" style="background: black; color: white; border: 2px solid white; padding: 5px; outline: none; font-family: inherit; font-size: 10px;">
-                                        <option value="default" data-i18n="theme_default">Стандартная (Терминал)</option>
-                                        <option value="aero" data-i18n="theme_aero">Frutiger Aero</option>
-                                    </select>
-                                </div>
-
-                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_scale_label">Масштаб интерфейса:</span>
-                                    <select id="scaleSelector" style="background: black; color: white; border: 2px solid white; padding: 5px; outline: none; font-family: inherit; font-size: 10px;">
-                                        <option value="0.75">75%</option>
-                                        <option value="0.85">85%</option>
-                                        <option value="1.0" selected>100%</option>
-                                        <option value="1.15">115%</option>
-                                        <option value="1.25">125%</option>
-                                        <option value="1.5">150%</option>
-                                    </select>
-                                </div>
-
-                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_lang_label">Язык:</span>
-                                    <div class="lang-selector" style="margin: 0; padding: 0; border: none; display: flex; gap: 5px;">
-                                        <button class="lang-btn" data-lang="en">EN</button>
-                                        <button class="lang-btn" data-lang="ru">RU</button>
-                                        <button class="lang-btn" data-lang="uk">UK</button>
-                                    </div>
-                                </div>
-
-                                <div id="tauriSettingsGroup" style="display: none; flex-direction: column; gap: 15px; width: 100%; margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px;">
+                    <div class="settings-columns-layout"
+                        style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap; width: 100%; justify-content: center;">
+                        
+                        <!-- Левая колонка настроек -->
+                        <div class="settings-left-col" style="flex: 1; min-width: 320px; max-width: 500px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+                            <!-- Внешний вид / Язык -->
+                            <div id="appearanceSection" class="animate-fade-in"
+                                style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
+                                <div class="profile-section-title" data-i18n="profile_appearance_title" style="border-bottom: 2px dashed white; padding-bottom: 5px; color: #00ff00; text-transform: uppercase;">ВНЕШНИЙ ВИД</div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 15px;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                        <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_auto_update_label">Автообновления:</span>
-                                        <input type="checkbox" id="autoUpdateCheckbox" style="cursor: pointer;">
+                                        <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_theme_label">Тема оформления:</span>
+                                        <select id="themeSelector" style="background: black; color: white; border: 2px solid white; padding: 5px; outline: none; font-family: inherit; font-size: 10px;">
+                                            <option value="default" data-i18n="theme_default">Стандартная (Терминал)</option>
+                                            <option value="aero" data-i18n="theme_aero">Frutiger Aero</option>
+                                        </select>
                                     </div>
+
                                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                        <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_autostart_label">Запускать при старте системы:</span>
-                                        <input type="checkbox" id="autostartCheckbox" style="cursor: pointer;">
+                                        <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_scale_label">Масштаб интерфейса:</span>
+                                        <select id="scaleSelector" style="background: black; color: white; border: 2px solid white; padding: 5px; outline: none; font-family: inherit; font-size: 10px;">
+                                            <option value="0.75">75%</option>
+                                            <option value="0.85">85%</option>
+                                            <option value="1.0" selected>100%</option>
+                                            <option value="1.15">115%</option>
+                                            <option value="1.25">125%</option>
+                                            <option value="1.5">150%</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_lang_label">Язык:</span>
+                                        <div class="lang-selector" style="margin: 0; padding: 0; border: none; display: flex; gap: 5px;">
+                                            <button class="lang-btn" data-lang="en">EN</button>
+                                            <button class="lang-btn" data-lang="ru">RU</button>
+                                            <button class="lang-btn" data-lang="uk">UK</button>
+                                        </div>
+                                    </div>
+
+                                    <div id="tauriSettingsGroup" style="display: none; flex-direction: column; gap: 15px; width: 100%; margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                            <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_auto_update_label">Автообновления:</span>
+                                            <input type="checkbox" id="autoUpdateCheckbox" style="cursor: pointer;">
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                            <span style="font-size: 12px; font-weight: bold;" data-i18n="profile_autostart_label">Запускать при старте системы:</span>
+                                            <input type="checkbox" id="autostartCheckbox" style="cursor: pointer;">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Блок подтверждения email (перенесен сюда) -->
-                        <div id="verifySection" class="verify-section"
-                            style="display:none; border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
-                            <h3
-                                style="margin-top: 0; color: #00ccff; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_email_verification">
-                                Подтверждение почты</h3>
-                            <p class="verify-hint" style="font-size: 11px; margin-bottom: 15px;" data-i18n="profile_email_verification_hint">На вашу почту отправлен
-                                код. Введите его ниже:</p>
-                            <div class="verify-group"
-                                style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-                                <input type="text" id="verifyCode" maxlength="6" data-i18n-placeholder="profile_delete_code_placeholder" placeholder="6-значный код"
-                                    style="background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
-                                <button id="verifyBtn" class="auth-btn"
-                                    style="padding: 10px; font-size: 12px; width: auto; cursor: pointer;" data-i18n="profile_verify_btn">Подтвердить</button>
-                            </div>
-                            <div id="verifyMessage" class="verify-message" style="margin-top: 10px;"></div>
-
-                            <div id="changeEmailSection"
-                                style="margin-top: 15px; border-top: 2px dashed rgba(255, 255, 255, 0.2); padding-top: 15px; width: 100%;">
-                                <p style="font-size: 11px; margin-bottom: 8px; color: #aaa;" data-i18n="profile_new_email_hint">Не пришел код или
-                                    опечатались в адресе?</p>
-                                <div style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;">
-                                    <input type="email" id="newEmailInput" data-i18n-placeholder="profile_new_email_placeholder" placeholder="Новый email"
-                                        style="flex-grow: 1; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 11px; outline: none; box-sizing: border-box;">
-                                    <button id="changeEmailBtn" class="user-btn"
-                                        style="padding: 10px; font-size: 11px; cursor: pointer; white-space: nowrap;" data-i18n="profile_new_email_btn">Сменить
-                                        email</button>
-                                </div>
-                                <div id="changeEmailMessage" style="margin-top: 8px; font-size: 11px;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Блок смены логина/пароля -->
-                        <div id="updateSection" class="animate-fade-in"
-                            style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center;">
-                            <h3
-                                style="margin-top: 0; color: #ff8c00; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_settings_title">
-                                СМЕНИТЬ ЛОГИН И ПАРОЛЬ</h3>
-                            <div class="update-box"
-                                style="margin-top: 20px; border: 2px solid rgba(255, 255, 255, 0.2); padding: 20px; background: rgba(255,255,255,0.01);">
-                                <form id="updateForm" class="auth-form"
-                                    style="max-width: 100%; display: flex; flex-direction: column; gap: 15px; width: 100%;">
-                                    <div class="input-group" style="margin-bottom: 0; width: 100%;">
-                                        <input type="text" id="newUsername" maxlength="20"
-                                            data-i18n-placeholder="profile_new_username_placeholder"
-                                            placeholder="Введите новый логин"
-                                            style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
-                                    </div>
-                                    <div class="input-group" style="margin-bottom: 0; width: 100%;">
-                                        <input type="password" id="newPassword" data-i18n-placeholder="profile_new_password_placeholder" placeholder="Введите новый пароль"
-                                            style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
-                                    </div>
-                                    <div class="input-group" style="margin-bottom: 0; width: 100%;">
-                                        <input type="password" id="currentPassword" data-i18n-placeholder="profile_curr_password_placeholder" placeholder="Текущий пароль"
-                                            style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
-                                    </div>
-                                    <div style="text-align: center; width: 100%;">
-                                        <button type="submit" class="auth-btn"
-                                            style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;" data-i18n="profile_save_settings">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
-                                    </div>
-                                    <div id="message" style="margin-top: 10px;"></div>
-                                </form>
-                            </div>
-                        </div>
-
-                        <!-- Блок Выхода из аккаунта -->
-                        <div id="logoutSection" class="animate-fade-in"
-                            style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 20px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 15px;">
-                            <h3 style="margin-top: 0; color: #ff3333; border-bottom: 2px dashed rgba(255, 255, 255, 0.2); padding-bottom: 8px; text-transform: uppercase;" data-i18n="nav_logout">ВЫЙТИ ИЗ АККАУНТА</h3>
-                            <button id="profileLogoutBtn" class="user-btn btn-delete"
-                                style="width: auto; cursor: pointer; border-color: red; color: red; font-weight: bold; text-transform: uppercase; margin-top: 10px;" data-i18n="nav_logout">Выйти</button>
-                        </div>
-
-                        <!-- Блок удаления аккаунта -->
-                        <div id="deleteAccountSection" class="animate-fade-in"
-                            style="border: 2px solid #ff4444; padding: 25px; background: rgba(255, 68, 68, 0.02); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 15px;">
-                            <h3
-                                style="margin-top: 0; color: #ff4444; border-bottom: 2px dashed #ff4444; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_delete_title">
-                                УДAЛЕНИЕ АККАУНТА</h3>
-                            <div id="deleteStep1">
-                                <p style="font-size: 11px; margin-bottom: 15px; color: #ff8888;" data-i18n="profile_delete_confirm">Внимание! Это действие необратимо. Все ваши данные будут стерты навсегда.</p>
-                                <button id="requestDeleteBtn" class="user-btn btn-delete"
-                                    style="width: auto; cursor: pointer; border-color: red; color: red; font-weight: bold; text-transform: uppercase;" data-i18n="profile_delete_btn">УДAЛИТЬ АККАУНТ</button>
-                            </div>
-                            <div id="deleteStep2" style="display: none; margin-top: 15px;">
-                                <p style="font-size: 11px; margin-bottom: 15px; color: yellow;" data-i18n="profile_delete_code_sent">Код подтверждения отправлен на вашу почту. Введите его для подтверждения удаления:</p>
-                                <div
+                            <!-- Блок подтверждения email -->
+                            <div id="verifySection" class="verify-section"
+                                style="display:none; border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 0;">
+                                <h3
+                                    style="margin-top: 0; color: #00ccff; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_email_verification">
+                                    Подтверждение почты</h3>
+                                <p class="verify-hint" style="font-size: 11px; margin-bottom: 15px;" data-i18n="profile_email_verification_hint">На вашу почту отправлен
+                                    код. Введите его ниже:</p>
+                                <div class="verify-group"
                                     style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-                                    <input type="text" id="deleteConfirmCode" data-i18n-placeholder="profile_delete_code_placeholder" placeholder="Код из письма"
-                                        style="background: black; color: white; border: 2px solid #ff4444; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
-                                    <button id="confirmDeleteBtn" class="user-btn btn-delete"
-                                        style="width: auto; cursor: pointer; text-transform: uppercase;" data-i18n="profile_confirm_delete_btn">Подтвердить удаление</button>
+                                    <input type="text" id="verifyCode" maxlength="6" data-i18n-placeholder="profile_delete_code_placeholder" placeholder="6-значный код"
+                                        style="background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
+                                    <button id="verifyBtn" class="auth-btn"
+                                        style="padding: 10px; font-size: 12px; width: auto; cursor: pointer;" data-i18n="profile_verify_btn">Подтвердить</button>
+                                </div>
+                                <div id="verifyMessage" class="verify-message" style="margin-top: 10px;"></div>
+
+                                <div id="changeEmailSection"
+                                    style="margin-top: 15px; border-top: 2px dashed rgba(255, 255, 255, 0.2); padding-top: 15px; width: 100%;">
+                                    <p style="font-size: 11px; margin-bottom: 8px; color: #aaa;" data-i18n="profile_new_email_hint">Не пришел код или
+                                        опечатались в адресе?</p>
+                                    <div style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;">
+                                        <input type="email" id="newEmailInput" data-i18n-placeholder="profile_new_email_placeholder" placeholder="Новый email"
+                                            style="flex-grow: 1; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 11px; outline: none; box-sizing: border-box;">
+                                        <button id="changeEmailBtn" class="user-btn"
+                                            style="padding: 10px; font-size: 11px; cursor: pointer; white-space: nowrap;" data-i18n="profile_new_email_btn">Сменить
+                                            email</button>
+                                    </div>
+                                    <div id="changeEmailMessage" style="margin-top: 8px; font-size: 11px;"></div>
                                 </div>
                             </div>
-                            <div id="deleteMessage" style="margin-top: 10px; font-size: 11px;"></div>
+
+                            <!-- Блок Выхода из аккаунта -->
+                            <div id="logoutSection" class="animate-fade-in"
+                                style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 20px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 0;">
+                                <h3 style="margin-top: 0; color: #ff3333; border-bottom: 2px dashed rgba(255, 255, 255, 0.2); padding-bottom: 8px; text-transform: uppercase;" data-i18n="nav_logout">ВЫЙТИ ИЗ АККАУНТА</h3>
+                                <button id="profileLogoutBtn" class="user-btn btn-delete"
+                                    style="width: auto; cursor: pointer; border-color: red; color: red; font-weight: bold; text-transform: uppercase; margin-top: 10px;" data-i18n="nav_logout">Выйти</button>
+                            </div>
+                        </div>
+
+                        <!-- Правая колонка настроек -->
+                        <div class="settings-right-col" style="flex: 1.2; min-width: 320px; max-width: 500px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+                            <!-- Блок смены логина/пароля -->
+                            <div id="updateSection" class="animate-fade-in"
+                                style="border: 2px solid rgba(255, 255, 255, 0.25); padding: 25px; background: rgba(255, 255, 255, 0.01); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 0;">
+                                <h3
+                                    style="margin-top: 0; color: #ff8c00; border-bottom: 2px dashed white; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_settings_title">
+                                    СМЕНИТЬ ЛОГИН И ПАРОЛЬ</h3>
+                                <div class="update-box"
+                                    style="margin-top: 20px; border: 2px solid rgba(255, 255, 255, 0.2); padding: 20px; background: rgba(255,255,255,0.01);">
+                                    <form id="updateForm" class="auth-form"
+                                        style="max-width: 100%; display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                                        <div class="input-group" style="margin-bottom: 0; width: 100%;">
+                                            <input type="text" id="newUsername" maxlength="20"
+                                                data-i18n-placeholder="profile_new_username_placeholder"
+                                                placeholder="Введите новый логин"
+                                                style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
+                                        </div>
+                                        <div class="input-group" style="margin-bottom: 0; width: 100%;">
+                                            <input type="password" id="newPassword" data-i18n-placeholder="profile_new_password_placeholder" placeholder="Введите новый пароль"
+                                                style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
+                                        </div>
+                                        <div class="input-group" style="margin-bottom: 0; width: 100%;">
+                                            <input type="password" id="currentPassword" data-i18n-placeholder="profile_curr_password_placeholder" placeholder="Текущий пароль"
+                                                style="width: 100%; background: black; color: white; border: 2px solid white; padding: 10px; font-family: inherit; font-size: 12px; box-sizing: border-box; outline: none;">
+                                        </div>
+                                        <div style="text-align: center; width: 100%;">
+                                            <button type="submit" class="auth-btn"
+                                                style="width: auto; padding: 10px 20px; font-size: 12px; cursor: pointer; border-color: green; color: green; font-weight: bold; text-transform: uppercase;" data-i18n="profile_save_settings">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
+                                        </div>
+                                        <div id="message" style="margin-top: 10px;"></div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Блок удаления аккаунта -->
+                            <div id="deleteAccountSection" class="animate-fade-in"
+                                style="border: 2px solid #ff4444; padding: 25px; background: rgba(255, 68, 68, 0.02); width: 100%; max-width: 500px; box-sizing: border-box; text-align: center; margin-top: 0;">
+                                <h3
+                                    style="margin-top: 0; color: #ff4444; border-bottom: 2px dashed #ff4444; padding-bottom: 8px; text-transform: uppercase;" data-i18n="profile_delete_title">
+                                    УДAЛЕНИЕ АККАУНТА</h3>
+                                <div id="deleteStep1">
+                                    <p style="font-size: 11px; margin-bottom: 15px; color: #ff8888;" data-i18n="profile_delete_confirm">Внимание! Это действие необратимо. Все ваши данные будут стерты навсегда.</p>
+                                    <button id="requestDeleteBtn" class="user-btn btn-delete"
+                                        style="width: auto; cursor: pointer; border-color: red; color: red; font-weight: bold; text-transform: uppercase;" data-i18n="profile_delete_btn">УДAЛИТЬ АККАУНТ</button>
+                                </div>
+                                <div id="deleteStep2" style="display: none; margin-top: 15px;">
+                                    <p style="font-size: 11px; margin-bottom: 15px; color: yellow;" data-i18n="profile_delete_code_sent">Код подтверждения отправлен на вашу почту. Введите его для подтверждения удаления:</p>
+                                    <div
+                                        style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
+                                        <input type="text" id="deleteConfirmCode" data-i18n-placeholder="profile_delete_code_placeholder" placeholder="Код из письма"
+                                            style="background: black; color: white; border: 2px solid #ff4444; padding: 10px; font-family: inherit; font-size: 12px; text-align: center; width: 100%; box-sizing: border-box; outline: none;">
+                                        <button id="confirmDeleteBtn" class="user-btn btn-delete"
+                                            style="width: auto; cursor: pointer; text-transform: uppercase;" data-i18n="profile_confirm_delete_btn">Подтвердить удаление</button>
+                                    </div>
+                                </div>
+                                <div id="deleteMessage" style="margin-top: 10px; font-size: 11px;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>

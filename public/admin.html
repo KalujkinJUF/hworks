@@ -38,6 +38,19 @@
                         <div id="usersList"></div>
                     </div>
 
+                    <!-- Управление Сервисом -->
+                    <div class="service-management" style="display: none; margin-top: 20px; border-top: 1px dashed white; padding-top: 15px;">
+                        <h2 style="font-size: 14px; color: yellow; margin-bottom: 15px; text-transform: uppercase;">Управление сервисом</h2>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                            <button id="toggleMaintenanceBtn" class="user-btn" style="padding: 10px; font-size: 11px; cursor: pointer;"></button>
+                            <span id="maintenanceStatus" style="font-size: 11px; font-weight: bold;">Загрузка...</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button id="updateServiceBtn" class="user-btn" style="padding: 10px; font-size: 11px; cursor: pointer; border-color: #ff4444; color: #ff4444;">ОБНОВИТЬ СЕРВИС</button>
+                            <span id="updateStatus" style="font-size: 11px; color: #aaa;"></span>
+                        </div>
+                    </div>
+
                     <div id="adminMessage" class="admin-message"></div>
                 </div>
             </div>

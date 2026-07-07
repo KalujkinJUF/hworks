@@ -316,6 +316,109 @@ function initializeAdmin(myData) {
         adminSearchInput.addEventListener("input", () => renderUsers());
     }
 
+    // Управление сервисом (только для админа)
+    const serviceMgmtDiv = document.querySelector(".service-management");
+    if (serviceMgmtDiv) {
+        if (isAdmin) {
+            serviceMgmtDiv.style.display = "block";
+            initServiceManagement();
+        } else {
+            serviceMgmtDiv.style.display = "none";
+        }
+    }
+
+    function initServiceManagement() {
+        const toggleBtn = document.getElementById("toggleMaintenanceBtn");
+        const statusSpan = document.getElementById("maintenanceStatus");
+        const updateBtn = document.getElementById("updateServiceBtn");
+        const updateStatus = document.getElementById("updateStatus");
+
+        let maintenanceActive = false;
+
+        function updateMaintenanceUI() {
+            if (maintenanceActive) {
+                toggleBtn.textContent = "ВЫКЛЮЧИТЬ ОБСЛУЖИВАНИЕ";
+                toggleBtn.style.borderColor = "#2ecc71";
+                toggleBtn.style.color = "#2ecc71";
+                statusSpan.textContent = "АКТИВЕН";
+                statusSpan.style.color = "#ff4444";
+            } else {
+                toggleBtn.textContent = "ВКЛЮЧИТЬ ОБСЛУЖИВАНИЕ";
+                toggleBtn.style.borderColor = "#ff4444";
+                toggleBtn.style.color = "#ff4444";
+                statusSpan.textContent = "ВЫКЛЮЧЕН";
+                statusSpan.style.color = "#2ecc71";
+            }
+        }
+
+        // Загрузить статус
+        fetch("/api/admin/maintenance", { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                maintenanceActive = !!data.enabled;
+                updateMaintenanceUI();
+            })
+            .catch(err => console.error(err));
+
+        // Переключить статус
+        toggleBtn.onclick = () => {
+            toggleBtn.disabled = true;
+            fetch("/api/admin/maintenance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: 'include',
+                body: JSON.stringify({ enabled: !maintenanceActive })
+            })
+            .then(res => res.json())
+            .then(data => {
+                toggleBtn.disabled = false;
+                if (data.message) {
+                    maintenanceActive = !maintenanceActive;
+                    updateMaintenanceUI();
+                } else if (data.error) {
+                    window.showCustomAlert(data.error);
+                }
+            })
+            .catch(err => {
+                toggleBtn.disabled = false;
+                console.error(err);
+            });
+        };
+
+        // Обновить сервис
+        updateBtn.onclick = async () => {
+            if (!await window.showCustomConfirm("Вы уверены, что хотите обновить сервис? Будет выполнен git pull и перезапуск.")) return;
+            updateBtn.disabled = true;
+            updateStatus.textContent = "Выполняется обновление...";
+            updateStatus.style.color = "yellow";
+
+            fetch("/api/admin/update-service", {
+                method: "POST",
+                credentials: 'include'
+            })
+            .then(res => res.json())
+            .then(data => {
+                updateBtn.disabled = false;
+                if (data.message) {
+                    updateStatus.textContent = "Обновление завершено успешно!";
+                    updateStatus.style.color = "#00ff00";
+                    window.showCustomAlert("Сервис успешно обновлен!");
+                } else {
+                    const errMsg = data.error || "Ошибка обновления";
+                    updateStatus.textContent = "Ошибка: " + errMsg;
+                    updateStatus.style.color = "#ff4444";
+                    window.showCustomAlert("Ошибка обновления:\n" + errMsg);
+                }
+            })
+            .catch(err => {
+                updateBtn.disabled = false;
+                updateStatus.textContent = "Ошибка сети при обновлении";
+                updateStatus.style.color = "#ff4444";
+                console.error(err);
+            });
+        };
+    }
+
     // Функция для экранирования HTML
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';

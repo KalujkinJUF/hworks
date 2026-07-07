@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voidtree - Технические работы</title>
+    <link rel="stylesheet" id="theme-link" href="default.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: black;
+        }
+        .maintenance-card {
+            border: 2px solid white;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            background: black;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+        .maintenance-title {
+            color: #ff4444;
+            font-size: 20px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .maintenance-text {
+            color: #ccc;
+            font-size: 12px;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-card">
+        <div class="maintenance-title">СЕРВИС НА ОБСЛУЖИВАНИИ</div>
+        <div class="maintenance-text">
+            В данный момент проводятся плановые технические работы.<br>
+            Доступ временно ограничен.<br>
+            Пожалуйста, зайдите позже.
+        </div>
+    </div>
+    <script>
+        // Применяем тему из localStorage
+        try {
+            const savedTheme = localStorage.getItem('theme');
+            const themeLink = document.getElementById('theme-link');
+            if (savedTheme === 'aero') {
+                themeLink.href = 'aero.css';
+            } else {
+                themeLink.href = 'default.css';
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    </script>
+</body>
+</html>

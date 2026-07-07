@@ -1,70 +1,44 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const serverUrlInput = document.getElementById('server-url');
-    const connectBtn = document.getElementById('connect-btn');
-    const messageDiv = document.getElementById('message');
+    const loadingView = document.getElementById('loading-view');
+    const maintenanceView = document.getElementById('maintenance-view');
+    const retryBtn = document.getElementById('retry-btn');
+    const appVersionSpan = document.getElementById('app-version');
 
     // Получаем и выводим текущую версию
     if (window.api && window.api.getVersion) {
         window.api.getVersion().then(version => {
-            const versionSpan = document.getElementById('app-version');
-            if (versionSpan) {
-                versionSpan.textContent = version;
+            if (appVersionSpan) {
+                appVersionSpan.textContent = version;
             }
         }).catch(err => {
             console.error('Ошибка получения версии:', err);
         });
     }
 
-    // Восстанавливаем последний введенный адрес для удобства
-    const savedUrl = localStorage.getItem('last_server_url');
-    if (savedUrl) {
-        serverUrlInput.value = savedUrl;
-    }
+    function doConnect() {
+        loadingView.style.display = 'flex';
+        maintenanceView.style.display = 'none';
 
-    connectBtn.addEventListener('click', () => {
-        const url = serverUrlInput.value.trim();
-        if (!url) {
-            showMessage('ВВЕДИТЕ АДРЕС СЕРВЕРА', 'red');
-            return;
-        }
-
-        localStorage.setItem('last_server_url', url);
-        
-        connectBtn.disabled = true;
-        connectBtn.textContent = 'ПИНГ...';
-        
-        window.api.tryConnect(url);
-    });
-
-    // Обработка ввода клавиши Enter
-    serverUrlInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            connectBtn.click();
-        }
-    });
-
-    window.api.onStatusUpdate((status) => {
-        showMessage(status.toUpperCase(), 'yellow');
-    });
-
-    window.api.onConnectionFailed((error) => {
-        connectBtn.disabled = false;
-        connectBtn.textContent = 'ПОДКЛЮЧИТЬСЯ';
-        showMessage(`ОШИБКА: ${error.toUpperCase()}`, 'red');
-    });
-
-    window.api.onConnectionError((error) => {
-        showMessage(`СЕРВЕР НЕДОСТУПЕН:\n${error.toUpperCase()}`, 'red');
-    });
-
-    function showMessage(text, color) {
-        messageDiv.textContent = text;
-        if (color === 'red') {
-            messageDiv.style.color = '#ff4444';
-        } else if (color === 'yellow') {
-            messageDiv.style.color = '#ffff00';
+        if (window.api && window.api.autoConnect) {
+            window.api.autoConnect()
+                .catch((err) => {
+                    console.error("Connection failed:", err);
+                    loadingView.style.display = 'none';
+                    maintenanceView.style.display = 'flex';
+                });
         } else {
-            messageDiv.style.color = '#00ff00';
+            console.error("Tauri API is not available.");
+            loadingView.style.display = 'none';
+            maintenanceView.style.display = 'flex';
         }
     }
+
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+            doConnect();
+        });
+    }
+
+    // Запускаем подключение при старте
+    doConnect();
 });

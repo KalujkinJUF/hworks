@@ -113,6 +113,47 @@ fn try_connect(app: AppHandle, window: WebviewWindow, url: String) -> Result<Str
     }
 }
 
+#[tauri::command]
+fn auto_connect(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+    let mut config = read_config(&app);
+    let mut version_changed = false;
+    let current_ver = get_version();
+    if config.last_version.as_ref() != Some(&current_ver) {
+        config.last_version = Some(current_ver.clone());
+        write_config(&app, &config);
+        version_changed = true;
+    }
+
+    let url = config.server_url.clone().unwrap_or_else(|| "https://hworks.space".to_string());
+    let clean_url = normalize_url(&url);
+
+    match test_connection(&clean_url) {
+        Ok(()) => {
+            if config.server_url.is_none() {
+                config.server_url = Some(clean_url.clone());
+                write_config(&app, &config);
+            }
+            
+            let target_url_str = if version_changed {
+                format!("{}?clear_session=true", clean_url.trim_end_matches('/'))
+            } else {
+                clean_url.clone()
+            };
+            
+            let target_url = tauri::Url::parse(&target_url_str).map_err(|e| e.to_string())?;
+            let _ = window.navigate(target_url);
+            
+            let check_url = clean_url.clone();
+            let app_clone = app.clone();
+            std::thread::spawn(move || {
+                let _ = check_for_updates(&app_clone, &check_url);
+            });
+            Ok(())
+        }
+        Err(err) => Err(err)
+    }
+}
+
 fn check_for_updates(app: &AppHandle, server_url: &str) -> Result<(), String> {
     let version_url = format!("{}/api/version", server_url.trim_end_matches('/'));
     let agent = ureq::AgentBuilder::new()
@@ -328,61 +369,6 @@ pub fn run() {
             .build(app)
             .unwrap();
 
-        let handle = app.handle().clone();
-        std::thread::spawn(move || {
-            let mut config = read_config(&handle);
-            let mut version_changed = false;
-            let current_ver = get_version();
-            if config.last_version.as_ref() != Some(&current_ver) {
-                config.last_version = Some(current_ver.clone());
-                write_config(&handle, &config);
-                version_changed = true;
-            }
-
-            if let Some(ref saved_url) = config.server_url {
-                let clean_url = normalize_url(saved_url);
-                if test_connection(&clean_url).is_ok() {
-                    if let Some(window) = handle.get_webview_window("main") {
-                        let target_url_str = if version_changed {
-                            format!("{}?clear_session=true", clean_url.trim_end_matches('/'))
-                        } else {
-                            clean_url.clone()
-                        };
-                        if let Ok(target_url) = tauri::Url::parse(&target_url_str) {
-                            let _ = window.navigate(target_url);
-                            let check_url = clean_url.clone();
-                            let app_clone = handle.clone();
-                            std::thread::spawn(move || {
-                                let _ = check_for_updates(&app_clone, &check_url);
-                            });
-                        }
-                    }
-                }
-            } else {
-                let default_cloud = "https://hworks.space".to_string();
-                if test_connection(&default_cloud).is_ok() {
-                    if let Some(window) = handle.get_webview_window("main") {
-                        let target_url_str = if version_changed {
-                            format!("{}?clear_session=true", default_cloud.trim_end_matches('/'))
-                        } else {
-                            default_cloud.clone()
-                        };
-                        if let Ok(target_url) = tauri::Url::parse(&target_url_str) {
-                            let _ = window.navigate(target_url);
-                            write_config(&handle, &AppConfig {
-                                server_url: Some(default_cloud.clone()),
-                                last_version: Some(current_ver),
-                            });
-                            let check_url = default_cloud.clone();
-                            let app_clone = handle.clone();
-                            std::thread::spawn(move || {
-                                let _ = check_for_updates(&app_clone, &check_url);
-                            });
-                        }
-                    }
-                }
-            }
-        });
         Ok(())
     })
     .on_window_event(|window, event| {
@@ -391,7 +377,7 @@ pub fn run() {
             api.prevent_close();
         }
     })
-    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window, open_url])
+    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window, open_url, auto_connect])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

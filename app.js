@@ -34,6 +34,80 @@ const { setCsrfToken, verifyCsrfToken, getCsrfToken } = require('./middleware/cs
 // Cookie parser для чтения JWT из httpOnly cookie
 app.use(cookieParser());
 
+// Режим обслуживания (maintenance mode)
+const fs = require('fs');
+const path = require('path');
+const maintenanceFile = path.join(__dirname, 'maintenance.json');
+
+function isMaintenanceMode() {
+    if (fs.existsSync(maintenanceFile)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(maintenanceFile, 'utf8'));
+            return !!data.enabled;
+        } catch (e) {}
+    }
+    return false;
+}
+
+function checkAdminRole(userId) {
+    return new Promise((resolve) => {
+        db.query('SELECT role FROM users WHERE id = ?', [userId], (err, results) => {
+            if (err || results.length === 0) return resolve(false);
+            resolve(results[0].role === 'admin');
+        });
+    });
+}
+
+app.use(async (req, res, next) => {
+    if (!isMaintenanceMode()) {
+        return next();
+    }
+
+    let isAdminUser = false;
+    const token = req.cookies.token;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+            if (decoded && decoded.id) {
+                isAdminUser = await checkAdminRole(decoded.id);
+            }
+        } catch (e) {}
+    }
+
+    if (isAdminUser) {
+        return next();
+    }
+
+    const allowedUrls = [
+        '/maintenance.html',
+        '/login.html',
+        '/aero.css',
+        '/default.css',
+        '/spa.js',
+        '/csrf.js',
+        '/i18n.js',
+        '/api/csrf-token',
+        '/api/health',
+        '/api/version',
+        '/api/users/login'
+    ];
+
+    const cleanPath = req.path.toLowerCase();
+    if (allowedUrls.some(url => cleanPath.startsWith(url.toLowerCase())) || cleanPath.startsWith('/api/admin')) {
+        return next();
+    }
+
+    if (cleanPath.endsWith('.png') || cleanPath.endsWith('.jpg') || cleanPath.endsWith('.ico') || cleanPath.endsWith('.ttf') || cleanPath.endsWith('.js') || cleanPath.endsWith('.css')) {
+        return next();
+    }
+
+    if (cleanPath.startsWith('/api')) {
+        return res.status(503).json({ error: 'maintenance' });
+    }
+
+    res.redirect('/maintenance.html');
+});
+
 // Ответы API нельзя кэшировать: они зависят от авторизации и конкретного пользователя.
 // Без этого Express отдаёт ETag, браузер ревалидирует и получает 304, а fetch трактует
 // 304 как res.ok === false → ложный редирект «войдите в систему» на странице профиля.
@@ -99,7 +173,6 @@ app.use(bodyParser.json({ limit: '1mb' }));
 // Подключаем маршруты (после middleware) с CSRF защитой для state-changing методов
 app.use('/api/admin', verifyCsrfToken, adminRoutes);
 
-const path = require('path');
 // Подключаем маршруты пользователей с CSRF защитой
 app.use('/api/users', verifyCsrfToken, userRoutes);
 // Подключаем маршруты друзей с CSRF защитой

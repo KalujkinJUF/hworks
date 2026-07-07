@@ -140,4 +140,44 @@ router.delete('/user/:id', verifyToken, requireAdmin, (req, res) => {
     });
 });
 
+const fs = require('fs');
+const path = require('path');
+const maintenanceFile = path.join(__dirname, '../maintenance.json');
+
+// Получить статус режима обслуживания
+router.get('/maintenance', verifyToken, requireAdmin, (req, res) => {
+    let enabled = false;
+    if (fs.existsSync(maintenanceFile)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(maintenanceFile, 'utf8'));
+            enabled = !!data.enabled;
+        } catch (e) {}
+    }
+    res.json({ enabled });
+});
+
+// Переключить режим обслуживания
+router.post('/maintenance', verifyToken, requireAdmin, (req, res) => {
+    const { enabled } = req.body;
+    try {
+        fs.writeFileSync(maintenanceFile, JSON.stringify({ enabled: !!enabled }));
+        res.json({ message: `Режим обслуживания ${enabled ? 'включен' : 'выключен'}` });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка записи настроек' });
+    }
+});
+
+const { exec } = require('child_process');
+
+// Обновление сервиса (git pull + pm2 restart)
+router.post('/update-service', verifyToken, requireAdmin, (req, res) => {
+    const scriptPath = path.join(__dirname, '../update.sh');
+    exec(`bash "${scriptPath}"`, (err, stdout, stderr) => {
+        if (err) {
+            return res.status(500).json({ error: 'Ошибка при обновлении: ' + err.message, stderr });
+        }
+        res.json({ message: 'Сервис успешно обновлен', stdout, stderr });
+    });
+});
+
 module.exports = router;

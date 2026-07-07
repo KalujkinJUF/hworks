@@ -51,17 +51,15 @@
                     <!-- Форма создания поста (только админ/модератор) -->
                     <div id="postFormSection" class="post-form-section" style="display:none;">
                         <textarea id="postContent" rows="3" data-i18n-placeholder="write_post_placeholder" placeholder="Напишите пост..." maxlength="4000"></textarea>
-                        <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; margin-top: 8px; margin-bottom: 8px; width: 100%;">
+                        <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; margin-top: 8px; width: 100%; box-sizing: border-box; flex-wrap: wrap;">
+                            <button id="postNewsBtn" class="auth-btn" style="width: auto; flex: 0 0 auto; display: inline-block; padding: 8px 20px; font-size: 12px; margin: 0;" data-i18n="publish_post">Опубликовать пост</button>
+                            <button id="postPatchBtn" class="user-btn" style="width: auto; border-color: #ff8c00; color: #ff8c00; margin: 0; padding: 8px 20px; font-size: 12px;" data-i18n="publish_update">Обновление</button>
                             <input type="file" id="postFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
-                            <button id="postAttachBtn" class="user-btn" style="width: auto; padding: 6px 12px; font-size: 11px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" data-i18n="attach_file">Прикрепить файл</button>
+                            <button id="postAttachBtn" class="user-btn" style="width: auto; padding: 8px 20px; font-size: 12px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" data-i18n="attach_file">Прикрепить файл</button>
                             <span id="postAttachedFileName" style="font-size: 11px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>
-                            <button id="postClearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 6px 12px; font-size: 11px; border-color: red; color: red; margin: 0; cursor: pointer;" data-i18n="delete">Удалить</button>
+                            <button id="postClearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 8px 20px; font-size: 12px; border-color: red; color: red; margin: 0; cursor: pointer;" data-i18n="delete">Удалить</button>
                         </div>
-                        <div class="post-form-controls">
-                            <button id="postNewsBtn" class="auth-btn" style="width: auto; flex: 0 0 auto; display: inline-block; padding: 8px 20px; font-size: 12px;" data-i18n="publish_post">Опубликовать пост</button>
-                            <button id="postPatchBtn" class="user-btn" style="border-color: #ff8c00; color: #ff8c00;" data-i18n="publish_update">Обновление</button>
-                        </div>
-                        <div id="postMessage" class="verify-message"></div>
+                        <div id="postMessage" class="verify-message" style="margin-top: 8px;"></div>
                     </div>
 
                     <!-- Список постов -->

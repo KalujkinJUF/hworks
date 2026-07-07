@@ -864,7 +864,7 @@ textarea#aboutMe:focus {
 }
 
 .admin-pin-content {
-    font-size: 10px;
+    font-size: 14px;
     line-height: 1.4;
     word-break: break-word;
     color: rgba(255, 255, 255, 0.85);
@@ -877,7 +877,7 @@ textarea#aboutMe:focus {
     border: 2px solid white;
     padding: 8px;
     font-family: 'PublicPixel-rv0pA', monospace;
-    font-size: 10px;
+    font-size: 14px;
     resize: vertical;
     outline: none;
     box-sizing: border-box;

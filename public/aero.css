@@ -3439,7 +3439,7 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
 
 /* Увеличение шрифтов для темы Aero */
 body, p, span, div, input, textarea, button, select, a {
-    font-size: 18px;
+    font-size: 15px;
 }
 h2 {
     font-size: 20px !important;

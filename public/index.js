@@ -225,9 +225,17 @@ document.addEventListener('spa:navigate', () => {
                         <div id="commentsList-${post.id}" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
                             <p class="loading-text" style="font-size: 10px;">${window.t('loading', 'Загрузка...')}</p>
                         </div>
-                        <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; gap: 8px;">
-                            <input type="text" id="commentInput-${post.id}" placeholder="${window.t('write_comment_placeholder', 'Напишите комментарий...')}" style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
-                            <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">${window.t('send', 'Отправить')}</button>
+                        <form onsubmit="submitPostComment(event, ${post.id})" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                            <div style="display: flex; gap: 8px; width: 100%;">
+                                <input type="text" id="commentInput-${post.id}" placeholder="${window.t('write_comment_placeholder', 'Напишите комментарий...')}" style="flex: 1; background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;" maxlength="1000">
+                                <button type="submit" class="auth-btn" style="padding: 5px 10px; font-size: 10px; width: auto; margin: 0; cursor: pointer;">${window.t('send', 'Отправить')}</button>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; width: 100%; margin-top: 2px;">
+                                <input type="file" id="commentFileInput-${post.id}" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" onchange="commentFileChanged(${post.id})">
+                                <button type="button" class="user-btn" style="width: auto; padding: 4px 8px; font-size: 9px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" onclick="document.getElementById('commentFileInput-${post.id}').click()">${window.t('attach_file', 'Прикрепить файл')}</button>
+                                <span id="commentAttachedFileName-${post.id}" style="font-size: 10px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>
+                                <button type="button" id="commentClearAttachBtn-${post.id}" class="user-btn" style="display: none; width: auto; padding: 4px 8px; font-size: 9px; border-color: red; color: red; margin: 0; cursor: pointer;" onclick="clearCommentAttachment(${post.id})">${window.t('delete', 'Удалить')}</button>
+                            </div>
                         </form>
                     </div>
                 `;
@@ -523,6 +531,7 @@ document.addEventListener('spa:navigate', () => {
                                 <span class="wall-comment-date" style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
                             </div>
                             <div style="font-size: 12px; color: #eee; margin-top: 4px; word-break: break-word; line-height: 1.4;">${escapeHtml(comment.content)}</div>
+                            ${window.mediaListHtml ? window.mediaListHtml(comment.media, comment.image_url, 200, 'comment-media-box') : ''}
                             ${repliesHTML}
                         </div>
                     `;
@@ -543,15 +552,60 @@ document.addEventListener('spa:navigate', () => {
         }
     };
 
+    window.commentFileChanged = function(postId) {
+        const fileInput = document.getElementById(`commentFileInput-${postId}`);
+        const fileNameSpan = document.getElementById(`commentAttachedFileName-${postId}`);
+        const clearBtn = document.getElementById(`commentClearAttachBtn-${postId}`);
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            fileNameSpan.textContent = fileInput.files[0].name;
+            clearBtn.style.display = 'inline-block';
+        }
+    };
+
+    window.clearCommentAttachment = function(postId) {
+        const fileInput = document.getElementById(`commentFileInput-${postId}`);
+        const fileNameSpan = document.getElementById(`commentAttachedFileName-${postId}`);
+        const clearBtn = document.getElementById(`commentClearAttachBtn-${postId}`);
+        if (fileInput) fileInput.value = '';
+        if (fileNameSpan) fileNameSpan.textContent = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+    };
+
     window.submitPostComment = async function (event, postId) {
         event.preventDefault();
 
         const input = document.getElementById(`commentInput-${postId}`);
         if (!input) return;
         const content = input.value.trim();
-        if (!content) return;
+        
+        const fileInput = document.getElementById(`commentFileInput-${postId}`);
+        const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+        if (!content && !hasFile) return;
 
         const parentId = input.dataset.parentId || null;
+
+        let mediaUrls = [];
+        if (hasFile) {
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            try {
+                const uploadRes = await fetch("/api/users/upload-media", {
+                    method: "POST",
+                    credentials: 'include',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                if (uploadData.error) {
+                    await window.showCustomAlert(uploadData.error);
+                    return;
+                }
+                mediaUrls.push(uploadData.url);
+            } catch (err) {
+                await window.showCustomAlert(window.t ? window.t('error_network', 'Ошибка загрузки медиа') : 'Ошибка загрузки медиа');
+                return;
+            }
+        }
 
         fetch(`/api/users/posts/${postId}/comments`, {
             method: "POST",
@@ -559,13 +613,14 @@ document.addEventListener('spa:navigate', () => {
                 "Content-Type": "application/json"
             },
             credentials: 'include',
-            body: JSON.stringify({ content, parent_id: parentId })
+            body: JSON.stringify({ content, parent_id: parentId, media: mediaUrls })
         })
             .then(res => res.json())
             .then(async data => {
                 if (data.commentId) {
                     input.value = "";
                     delete input.dataset.parentId;
+                    window.clearCommentAttachment(postId);
                     loadPostComments(postId);
                 } else if (data.error) {
                     await window.showCustomAlert(data.error);

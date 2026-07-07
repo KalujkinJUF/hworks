@@ -50,7 +50,7 @@ router.get('/', (req, res) => {
                  FROM users u
                  INNER JOIN friends f ON (f.user_id = u.id OR f.friend_id = u.id)
                  WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted' AND u.id != ?
-                 ORDER BY COALESCE(last_message_time, '1970-01-01 00:00:00') DESC, u.username ASC
+                 ORDER BY GREATEST(COALESCE(last_message_time, '1970-01-01 00:00:00'), f.created_at) DESC, u.username ASC
                  LIMIT ? OFFSET ?`,
                 [userId, userId, userId, userId, userId, limit, offset],
                 (err, results) => {

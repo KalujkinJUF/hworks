@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const sanitizeHtml = require('sanitize-html');
 const { verifyToken } = require('../middleware/auth');
 const { requireAdmin, requireAdminOrModerator, requireHierarchy } = require('../middleware/rbac');
-const { encrypt, hashValue } = require('../config/crypto');
+const { encrypt, decrypt, hashValue } = require('../config/crypto');
 const db = require('../config/db');
 
 const sanitize = (dirty) => sanitizeHtml(dirty, {
@@ -19,9 +19,14 @@ router.get('/dashboard', verifyToken, requireAdminOrModerator, (req, res) => {
         if (error) {
             return res.status(500).send('Database error');
         }
+        const decryptedUsers = results.map(u => ({
+            ...u,
+            about: decrypt(u.about),
+            email: decrypt(u.email)
+        }));
         res.json({
             message: "Панель управления",
-            users: results
+            users: decryptedUsers
         });
     });
 });
@@ -42,8 +47,8 @@ router.put('/user/:id/role', verifyToken, requireAdmin, (req, res) => {
 // Редактировать "обо мне" — админ и модератор
 router.put('/user/:id/about', verifyToken, requireAdminOrModerator, requireHierarchy, (req, res) => {
     const { about } = req.body;
-    // Санитизируем от XSS и шифруем — как в пользовательском пути (config/crypto)
-    const sanitizedAbout = about != null ? encrypt(sanitize(String(about))) : about;
+    // Санитизируем от XSS
+    const sanitizedAbout = about != null ? sanitize(String(about)) : about;
     db.query('UPDATE users SET about = ? WHERE id = ?', [sanitizedAbout, req.params.id], (error, result) => {
         if (error) return res.status(500).json({ error: 'Database error' });
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });

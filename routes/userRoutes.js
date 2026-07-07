@@ -148,7 +148,6 @@ const findUser = (id) => {
         db.query('SELECT id, username, role, about, email FROM users WHERE id = ?', [id], (err, results) => {
             if (err) return reject(err);
             if (results[0]) {
-                results[0].email = decrypt(results[0].email);
                 results[0].about = decrypt(results[0].about);
             }
             resolve(results[0]);
@@ -175,7 +174,7 @@ router.get('/', (req, res) => {
 });
 
 // Поиск пользователей (с rate limit)
-router.get('/search', searchLimiter, (req, res) => {
+router.get('/search', verifyToken, verifyNotBanned, searchLimiter, (req, res) => {
     const q = req.query.q || '';
 
     const page = parseInt(req.query.page || '1', 10);
@@ -206,8 +205,12 @@ router.get('/search', searchLimiter, (req, res) => {
                         logger.error('Ошибка БД при поиске пользователей');
                         return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
                     }
+                    const decryptedUsers = results.map(u => ({
+                        ...u,
+                        about: decrypt(u.about)
+                    }));
                     res.json({
-                        users: results,
+                        users: decryptedUsers,
                         totalPages,
                         currentPage: page
                     });
@@ -472,14 +475,12 @@ router.get('/profile', verifyToken, verifyNotBanned, async (req, res) => {
             (err, results) => {
                 if (err || results.length === 0) return res.status(404).send('User not found');
                 const user = results[0];
-                user.email = decrypt(user.email);
                 user.about = decrypt(user.about);
                 updateLastActive(req.user.id);
                 db.query('UPDATE users SET last_viewed_wall = NOW() WHERE id = ?', [req.user.id]);
                 res.json({
                     id: user.id,
                     username: user.username,
-                    email: user.email,
                     verified: user.verified,
                     created_at: user.created_at,
                     about: user.about,
@@ -719,6 +720,10 @@ router.post('/posts', verifyToken, verifyNotBanned, loadRole, (req, res) => {
     const imageUrl = mediaArr[0] || sanitizeImageUrl(req.body.image_url);
     const mediaJson = mediaArr.length ? JSON.stringify(mediaArr) : null;
 
+    if (content && content.length > 4000) {
+        return res.status(400).json({ error: 'Пост не может быть длиннее 4000 символов' });
+    }
+
     // #4 разрешаем пост без текста, если приложено изображение
     if ((!content || content.trim() === '') && !imageUrl) {
         return res.status(400).json({ error: 'Контент не может быть пустым' });
@@ -780,8 +785,9 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
     if (parseInt(req.user.id) !== parseInt(userId)) {
         return res.status(403).json({ error: 'Доступ запрещен: нельзя редактировать чужой профиль' });
     }
+    let user;
     try {
-        const user = await findUser(userId);
+        user = await findUser(userId);
         if (!user) return res.status(404).send('User not found');
         if (user.role === 'banned') {
             return res.status(403).json({ error: 'Ваш аккаунт заблокирован. Изменения невозможны.' });
@@ -791,8 +797,59 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
     }
     const { username, password, currentPassword, about } = req.body;
 
+    const usernameTrim = username ? username.trim() : '';
+    const isPasswordChanging = typeof password === 'string' && password.trim() !== '';
+    const isUsernameChanging = usernameTrim && usernameTrim !== user.username;
+    const isAboutChanging = about !== undefined && about !== user.about;
+
+    if (about && about.length > 300) {
+        return res.status(400).json({ error: 'Биография не должна превышать 300 символов' });
+    }
+
+    if (isPasswordChanging || isUsernameChanging) {
+        const credentialCheck = await new Promise((resolve) => {
+            db.query('SELECT last_credential_edit FROM users WHERE id = ?', [userId], (err, results) => {
+                if (err || results.length === 0) return resolve({ allowed: true });
+                const lastEdit = results[0].last_credential_edit;
+                if (lastEdit) {
+                    const diffMs = Date.now() - new Date(lastEdit).getTime();
+                    if (diffMs < 24 * 60 * 60 * 1000) {
+                        const remainingMs = 24 * 60 * 60 * 1000 - diffMs;
+                        const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+                        const minutes = Math.ceil((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+                        return resolve({ allowed: false, remaining: `Смена логина или пароля возможна только раз в день. Осталось подождать ${hours} ч. ${minutes} мин.` });
+                    }
+                }
+                resolve({ allowed: true });
+            });
+        });
+        if (!credentialCheck.allowed) {
+            return res.status(429).json({ error: credentialCheck.remaining });
+        }
+    }
+
+    if (isAboutChanging) {
+        const profileCheck = await new Promise((resolve) => {
+            db.query('SELECT last_profile_edit FROM users WHERE id = ?', [userId], (err, results) => {
+                if (err || results.length === 0) return resolve({ allowed: true });
+                const lastEdit = results[0].last_profile_edit;
+                if (lastEdit) {
+                    const diffMs = Date.now() - new Date(lastEdit).getTime();
+                    if (diffMs < 15 * 1000) {
+                        const remainingSec = Math.ceil((15 * 1000 - diffMs) / 1000);
+                        return resolve({ allowed: false, remaining: `Вы не можете изменять профиль так часто. Подождите еще ${remainingSec} сек.` });
+                    }
+                }
+                resolve({ allowed: true });
+            });
+        });
+        if (!profileCheck.allowed) {
+            return res.status(429).json({ error: profileCheck.remaining });
+        }
+    }
+
     // Если меняется пароль — обязательно подтверждение текущим паролем
-    if (typeof password === 'string' && password.trim() !== '') {
+    if (isPasswordChanging) {
         if (!currentPassword || typeof currentPassword !== 'string') {
             return res.status(400).json({ error: 'Для смены пароля введите текущий пароль' });
         }
@@ -815,7 +872,6 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
     }
 
     // Валидация имени пользователя
-    const usernameTrim = username ? username.trim() : '';
     if (!usernameTrim) {
         return res.status(400).json({ error: 'Имя пользователя обязательно' });
     }
@@ -829,8 +885,13 @@ router.put('/:id', verifyToken, verifyNotBanned, profileUpdateLimiter, async (re
 
     try {
         const sanitizedAbout = about != null ? sanitize(String(about)) : about;
-        const encryptedAbout = encrypt(sanitizedAbout);
-        const result = await updateUser(userId, usernameTrim, password, encryptedAbout);
+        const result = await updateUser(userId, usernameTrim, password, sanitizedAbout);
+        if (isPasswordChanging || isUsernameChanging) {
+            await new Promise(r => db.query('UPDATE users SET last_credential_edit = NOW() WHERE id = ?', [userId], () => r()));
+        }
+        if (isAboutChanging) {
+            await new Promise(r => db.query('UPDATE users SET last_profile_edit = NOW() WHERE id = ?', [userId], () => r()));
+        }
         if (result.affectedRows === 0) return res.status(404).send('User not found');
         updateLastActive(userId);
 
@@ -954,13 +1015,21 @@ router.post('/subscribe/:id', verifyToken, verifyNotBanned, (req, res) => {
 });
 
 // Написать отзыв в профиле
+
+// Написать отзыв в профиле
 router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
     const targetId = parseInt(req.params.userId);
     const { content } = req.body;
+    const mediaArr = Array.isArray(req.body.media) ? req.body.media.map(sanitizeImageUrl).filter(Boolean).slice(0, 10) : [];
+    const imageUrl = mediaArr[0] || sanitizeImageUrl(req.body.image_url);
+    const mediaJson = mediaArr.length ? JSON.stringify(mediaArr) : null;
 
-    if (!content || content.trim() === '') {
+    if ((!content || content.trim() === '') && !imageUrl) {
         return res.status(400).json({ error: 'Комментарий не может быть пустым' });
+    }
+    if (content && content.length > 1000) {
+        return res.status(400).json({ error: 'Комментарий не может быть длиннее 1000 символов' });
     }
 
     db.query('SELECT role FROM users WHERE id = ?', [targetId], (err, targetUserRes) => {
@@ -993,11 +1062,11 @@ router.post('/comments/profile/:userId', verifyToken, verifyNotBanned, (req, res
                 }
 
                 // Санитизация комментария от XSS
-                const sanitizedComment = sanitize(content.trim());
+                const sanitizedComment = content ? sanitize(content.trim()) : '';
 
                 db.query(
-                    "INSERT INTO comments (user_id, target_id, target_type, content) VALUES (?, ?, 'profile', ?)",
-                    [userId, targetId, sanitizedComment],
+                    "INSERT INTO comments (user_id, target_id, target_type, content, image_url, media) VALUES (?, ?, 'profile', ?, ?, ?)",
+                    [userId, targetId, sanitizedComment, imageUrl, mediaJson],
                     (err, result) => {
                         if (err) {
                             logger.error('Ошибка создания отзыва');
@@ -1032,7 +1101,7 @@ router.get('/comments/profile/:userId', (req, res) => {
             const totalPages = Math.ceil(totalItems / limit);
 
             db.query(
-                `SELECT c.id, c.content, c.created_at, u.id AS user_id, u.username, u.avatar, u.role 
+                `SELECT c.id, c.content, c.created_at, c.image_url, c.media, u.id AS user_id, u.username, u.avatar, u.role 
                  FROM comments c
                  JOIN users u ON c.user_id = u.id
                  WHERE c.target_id = ? AND c.target_type = 'profile'
@@ -1092,9 +1161,15 @@ router.post('/posts/:id/comments', verifyToken, verifyNotBanned, (req, res) => {
     const userId = req.user.id;
     const postId = parseInt(req.params.id);
     const { content, parent_id } = req.body;
+    const mediaArr = Array.isArray(req.body.media) ? req.body.media.map(sanitizeImageUrl).filter(Boolean).slice(0, 10) : [];
+    const imageUrl = mediaArr[0] || sanitizeImageUrl(req.body.image_url);
+    const mediaJson = mediaArr.length ? JSON.stringify(mediaArr) : null;
 
-    if (!content || content.trim() === '') {
+    if ((!content || content.trim() === '') && !imageUrl) {
         return res.status(400).json({ error: 'Комментарий не может быть пустым' });
+    }
+    if (content && content.length > 1000) {
+        return res.status(400).json({ error: 'Комментарий не может быть длиннее 1000 символов' });
     }
 
     db.query(
@@ -1119,11 +1194,11 @@ router.post('/posts/:id/comments', verifyToken, verifyNotBanned, (req, res) => {
             }
 
             // Санитизация комментария от XSS
-            const sanitizedComment = sanitize(content.trim());
+            const sanitizedComment = content ? sanitize(content.trim()) : '';
 
             db.query(
-                "INSERT INTO comments (user_id, target_id, target_type, content, parent_id) VALUES (?, ?, 'post', ?, ?)",
-                [userId, postId, sanitizedComment, parent_id || null],
+                "INSERT INTO comments (user_id, target_id, target_type, content, parent_id, image_url, media) VALUES (?, ?, 'post', ?, ?, ?, ?)",
+                [userId, postId, sanitizedComment, parent_id || null, imageUrl, mediaJson],
                 (err, result) => {
                     if (err) {
                         logger.error('Ошибка добавления комментария');
@@ -1141,7 +1216,7 @@ router.get('/posts/:id/comments', (req, res) => {
     const postId = parseInt(req.params.id);
 
     db.query(
-        `SELECT c.id, c.content, c.parent_id, c.created_at, u.id AS user_id, u.username, u.avatar, u.role
+        `SELECT c.id, c.content, c.parent_id, c.created_at, c.image_url, c.media, u.id AS user_id, u.username, u.avatar, u.role
          FROM comments c
          JOIN users u ON c.user_id = u.id
          WHERE c.target_id = ? AND c.target_type = 'post'
@@ -1197,12 +1272,27 @@ router.put('/:id/bio', verifyToken, verifyNotBanned, (req, res) => {
         return res.status(403).json({ error: 'Доступ запрещен: нельзя редактировать чужой профиль' });
     }
     const { about } = req.body;
-    const sanitizedAbout = about != null ? sanitize(String(about)) : about;
-    const encryptedAbout = encrypt(sanitizedAbout);
-    db.query('UPDATE users SET about = ? WHERE id = ?', [encryptedAbout, userId], (err) => {
-        if (err) return res.status(500).json({ error: 'Ошибка обновления биографии' });
-        updateLastActive(userId);
-        res.json({ message: 'Биография обновлена' });
+    if (about && about.length > 300) {
+        return res.status(400).json({ error: 'Биография не должна превышать 300 символов' });
+    }
+
+    db.query('SELECT last_profile_edit FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) return res.status(500).json({ error: 'Ошибка БД' });
+        if (results.length > 0 && results[0].last_profile_edit) {
+            const lastEdit = new Date(results[0].last_profile_edit).getTime();
+            const diffMs = Date.now() - lastEdit;
+            if (diffMs < 15 * 1000) {
+                const remainingSeconds = Math.ceil((15 * 1000 - diffMs) / 1000);
+                return res.status(429).json({ error: `Вы не можете изменять профиль так часто. Подождите еще ${remainingSeconds} сек.` });
+            }
+        }
+
+        const sanitizedAbout = about != null ? sanitize(String(about)) : about;
+        db.query('UPDATE users SET about = ?, last_profile_edit = NOW() WHERE id = ?', [sanitizedAbout, userId], (err) => {
+            if (err) return res.status(500).json({ error: 'Ошибка обновления биографии' });
+            updateLastActive(userId);
+            res.json({ message: 'Биография обновлена' });
+        });
     });
 });
 

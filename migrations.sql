@@ -145,5 +145,14 @@ INSERT INTO admin_pin (id, content)
 SELECT 1, 'Привет! Это закрепленный пост от админа.' 
 WHERE NOT EXISTS (SELECT 1 FROM admin_pin WHERE id = 1);
 
+-- Колонки для отслеживания времени изменений профиля и учетных данных
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_profile_edit TIMESTAMP NULL DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_credential_edit TIMESTAMP NULL DEFAULT NULL;
+
+-- Колонки медиа и изображений для комментариев
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) DEFAULT NULL;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS media TEXT DEFAULT NULL;
+
+
 
 

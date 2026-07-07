@@ -234,6 +234,32 @@ fn start_update(app: AppHandle) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", &url])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&url)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&url)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -365,7 +391,7 @@ pub fn run() {
             api.prevent_close();
         }
     })
-    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window])
+    .invoke_handler(tauri::generate_handler![get_version, try_connect, start_update, close_window, open_url])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

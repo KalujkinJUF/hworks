@@ -103,15 +103,7 @@ function initializeProfile(myData) {
         const usernameElem = document.getElementById("username");
         usernameElem.innerText = data.username;
 
-        // Email (только для своего профиля)
-        const emailElem = document.getElementById("email");
-        if (emailElem) {
-            if (isOwn) {
-                emailElem.innerText = data.email;
-            } else {
-                emailElem.parentElement.style.display = 'none';
-            }
-        }
+
 
         // Аватар
         const avatarCol = document.getElementById("avatarCol");
@@ -363,24 +355,72 @@ function initializeProfile(myData) {
 
         // Настройка формы отправки отзывов
         const commentForm = document.getElementById("commentForm");
+        const attachBtn = document.getElementById("profileCommentAttachBtn");
+        const fileInput = document.getElementById("profileCommentFileInput");
+        const fileNameSpan = document.getElementById("profileCommentAttachedFileName");
+        const clearBtn = document.getElementById("profileCommentClearAttachBtn");
+
+        if (attachBtn && fileInput) {
+            attachBtn.onclick = () => fileInput.click();
+            fileInput.onchange = () => {
+                if (fileInput.files && fileInput.files[0]) {
+                    fileNameSpan.textContent = fileInput.files[0].name;
+                    clearBtn.style.display = 'inline-block';
+                }
+            };
+            clearBtn.onclick = () => {
+                fileInput.value = '';
+                fileNameSpan.textContent = '';
+                clearBtn.style.display = 'none';
+            };
+        }
+
         if (commentForm) {
-            commentForm.onsubmit = (e) => {
+            commentForm.onsubmit = async (e) => {
                 e.preventDefault();
                 const content = document.getElementById("commentContent").value.trim();
-                if (!content) return;
+                const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+                if (!content && !hasFile) return;
+
+                let mediaUrls = [];
+                if (hasFile) {
+                    const formData = new FormData();
+                    formData.append("file", fileInput.files[0]);
+                    try {
+                        const uploadRes = await fetch("/api/users/upload-media", {
+                            method: "POST",
+                            credentials: 'include',
+                            body: formData
+                        });
+                        const uploadData = await uploadRes.json();
+                        if (uploadData.error) {
+                            await window.showCustomAlert(uploadData.error);
+                            return;
+                        }
+                        mediaUrls.push(uploadData.url);
+                    } catch (err) {
+                        await window.showCustomAlert(window.t ? window.t('error_network', 'Ошибка загрузки медиа') : 'Ошибка загрузки медиа');
+                        return;
+                    }
+                }
+
                 fetch(`/api/users/comments/profile/${data.id}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: 'include',
-                    body: JSON.stringify({ content })
+                    body: JSON.stringify({ content, media: mediaUrls })
                 })
                 .then(res => res.json())
                 .then(commentRes => {
                     if (commentRes.commentId) {
                         document.getElementById("commentContent").value = "";
+                        if (fileInput) fileInput.value = '';
+                        if (fileNameSpan) fileNameSpan.textContent = '';
+                        if (clearBtn) clearBtn.style.display = 'none';
                         loadProfileComments(data.id);
                     } else if (commentRes.error) {
-                        window.showCustomAlert(commentRes.error);
+                        window.showCustomAlert(window.tErr ? (window.tErr(commentRes.error) || commentRes.error) : commentRes.error);
                     }
                 })
                 .catch(err => console.error(err));
@@ -743,6 +783,7 @@ function initializeProfile(myData) {
                                 <span class="wall-comment-date" style="margin-left: auto; font-size: 10px; color: #888;">${new Date(c.created_at).toLocaleString()}</span>
                             </div>
                             <div class="comment-content" style="font-size: 12px; text-align: left; color: #ddd; word-break: break-word; line-height: 1.4;">${commentContentMarkup}</div>
+                            ${window.mediaListHtml ? window.mediaListHtml(c.media, c.image_url, 200, 'comment-media-box') : ''}
                         </div>
                     `;
                 }).join('');
@@ -800,6 +841,14 @@ function initializeProfile(myData) {
             const about = document.getElementById("aboutMe").value;
             const bioMessage = document.getElementById("bioMessage");
             if (bioMessage) bioMessage.textContent = "";
+
+            if (about.length > 300) {
+                if (bioMessage) {
+                    bioMessage.style.color = "#ff4444";
+                    bioMessage.textContent = "Превышен лимит 300 символов";
+                }
+                return;
+            }
 
             fetch(`/api/users/${viewingProfileId}/bio`, {
                 method: "PUT",

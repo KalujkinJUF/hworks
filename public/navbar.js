@@ -436,7 +436,7 @@ function updateNavbarVisibility(myData) {
         if (btnProfile) btnProfile.style.display = "none";
         if (btnFriends) btnFriends.style.display = "none";
         if (btnChat) btnChat.style.display = "none";
-        if (btnSearch) btnSearch.style.display = "inline-block";
+        if (btnSearch) btnSearch.style.display = "none";
         if (btnAdmin) btnAdmin.style.display = "none";
         if (btnLogout) btnLogout.style.display = "none";
     }
@@ -650,7 +650,7 @@ if(_navbarInterval2) clearInterval(_navbarInterval2); _navbarInterval2 = setInte
         if (btnProfile) btnProfile.style.display = "none";
         if (btnFriends) btnFriends.style.display = "none";
         if (btnChat) btnChat.style.display = "none";
-        if (btnSearch && currentPage !== 'search.html' && currentPage !== 'profile.html') btnSearch.style.display = "inline-block";
+        if (btnSearch) btnSearch.style.display = "none";
         if (btnAdmin) btnAdmin.style.display = "none";
         if (btnLogout) btnLogout.style.display = "none";
     }

@@ -160,6 +160,10 @@ router.post('/', messageLimiter, (req, res) => {
         return res.status(400).json({ error: 'Сообщение не может быть пустым' });
     }
 
+    if (content && content.length > 2000) {
+        return res.status(400).json({ error: 'Сообщение не может быть длиннее 2000 символов' });
+    }
+
     if (senderId === receiverId) {
         return res.status(400).json({ error: 'Нельзя отправить сообщение самому себе' });
     }

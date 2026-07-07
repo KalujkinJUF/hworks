@@ -1100,6 +1100,8 @@ function initializeProfile(myData) {
                     ? await window.__TAURI__.core.invoke('get_app_config') 
                     : await window.api.getAppConfig();
                 
+                window.showCustomAlert("Загружено из Tauri: " + JSON.stringify(config));
+                
                 const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
                 const autostartCheckbox = document.getElementById("autostartCheckbox");
                 if (autoUpdateCheckbox) {
@@ -1109,8 +1111,10 @@ function initializeProfile(myData) {
                     autostartCheckbox.checked = config.autostart !== false;
                 }
             } catch (e) {
-                console.error("Ошибка загрузки настроек клиента:", e);
+                window.showCustomAlert("Ошибка загрузки настроек: " + (e.message || e || JSON.stringify(e)));
             }
+        } else {
+            window.showCustomAlert("Tauri не обнаружен при загрузке настроек");
         }
     }
 
@@ -1122,6 +1126,8 @@ function initializeProfile(myData) {
                 const autostart = document.getElementById("autostartCheckbox").checked;
                 const scale = document.getElementById("scaleSelector").value;
                 
+                window.showCustomAlert("Сохраняем в Tauri: " + JSON.stringify({ autoUpdate, autostart, scale }));
+                
                 if (hasTauri) {
                     await window.__TAURI__.core.invoke('update_app_config', { 
                         autoUpdate, 
@@ -1132,9 +1138,12 @@ function initializeProfile(myData) {
                 } else {
                     await window.api.updateAppConfig(autoUpdate, autostart, scale);
                 }
+                window.showCustomAlert("Настройки успешно сохранены!");
             } catch (e) {
-                console.error("Ошибка сохранения настроек клиента:", e);
+                window.showCustomAlert("Ошибка сохранения настроек: " + (e.message || e || JSON.stringify(e)));
             }
+        } else {
+            window.showCustomAlert("Tauri не обнаружен при сохранении настроек");
         }
     }
 

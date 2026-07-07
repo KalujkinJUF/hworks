@@ -1093,9 +1093,12 @@ function initializeProfile(myData) {
     }
 
     async function loadTauriSettings() {
-        if (window.api && window.api.getAppConfig) {
+        const hasTauri = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
+        if (hasTauri || (window.api && window.api.getAppConfig)) {
             try {
-                const config = await window.api.getAppConfig();
+                const config = hasTauri 
+                    ? await window.__TAURI__.core.invoke('get_app_config') 
+                    : await window.api.getAppConfig();
                 const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
                 const autostartCheckbox = document.getElementById("autostartCheckbox");
                 if (autoUpdateCheckbox) autoUpdateCheckbox.checked = config.auto_update !== false;
@@ -1107,12 +1110,17 @@ function initializeProfile(myData) {
     }
 
     async function saveTauriSettings() {
-        if (window.api && window.api.updateAppConfig) {
+        const hasTauri = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
+        if (hasTauri || (window.api && window.api.updateAppConfig)) {
             try {
                 const autoUpdate = document.getElementById("autoUpdateCheckbox").checked;
                 const autostart = document.getElementById("autostartCheckbox").checked;
                 const scale = document.getElementById("scaleSelector").value;
-                await window.api.updateAppConfig(autoUpdate, autostart, scale);
+                if (hasTauri) {
+                    await window.__TAURI__.core.invoke('update_app_config', { autoUpdate, autostart, scale });
+                } else {
+                    await window.api.updateAppConfig(autoUpdate, autostart, scale);
+                }
             } catch (e) {
                 console.error("Ошибка сохранения настроек клиента:", e);
             }

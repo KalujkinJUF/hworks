@@ -87,6 +87,105 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
     }, 0);
 };
 
+// #21/#23 Кастомное контекстное меню (заменяет нативное): действия + сохранить/копировать
+(function() {
+    let menuEl = null;
+    function closeMenu() {
+        if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('click', onDocClick, true); }
+    }
+    function onDocClick(e) { if (menuEl && !menuEl.contains(e.target)) closeMenu(); }
+
+    function showContextMenu(x, y, items) {
+        closeMenu();
+        if (!items.length) return;
+        menuEl = document.createElement('div');
+        menuEl.className = 'ctx-menu';
+        menuEl.style.cssText = 'position:fixed; z-index:100002; background:#141414; border:1px solid #888; border-radius:6px; padding:4px; display:flex; flex-direction:column; min-width:170px; box-shadow:0 6px 20px rgba(0,0,0,0.6);';
+        items.forEach(it => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = it.label;
+            b.style.cssText = 'background:none; border:none; color:' + (it.danger ? '#ff6b6b' : '#eee') + '; text-align:left; padding:8px 12px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:4px; white-space:nowrap;';
+            b.addEventListener('mouseenter', () => { b.style.background = 'rgba(255,255,255,0.12)'; });
+            b.addEventListener('mouseleave', () => { b.style.background = 'none'; });
+            b.addEventListener('click', () => { closeMenu(); try { it.action(); } catch (err) { console.error(err); } });
+            menuEl.appendChild(b);
+        });
+        document.body.appendChild(menuEl);
+        const r = menuEl.getBoundingClientRect();
+        menuEl.style.left = Math.min(x, window.innerWidth - r.width - 8) + 'px';
+        menuEl.style.top = Math.min(y, window.innerHeight - r.height - 8) + 'px';
+        setTimeout(() => document.addEventListener('click', onDocClick, true), 0);
+    }
+    window.showContextMenu = showContextMenu;
+
+    function downloadFile(url) {
+        try {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (String(url).split('/').pop() || 'file');
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } catch (e) { console.error(e); }
+    }
+    function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(() => {});
+        } else {
+            const t = document.createElement('textarea');
+            t.value = text; document.body.appendChild(t); t.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            t.remove();
+        }
+    }
+
+    document.addEventListener('contextmenu', (e) => {
+        // В полях ввода оставляем нативное меню (вставить/копировать/выделить)
+        if (e.target.closest('input, textarea')) return;
+        // Полностью подавляем нативное меню (выбор пользователя)
+        e.preventDefault();
+        const items = [];
+        const sel = (window.getSelection && window.getSelection().toString()) || '';
+
+        const mediaBox = e.target.closest('.post-media-box, .message-media-box');
+        const mediaEl = mediaBox && mediaBox.querySelector('img, video, audio');
+        const message = e.target.closest('.message[data-msg-id]');
+        const comment = e.target.closest('[data-ctx="comment"]');
+        const post = e.target.closest('.post-card[data-post-id]');
+
+        if (sel.trim()) {
+            items.push({ label: window.t('ctx_copy', 'Копировать'), action: () => copyText(sel) });
+        }
+        if (comment) {
+            if (comment.dataset.reply === '1' && window.replyToComment) {
+                items.push({ label: window.t('ctx_reply', 'Ответить'), action: () => window.replyToComment(comment.dataset.postId, comment.dataset.commentId, comment.dataset.username) });
+            }
+            if (comment.dataset.canDelete === '1') {
+                items.push({ label: window.t('delete', 'Удалить'), danger: true, action: () => {
+                    if (comment.dataset.postId && window.deleteComment) window.deleteComment(comment.dataset.postId, comment.dataset.commentId);
+                    else if (window.deleteWallComment) window.deleteWallComment(comment.dataset.commentId);
+                }});
+            }
+        } else if (message) {
+            if (message.dataset.canDelete === '1' && window.deleteMessage) {
+                items.push({ label: window.t('delete', 'Удалить'), danger: true, action: () => window.deleteMessage(message.dataset.msgId, { stopPropagation() {} }) });
+            }
+        } else if (post && post.dataset.canDelete === '1' && window.deletePost) {
+            items.push({ label: window.t('delete', 'Удалить'), danger: true, action: () => window.deletePost(post.dataset.postId) });
+        }
+
+        if (mediaEl && mediaEl.getAttribute('src')) {
+            const url = mediaEl.getAttribute('src');
+            const abs = url.startsWith('http') ? url : (window.location.origin + url);
+            items.push({ label: window.t('ctx_save', 'Сохранить'), action: () => downloadFile(url) });
+            items.push({ label: window.t('ctx_copy_link', 'Копировать ссылку'), action: () => copyText(abs) });
+        }
+
+        if (items.length) showContextMenu(e.clientX, e.clientY, items);
+    });
+})();
+
 // Обработка clear_session от Tauri-клиента (при обновлении версии)
 (function() {
     const params = new URLSearchParams(window.location.search);

@@ -307,18 +307,18 @@ function initializeChat(myData) {
                          const contentHtml = escapeHtml(msg.content);
                          
                          const canDelete = isMine || currentUserRole === 'admin' || (currentUserRole === 'moderator' && currentFriendRole !== 'admin');
-                         const deleteBtn = canDelete ? `<button class="delete-btn" style="margin-left: 8px;" onclick="event.stopPropagation(); deleteMessage(${msgId}, event)">${window.t('delete', 'Удалить')}</button>` : '';
 
                          const msgNode = document.createElement("div");
                          const shouldAnimate = !isFirstLoad && (index === messages.length - 1);
                          msgNode.className = `message ${msgClass}${shouldAnimate ? ' new-message-anim' : ''}`;
                          msgNode.dataset.msgId = msgId;
+                         msgNode.dataset.canDelete = canDelete ? '1' : '0';
                          msgNode.innerHTML = `
                              <div class="chat-bubble">
                                  <div class="message-content">${contentHtml}</div>
                                  ${msg.image_url ? `<div class="message-media-box" style="margin-top: 5px; border: 2px solid white; padding: 2px; max-width: 100%; display: inline-block; background: black;">${window.mediaTag(msg.image_url, 200)}</div>` : ''}
                              </div>
-                             <div class="message-time">${timeStr}${deleteBtn}</div>
+                             <div class="message-time">${timeStr}</div>
                          `;
                          container.appendChild(msgNode);
                     });

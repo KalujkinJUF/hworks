@@ -205,14 +205,13 @@ document.addEventListener('spa:navigate', () => {
                 const isPostAdmin = currentUserRole === 'admin';
                 const isPostModerator = currentUserRole === 'moderator' && post.role !== 'admin';
                 const canDeletePost = isPostAuthor || isPostAdmin || isPostModerator;
-                const deletePostBtnHtml = canDeletePost ? `<button class="delete-btn" style="margin-left: 15px;" onclick="deletePost(${post.id})">${window.t('delete', 'Удалить')}</button>` : '';
+                card.dataset.canDelete = canDeletePost ? '1' : '0';
 
                 card.innerHTML = `
                     <div class="post-header">
                         ${avatar ? `<img src="${avatar}" class="post-avatar"><div class="post-avatar-placeholder" style="display:none;"></div>` : '<div class="post-avatar-placeholder"></div>'}
                         <a href="profile.html?username=${encodeURIComponent(post.username)}" style="color: ${color}; text-decoration: none; font-weight: bold;" class="post-author">${escapeHtml(post.username)}</a>
                         <span class="post-date">${dateStr}</span>
-                        ${deletePostBtnHtml}
                     </div>
                     <div class="post-content">${postContentMarkup}</div>
                     ${post.image_url ? `<div class="post-media-box" style="margin-top: 10px; border: 2px solid white; padding: 2px; max-width: 100%; max-height: 400px; display: inline-block; background: black;">${window.mediaTag(post.image_url, 380)}</div>` : ''}
@@ -515,16 +514,13 @@ document.addEventListener('spa:navigate', () => {
                         const isCommentAdmin = currentUserRole === 'admin';
                         const isCommentModerator = currentUserRole === 'moderator' && comment.role !== 'admin';
                         const canDeleteComment = isCommentAuthor || isCommentAdmin || isCommentModerator;
-                        const deleteCommentBtnHtml = canDeleteComment ? `<button class="delete-btn delete-comment-btn" style="margin-left: 8px;" onclick="deleteComment(${postId}, ${comment.id})">Удалить</button>` : '';
 
                         return `
-                        <div style="padding-left: 12px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 8px; padding-bottom: 8px; margin-bottom: 8px; text-align: left;">
+                        <div data-ctx="comment" data-comment-id="${comment.id}" data-post-id="${postId}" data-username="${escapeHtml(comment.username)}" data-reply="${currentUserId ? '1' : '0'}" data-can-delete="${canDeleteComment ? '1' : '0'}" style="padding-left: 12px; margin-left: ${indent}px; border-left: ${borderLeft}; padding-top: 8px; padding-bottom: 8px; margin-bottom: 8px; text-align: left;">
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
                                 ${comment.avatar ? `<img src="${escapeHtml(comment.avatar)}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); object-fit: cover; flex-shrink: 0;"><div style="display:none; width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; flex-shrink: 0;"></div>` : '<div style="width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; flex-shrink: 0;"></div>'}
                                 <a href="profile.html?username=${encodeURIComponent(comment.username)}" style="color: ${color}; font-weight: bold; text-decoration: none;">${escapeHtml(comment.username)}</a>
                                 <span class="wall-comment-date" style="font-size: 10px; color: rgba(255,255,255,0.5);">${new Date(comment.created_at).toLocaleString()}</span>
-                        ${currentUserId ? `<button class="reply-comment-btn" onclick="replyToComment(${postId}, ${comment.id}, '${escapeHtml(comment.username)}')">Ответить</button>` : ''}
-                                ${deleteCommentBtnHtml}
                             </div>
                             <div style="font-size: 12px; color: #eee; margin-top: 4px; word-break: break-word; line-height: 1.4;">${escapeHtml(comment.content)}</div>
                             ${repliesHTML}

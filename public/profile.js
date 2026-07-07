@@ -721,7 +721,6 @@ function initializeProfile(myData) {
                     const isCommentAdmin = currentUserRole === 'admin';
                     const isCommentModerator = currentUserRole === 'moderator' && c.role !== 'admin';
                     const canDeleteComment = isCommentAuthor || isCommentAdmin || isCommentModerator;
-                    const deleteBtn = canDeleteComment ? `<button class="delete-btn" style="margin-left: 8px;" onclick="deleteWallComment(${c.id})">Удалить</button>` : '';
 
                     const contentHtml = escapeHtml(c.content).replace(/\n/g, '<br>');
                     let commentContentMarkup = contentHtml;
@@ -737,11 +736,11 @@ function initializeProfile(myData) {
                     }
 
                     return `
-                        <div class="comment-card" data-comment-id="${c.id}" style="border: 1px solid rgba(255, 255, 255, 0.2); padding: 12px; margin-bottom: 12px; background: rgba(0, 0, 0, 0.2);">
+                        <div class="comment-card" data-ctx="comment" data-comment-id="${c.id}" data-can-delete="${canDeleteComment ? '1' : '0'}" data-username="${escapeHtml(c.username)}" style="border: 1px solid rgba(255, 255, 255, 0.2); padding: 12px; margin-bottom: 12px; background: rgba(0, 0, 0, 0.2);">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                                 ${c.avatar ? `<img src="${escapeHtml(c.avatar)}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); object-fit: cover;">` : '<div style="width: 24px; height: 24px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>'}
                                 <a href="profile.html?username=${encodeURIComponent(c.username)}" style="color: ${color}; font-size: 11px; font-weight: bold; text-decoration: none;">${escapeHtml(c.username)}</a>
-                                <span class="wall-comment-date" style="margin-left: auto; font-size: 10px; color: #888;">${new Date(c.created_at).toLocaleString()}${deleteBtn}</span>
+                                <span class="wall-comment-date" style="margin-left: auto; font-size: 10px; color: #888;">${new Date(c.created_at).toLocaleString()}</span>
                             </div>
                             <div class="comment-content" style="font-size: 12px; text-align: left; color: #ddd; word-break: break-word; line-height: 1.4;">${commentContentMarkup}</div>
                         </div>

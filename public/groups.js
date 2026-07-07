@@ -441,6 +441,14 @@ function initializeGroups(myData) {
         });
     }
 
+    // Клик по карточке группы → открытие
+    document.getElementById('groupsList').addEventListener('click', (e) => {
+        const card = e.target.closest('.group-card');
+        if (card && card.dataset.id) {
+            openGroup(parseInt(card.dataset.id));
+        }
+    });
+
     document.getElementById('backToGroupsBtn').addEventListener('click', backToGroups);
 
     // Клики по каналам (выбор / удаление)

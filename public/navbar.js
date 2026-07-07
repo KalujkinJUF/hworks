@@ -715,6 +715,7 @@ function updateNavbarVisibility(myData) {
     const btnSearch = document.getElementById("nav-search");
     const btnFriends = document.getElementById("nav-friends");
     const btnChat = document.getElementById("nav-chat");
+    const btnGroups = document.getElementById("nav-groups");
     const btnAdmin = document.getElementById("nav-admin");
     const btnLogout = document.getElementById("nav-logout");
 
@@ -729,6 +730,7 @@ function updateNavbarVisibility(myData) {
         if (btnProfile) btnProfile.style.display = "inline-block";
         if (btnFriends) btnFriends.style.display = "inline-block";
         if (btnChat) btnChat.style.display = "inline-block";
+        if (btnGroups) btnGroups.style.display = "inline-block";
         if (btnSearch) btnSearch.style.display = "inline-block";
         if (btnLogout) btnLogout.style.display = "inline-block";
     } else {
@@ -737,6 +739,7 @@ function updateNavbarVisibility(myData) {
         if (btnProfile) btnProfile.style.display = "none";
         if (btnFriends) btnFriends.style.display = "none";
         if (btnChat) btnChat.style.display = "none";
+        if (btnGroups) btnGroups.style.display = "none";
         if (btnSearch) btnSearch.style.display = "none";
         if (btnAdmin) btnAdmin.style.display = "none";
         if (btnLogout) btnLogout.style.display = "none";
@@ -748,6 +751,7 @@ function updateNavbarVisibility(myData) {
     if (btnSearch && currentPage === 'search.html') btnSearch.style.display = "none";
     if (btnFriends && currentPage === 'friends.html') btnFriends.style.display = "none";
     if (btnChat && currentPage === 'chat.html') btnChat.style.display = "none";
+    if (btnGroups && currentPage === 'groups.html') btnGroups.style.display = "none";
     if (btnAdmin && currentPage === 'admin.html') btnAdmin.style.display = "none";
 }
 
@@ -779,6 +783,7 @@ function initializeNavbar(myData) {
     const btnSearch = document.getElementById("nav-search");
     const btnFriends = document.getElementById("nav-friends");
     const btnChat = document.getElementById("nav-chat");
+    const btnGroups = document.getElementById("nav-groups");
     const btnAdmin = document.getElementById("nav-admin");
     const btnLogout = document.getElementById("nav-logout");
 
@@ -893,6 +898,21 @@ function initializeNavbar(myData) {
             }
         })
         .catch(err => console.error("Ошибка при получении непрочитанных отзывов на стене:", err));
+
+        // Получаем количество непрочитанных приглашений в группы
+        fetch("/api/groups/unread", {
+            credentials: 'include'
+        })
+        .then(res => res.json())
+        .then(data => {
+            const count = data.count || 0;
+            const btnGroups = document.getElementById("nav-groups");
+            if (btnGroups) {
+                const groupsText = window.t('nav_groups', 'Группы');
+                btnGroups.textContent = count > 0 ? `${groupsText} (+${count})` : groupsText;
+            }
+        })
+        .catch(err => console.error("Ошибка при получении приглашений в группы:", err));
     }
 
     window.updateNavbarNotifications = updateNavbarNotifications;
@@ -904,6 +924,7 @@ function initializeNavbar(myData) {
         if (btnProfile && (currentPage !== 'profile.html' || isViewingSomeoneElse)) btnProfile.style.display = "inline-block";
         if (btnFriends && currentPage !== 'friends.html') btnFriends.style.display = "inline-block";
         if (btnChat && currentPage !== 'chat.html') btnChat.style.display = "inline-block";
+        if (btnGroups && currentPage !== 'groups.html') btnGroups.style.display = "inline-block";
         if (btnSearch && currentPage !== 'search.html' && currentPage !== 'profile.html') btnSearch.style.display = "inline-block";
         if (btnLogout) btnLogout.style.display = "inline-block";
 
@@ -986,6 +1007,7 @@ if(_navbarInterval2) clearInterval(_navbarInterval2); _navbarInterval2 = setInte
         if (btnProfile) btnProfile.style.display = "none";
         if (btnFriends) btnFriends.style.display = "none";
         if (btnChat) btnChat.style.display = "none";
+        if (btnGroups) btnGroups.style.display = "none";
         if (btnSearch) btnSearch.style.display = "none";
         if (btnAdmin) btnAdmin.style.display = "none";
         if (btnLogout) btnLogout.style.display = "none";
@@ -1014,9 +1036,11 @@ function checkRole(data) {
     if (data.role === 'banned') {
         if (btnFriends) btnFriends.style.display = "none";
         if (btnChat) btnChat.style.display = "none";
-        
+        const btnGroups = document.getElementById("nav-groups");
+        if (btnGroups) btnGroups.style.display = "none";
+
         // Перенаправление забаненных пользователей
-        if (currentPage === 'friends.html' || currentPage === 'chat.html') {
+        if (currentPage === 'friends.html' || currentPage === 'chat.html' || currentPage === 'groups.html') {
             window.showCustomAlert(window.t('alert_banned_access', 'Ваш аккаунт заблокирован. Доступ к друзьям и чату ограничен.')).then(() => {
                 window.location.href = "profile.html";
             });

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="nav_groups">Группы</title>
+    <script src="fouc.js"></script>
+    </head>
+<body class="groups-page">
+    <div class="container">
+        <header>
+            <nav id="main-nav">
+                <a href="index.html" id="nav-home" data-i18n="nav_home">Главная</a>
+                <a href="search.html" id="nav-search" data-i18n="nav_search">Поиск</a>
+                <a href="friends.html" id="nav-friends" style="display: none;" data-i18n="nav_friends">Друзья</a>
+                <a href="chat.html" id="nav-chat" style="display: none;" data-i18n="nav_chat">ЛС</a>
+                <a href="groups.html" id="nav-groups" style="display: none;" data-i18n="nav_groups">Группы</a>
+                <a href="register.html" id="nav-register" data-i18n="nav_register">Регистрация</a>
+                <a href="login.html" id="nav-login" data-i18n="nav_login">Логин</a>
+                <a href="profile.html" id="nav-profile" style="display: none;" data-i18n="nav_profile">Профиль</a>
+                <a href="admin.html" id="nav-admin" style="display: none;" data-i18n="nav_admin">Админка</a>
+                </nav>
+        </header>
+
+        <main class="main-layout groups-layout" id="groupsRoot">
+
+            <!-- Вид 1: список групп -->
+            <div id="groupsListView" class="groups-list-view">
+                <div class="chat-section">
+                    <div class="chat-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h2 style="margin: 0; padding: 0; border: none; font-size: 16px; color: white; text-transform: uppercase;" data-i18n="groups_title">Мои группы</h2>
+                        <button id="createGroupBtn" class="auth-btn" style="width: auto; padding: 8px 16px; font-size: 12px; margin: 0; cursor: pointer;" data-i18n="groups_create">Создать группу</button>
+                    </div>
+
+                    <div id="createGroupForm" style="display: none; margin-top: 15px; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="newGroupName" maxlength="60" data-i18n-placeholder="groups_name_placeholder" placeholder="Название группы"
+                            style="flex: 1; min-width: 200px; background: black; color: white; border: 2px solid white; padding: 8px; font-family: inherit; font-size: 12px; outline: none;">
+                        <button id="submitGroupBtn" class="auth-btn" style="width: auto; padding: 8px 16px; font-size: 12px; margin: 0; cursor: pointer;" data-i18n="create">Создать</button>
+                        <button id="cancelGroupBtn" class="user-btn" style="width: auto; padding: 8px 16px; font-size: 12px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" data-i18n="cancel">Отмена</button>
+                    </div>
+
+                    <div id="groupsList" class="groups-grid" style="margin-top: 15px;">
+                        <p class="loading-text" data-i18n="loading">Загрузка...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Вид 2: открытая группа -->
+            <div id="groupView" class="group-view" style="display: none;">
+
+                <!-- Левая колонка: каналы -->
+                <div class="group-channels-column">
+                    <div class="chat-section">
+                        <div class="chat-header" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                            <button id="backToGroupsBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer;" data-i18n="groups_back">← К группам</button>
+                            <h2 id="groupNameTitle" style="margin: 0; padding: 0; border: none; font-size: 15px; color: white; text-transform: uppercase; text-align: center; word-break: break-word;"></h2>
+                        </div>
+                        <div id="channelsList" class="channels-list" style="margin-top: 12px;"></div>
+                        <div id="channelAdminBox" style="display: none; margin-top: 10px;">
+                            <div id="createChannelForm" style="display: none; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+                                <input type="text" id="newChannelName" maxlength="40" data-i18n-placeholder="groups_channel_placeholder" placeholder="Название канала"
+                                    style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                                <div style="display: flex; gap: 6px;">
+                                    <button id="submitChannelBtn" class="auth-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer;" data-i18n="create">Создать</button>
+                                    <button id="cancelChannelBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer; border-color:#aaa; color:#aaa;" data-i18n="cancel">Отмена</button>
+                                </div>
+                            </div>
+                            <button id="addChannelBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer; border-color: #00ff00; color: #00ff00;" data-i18n="groups_add_channel">+ Канал</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Центр: чат канала -->
+                <div class="chat-main-column">
+                    <div class="chat-section">
+                        <div class="chat-header">
+                            <div class="chat-info">
+                                <div class="friend-chat-info">
+                                    <h2 id="channelTitle" data-i18n="groups_select_channel">Выберите канал</h2>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="groupMessages" class="messages-container" style="display: none;">
+                            <p class="loading-text" data-i18n="loading">Загрузка...</p>
+                        </div>
+
+                        <div id="groupLockedNotice" style="display: none; text-align: center; color: #ff8888; padding: 14px; font-size: 12px; font-style: italic;" data-i18n="group_locked_notice">Группа закрыта: админ покинул её. Общение недоступно.</div>
+
+                        <div id="groupInputSection" class="chat-input-section" style="display: none;">
+                            <div class="input-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                <textarea id="groupMessageInput" data-i18n-placeholder="chat_message_placeholder" placeholder="Напишите сообщение..." rows="3" maxlength="2000"></textarea>
+                                <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; width: 100%; margin-top: 5px; flex-wrap: wrap;">
+                                    <button id="groupSendBtn" class="auth-btn" style="width: auto; flex: 0 0 auto; display: inline-block; padding: 8px 20px; font-size: 12px; margin: 0;" data-i18n="send">Отправить</button>
+                                    <input type="file" id="groupFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
+                                    <button id="groupAttachBtn" class="user-btn" style="width: auto; padding: 8px 20px; font-size: 12px; margin: 0; cursor: pointer; border-color: #aaa; color: #aaa;" data-i18n="attach_file">Прикрепить файл</button>
+                                    <span id="groupAttachedFileName" style="font-size: 11px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;"></span>
+                                    <button id="groupClearAttachBtn" class="user-btn" style="display: none; width: auto; padding: 8px 20px; font-size: 12px; border-color: red; color: red; margin: 0; cursor: pointer;" data-i18n="delete">Удалить</button>
+                                </div>
+                            </div>
+                            <div id="groupSendMessage" class="verify-message" style="margin-top: 8px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка: участники -->
+                <div class="group-members-column">
+                    <div class="chat-section">
+                        <div class="chat-header" style="justify-content: center;">
+                            <h2 style="margin: 0; padding: 0; border: none; font-size: 15px; color: white; text-transform: uppercase;" data-i18n="group_members">Участники</h2>
+                        </div>
+                        <div id="membersList" class="members-list" style="margin-top: 12px;"></div>
+
+                        <!-- Приглашение друзей: доступно любому участнику -->
+                        <div id="groupInviteBox" style="display: none; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.25); padding-top: 12px;">
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <select id="addMemberSelect" style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;"></select>
+                                <button id="addMemberBtn" class="auth-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer;" data-i18n="group_add_member">Пригласить друга</button>
+                            </div>
+                        </div>
+
+                        <!-- Управление: только админ -->
+                        <div id="groupAdminPanel" style="display: none; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.25); padding-top: 12px;">
+                            <div id="renameForm" style="display: none; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+                                <input type="text" id="renameGroupInput" maxlength="60" data-i18n-placeholder="groups_name_placeholder" placeholder="Название группы"
+                                    style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                                <div style="display: flex; gap: 6px;">
+                                    <button id="submitRenameBtn" class="auth-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer;" data-i18n="save">Сохранить</button>
+                                    <button id="cancelRenameBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer; border-color:#aaa; color:#aaa;" data-i18n="cancel">Отмена</button>
+                                </div>
+                            </div>
+                            <button id="renameGroupBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0 0 6px 0; cursor: pointer;" data-i18n="group_rename">Переименовать группу</button>
+                            <button id="deleteGroupBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer; border-color: red; color: red;" data-i18n="group_delete">Удалить группу</button>
+                        </div>
+
+                        <!-- Выход: доступен всем участникам -->
+                        <div id="groupLeaveBox" style="display: none; margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.25); padding-top: 12px;">
+                            <button id="leaveGroupBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer; border-color: red; color: red;" data-i18n="group_leave">Покинуть группу</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer style="font-size: 10px; padding: 5px 0;">
+            <p><a href="about.html" class="footer-link">&copy; hworks</a></p>
+        </footer>
+    </div>
+
+    <script src="spa.js"></script>
+    <script src="csrf.js"></script>
+    <script src="i18n.js"></script>
+    <script src="index.js"></script>
+    <script src="profile.js"></script>
+    <script src="chat.js"></script>
+    <script src="groups.js"></script>
+    <script src="friends.js"></script>
+    <script src="admin.js"></script>
+    <script src="search.js"></script>
+    <script src="login.js"></script>
+    <script src="register.js"></script>
+    <script src="navbar.js"></script>
+
+</body>
+</html>

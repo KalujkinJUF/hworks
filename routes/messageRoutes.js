@@ -143,9 +143,12 @@ router.get('/:friendId', verifyToken, verifyNotBanned, (req, res) => {
             );
 
             db.query(
-                `SELECT * FROM messages
-                 WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
-                 ORDER BY created_at ASC LIMIT 100`,
+                `SELECT m.*, gi.status AS invite_status, g.id AS invite_group_id, g.name AS invite_group_name
+                 FROM messages m
+                 LEFT JOIN group_invites gi ON gi.id = m.group_invite_id
+                 LEFT JOIN chat_groups g ON g.id = gi.group_id
+                 WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
+                 ORDER BY m.created_at ASC LIMIT 100`,
                  [userId, friendId, friendId, userId],
                  (err, results) => {
                      if (err) {

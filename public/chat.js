@@ -335,6 +335,40 @@ function initializeChat(myData) {
                              lastDateStr = dateStr;
                          }
 
+                         // Инвайт-плашка в группу
+                         if (msg.msg_type === 'group_invite') {
+                             const inviteId = msg.group_invite_id;
+                             const groupName = msg.invite_group_name || '';
+                             const status = msg.invite_status;
+                             const isReceiver = !isMine;
+                             let actions = '';
+                             if (!groupName) {
+                                 actions = `<div class="group-invite-status" style="margin-top:6px; color:#aaa; font-size:11px;">${window.t('group_invite_gone', 'Группа больше недоступна')}</div>`;
+                             } else if (status === 'pending' && isReceiver) {
+                                 actions = `<div style="display:flex; gap:8px; margin-top:8px;">
+                                     <button class="auth-btn group-invite-accept" data-invite="${inviteId}" style="width:auto; padding:6px 14px; font-size:11px; margin:0; cursor:pointer;">${window.t('group_accept', 'Принять')}</button>
+                                     <button class="user-btn group-invite-reject" data-invite="${inviteId}" style="width:auto; padding:6px 14px; font-size:11px; margin:0; cursor:pointer; border-color:red; color:red;">${window.t('group_reject', 'Отклонить')}</button>
+                                 </div>`;
+                             } else if (status === 'accepted') {
+                                 actions = `<div class="group-invite-status" style="margin-top:6px; color:#2ecc71; font-size:11px;">${window.t('group_invite_accepted', 'Приглашение принято')}</div>`;
+                             } else if (status === 'rejected') {
+                                 actions = `<div class="group-invite-status" style="margin-top:6px; color:#ff6b6b; font-size:11px;">${window.t('group_invite_rejected', 'Приглашение отклонено')}</div>`;
+                             } else {
+                                 actions = `<div class="group-invite-status" style="margin-top:6px; color:#aaa; font-size:11px;">${window.t('group_invite_sent', 'Приглашение отправлено')}</div>`;
+                             }
+                             const inviteNode = document.createElement("div");
+                             inviteNode.className = `message ${isMine ? 'my-message' : 'friend-message'}`;
+                             inviteNode.dataset.msgId = msgId;
+                             inviteNode.innerHTML = `
+                                 <div class="chat-bubble group-invite-card">
+                                     <div class="group-invite-title">📨 ${window.t('group_invite_label', 'Приглашение в группу')}</div>
+                                     <div class="group-invite-name">«${escapeHtml(groupName)}»</div>
+                                     ${actions}
+                                 </div>`;
+                             container.appendChild(inviteNode);
+                             return;
+                         }
+
                          const timeStr = dateObj.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit' });
                          const contentHtml = escapeHtml(msg.content);
 
@@ -531,6 +565,44 @@ function initializeChat(myData) {
                 const role = item.dataset.role;
                 window.selectFriend(id, username, avatar, status, role);
             }
+        });
+    }
+
+    // Кнопки инвайт-плашки (принять / отклонить приглашение в группу)
+    function acceptGroupInvite(inviteId) {
+        fetch(`/api/groups/invites/${inviteId}/accept`, { method: 'POST', credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.group_id) {
+                    window.location.href = `groups.html?group=${data.group_id}`;
+                } else {
+                    window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
+                    loadMessages();
+                }
+            })
+            .catch(() => window.showCustomAlert(window.t('error_network', 'Ошибка сети')));
+    }
+    function rejectGroupInvite(inviteId) {
+        fetch(`/api/groups/invites/${inviteId}/reject`, { method: 'POST', credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    // Принудительная перерисовка (состав сообщений не изменился)
+                    document.getElementById("messagesContainer").innerHTML = '';
+                    loadMessages();
+                } else {
+                    window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
+                }
+            })
+            .catch(() => window.showCustomAlert(window.t('error_network', 'Ошибка сети')));
+    }
+    const messagesContainerEl = document.getElementById("messagesContainer");
+    if (messagesContainerEl) {
+        messagesContainerEl.addEventListener("click", (e) => {
+            const acc = e.target.closest('.group-invite-accept');
+            if (acc) { acceptGroupInvite(acc.dataset.invite); return; }
+            const rej = e.target.closest('.group-invite-reject');
+            if (rej) { rejectGroupInvite(rej.dataset.invite); return; }
         });
     }
 }

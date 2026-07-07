@@ -26,6 +26,7 @@ const mysql = require('mysql');
 const userRoutes = require('./routes/userRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const groupRoutes = require('./routes/groupRoutes');
 const db = require('./config/db');
 const port = process.env.PORT || 3000;
 const adminRoutes = require('./routes/adminRoutes');
@@ -179,6 +180,8 @@ app.use('/api/users', verifyCsrfToken, userRoutes);
 app.use('/api/friends', verifyCsrfToken, friendRoutes);
 // Подключаем маршруты сообщений с CSRF защитой
 app.use('/api/messages', verifyCsrfToken, messageRoutes);
+// Подключаем маршруты групповых чатов с CSRF защитой
+app.use('/api/groups', verifyCsrfToken, groupRoutes);
 // Эндпоинт проверки работоспособности (для клиента)
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });

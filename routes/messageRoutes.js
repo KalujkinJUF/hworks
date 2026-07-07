@@ -62,7 +62,7 @@ router.get('/unread/count', (req, res) => {
     });
 });
 
-// Получить список отправителей непрочитанных сообщений с их количеством
+// Получить список отправителей непрочитанных сообщений с их количеством и последним сообщением
 router.get('/unread/friends', (req, res) => {
     const userId = req.user.id;
     db.query('SELECT user_status FROM users WHERE id = ?', [userId], (err, statusRes) => {
@@ -74,20 +74,36 @@ router.get('/unread/friends', (req, res) => {
         }
 
         db.query(
-            `SELECT m.sender_id, COUNT(m.id) AS count
+            `SELECT 
+                 m.sender_id, 
+                 COUNT(m.id) AS count, 
+                 u.username, 
+                 u.avatar,
+                 (SELECT m2.content FROM messages m2 WHERE m2.sender_id = m.sender_id AND m2.receiver_id = ? AND m2.is_read = 0 ORDER BY m2.created_at DESC LIMIT 1) AS content,
+                 (SELECT m2.image_url FROM messages m2 WHERE m2.sender_id = m.sender_id AND m2.receiver_id = ? AND m2.is_read = 0 ORDER BY m2.created_at DESC LIMIT 1) AS image_url
              FROM messages m
+             JOIN users u ON m.sender_id = u.id
              JOIN friends f ON (
                  (f.user_id = m.sender_id AND f.friend_id = m.receiver_id) OR
                  (f.user_id = m.receiver_id AND f.friend_id = m.sender_id)
              )
              WHERE m.receiver_id = ? AND m.is_read = 0 AND f.status = 'accepted'
-             GROUP BY m.sender_id`,
-            [userId],
+             GROUP BY m.sender_id, u.username, u.avatar`,
+            [userId, userId, userId],
             (err, results) => {
-            if (err) {
-                logger.error('Ошибка БД при получении непрочитанных от друзей');
-                return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-            }
+                if (err) {
+                    logger.error('Ошибка БД при получении непрочитанных от друзей');
+                    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+                }
+                results.forEach(m => {
+                    if (m.content) {
+                        try {
+                            m.content = decrypt(m.content);
+                        } catch (e) {
+                            m.content = "[Зашифрованное сообщение]";
+                        }
+                    }
+                });
                 res.json(results);
             }
         );

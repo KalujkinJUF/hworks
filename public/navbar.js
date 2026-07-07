@@ -744,6 +744,11 @@ function initializeNavbar(myData) {
     window.currentUserNavbarData = myData;
     const token = myData ? true : false;
 
+    // Запрос разрешений на системные уведомления
+    if (token && typeof Notification !== 'undefined' && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+
     // Определяем текущую страницу
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
@@ -796,23 +801,53 @@ function initializeNavbar(myData) {
                 btnChat.textContent = totalCount > 0 ? `${chatText} (+${totalCount})` : chatText;
             }
 
-            // Сумма для уведомлений (исключаем открытый чат, если окно в фокусе)
+            // Отслеживание непрочитанных для уведомлений
+            if (typeof window.prevUnreadMap === 'undefined') {
+                window.prevUnreadMap = {};
+            }
+
             const isChatPage = window.location.pathname.split('/').pop() === 'chat.html';
             const isAppVisible = !document.hidden && document.hasFocus();
             const activeFriendId = (isChatPage && isAppVisible && window.currentFriendId) ? parseInt(window.currentFriendId) : null;
 
-            const notificationCount = list
-                .filter(item => !activeFriendId || parseInt(item.sender_id) !== activeFriendId)
-                .reduce((acc, item) => acc + item.count, 0);
+            let gotNewMessage = false;
 
-            if (window.prevUnreadNotificationCount !== -1 && notificationCount > window.prevUnreadNotificationCount) {
+            list.forEach(item => {
+                const prevCount = window.prevUnreadMap[item.sender_id] || 0;
+                if (item.count > prevCount) {
+                    gotNewMessage = true;
+                    
+                    // Если чат с этим другом сейчас НЕ открыт и НЕ активен на экране
+                    if (parseInt(item.sender_id) !== activeFriendId) {
+                        if (typeof Notification !== 'undefined' && Notification.permission === "granted") {
+                            const bodyText = item.content || (item.image_url ? "📎 [Изображение]" : "📎 [Медиафайл]");
+                            new Notification(`Сообщение от ${item.username}`, {
+                                body: bodyText,
+                                icon: item.avatar || "/default-avatar.png",
+                                tag: `msg-${item.sender_id}`
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Обновляем карту предыдущих непрочитанных
+            window.prevUnreadMap = {};
+            list.forEach(item => {
+                window.prevUnreadMap[item.sender_id] = item.count;
+            });
+
+            // Воспроизводим звук, если пришло новое сообщение
+            if (gotNewMessage) {
                 const now = Date.now();
-                if (now - window.lastNotificationSoundTime > 5000) {
+                if (typeof window.lastNotificationSoundTime === 'undefined') {
+                    window.lastNotificationSoundTime = 0;
+                }
+                if (now - window.lastNotificationSoundTime > 4000) {
                     playRetroNotificationSound();
                     window.lastNotificationSoundTime = now;
                 }
             }
-            window.prevUnreadNotificationCount = notificationCount;
         })
         .catch(err => console.error("Ошибка при получении непрочитанных сообщений:", err));
 

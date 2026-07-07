@@ -385,7 +385,7 @@ textarea#aboutMe:focus {
     border: none !important;
     background: transparent !important;
     padding: 0 !important;
-    margin-top: 10px;
+    margin: 10px auto 0;
     max-width: 400px;
     text-align: left;
 }
@@ -3442,6 +3442,7 @@ a:hover {
 /* Убираем пунктирные линии */
 .profile-section h2,
 .profile-section h3,
+.profile-section .profile-section-title,
 .user-card-header,
 .user-card-actions {
     border: none !important;

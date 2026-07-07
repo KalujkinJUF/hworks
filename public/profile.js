@@ -1095,7 +1095,7 @@ function initializeProfile(myData) {
                 const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
                 const autostartCheckbox = document.getElementById("autostartCheckbox");
                 if (autoUpdateCheckbox) autoUpdateCheckbox.checked = config.auto_update !== false;
-                if (autostartCheckbox) autostartCheckbox.checked = config.autostart === true;
+                if (autostartCheckbox) autostartCheckbox.checked = config.autostart !== false;
             } catch (e) {
                 console.error("Ошибка загрузки настроек клиента:", e);
             }

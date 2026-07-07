@@ -88,7 +88,7 @@ fn get_app_config(app: AppHandle) -> AppConfig {
         config.auto_update = Some(true);
     }
     if config.autostart.is_none() {
-        config.autostart = Some(false);
+        config.autostart = Some(true);
     }
     if config.scale.is_none() {
         config.scale = Some("1.0".to_string());

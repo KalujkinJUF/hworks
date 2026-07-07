@@ -1113,6 +1113,19 @@ function initializeProfile(myData) {
             }
         }
     }
+
+    const profileLogoutBtn = document.getElementById("profileLogoutBtn");
+    if (profileLogoutBtn) {
+        profileLogoutBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            fetch('/api/users/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).finally(() => {
+                window.location.href = "index.html";
+            });
+        });
+    }
 }
 
 // Функция для экранирования HTML

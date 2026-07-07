@@ -1111,7 +1111,7 @@ function initializeProfile(myData) {
                     autostartCheckbox.checked = config.autostart !== false;
                 }
             } catch (e) {
-                window.showCustomAlert("Ошибка загрузки настроек: " + e.message);
+                window.showCustomAlert("Ошибка загрузки настроек: " + (e.message || e || JSON.stringify(e)));
             }
         } else {
             window.showCustomAlert("Tauri не обнаружен при загрузке настроек");
@@ -1140,7 +1140,7 @@ function initializeProfile(myData) {
                 }
                 window.showCustomAlert("Настройки успешно сохранены!");
             } catch (e) {
-                window.showCustomAlert("Ошибка сохранения настроек: " + e.message);
+                window.showCustomAlert("Ошибка сохранения настроек: " + (e.message || e || JSON.stringify(e)));
             }
         } else {
             window.showCustomAlert("Tauri не обнаружен при сохранении настроек");

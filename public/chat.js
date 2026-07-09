@@ -1,6 +1,8 @@
 let _spaInterval_2 = null;
+let _spaFriendsInterval = null;
 document.addEventListener('spa:unload', () => {
     if (_spaInterval_2) clearInterval(_spaInterval_2);
+    if (_spaFriendsInterval) clearInterval(_spaFriendsInterval);
 });
 document.addEventListener('spa:navigate', () => {
     if (!document.getElementById('messagesContainer')) return;
@@ -607,6 +609,11 @@ function initializeChat(myData) {
             loadMessages();
         }
     }, 2000);
+
+    // Автообновление колонки чатов в реальном времени: статусы, непрочитанные,
+    // порядок (закреплённые/новые) — раньше обновлялось только по клику на чат.
+    if (_spaFriendsInterval) clearInterval(_spaFriendsInterval);
+    _spaFriendsInterval = setInterval(loadFriendsList, 4000);
 
     // Делегирование кликов для выбора друга (избегаем inline onclick из-за проблем с кавычками в именах)
     const friendsListContainer = document.getElementById("chatFriendsList");

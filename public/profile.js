@@ -1074,18 +1074,20 @@ function initializeProfile(myData) {
             if (window.applyScale) {
                 window.applyScale();
             }
-            if (window.__TAURI__) {
+            if (window.__TAURI__ || (window.api && window.api.updateAppConfig)) {
                 saveTauriSettings();
             }
         });
     }
 
-    if (window.__TAURI__) {
+    // Настройки клиента показываем в любом десктоп-клиенте (Tauri или Electron)
+    const isDesktopClient = !!(window.__TAURI__ || (window.api && window.api.getAppConfig));
+    if (isDesktopClient) {
         const tauriGroup = document.getElementById("tauriSettingsGroup");
         if (tauriGroup) tauriGroup.style.display = "flex";
-        
+
         loadTauriSettings();
-        
+
         const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
         const autostartCheckbox = document.getElementById("autostartCheckbox");
         if (autoUpdateCheckbox) autoUpdateCheckbox.addEventListener("change", saveTauriSettings);

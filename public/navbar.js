@@ -437,6 +437,14 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
                         window.showCustomAlert(err);
                     }
                 });
+        } else if (window.api && window.api.saveFile) {
+            // Electron-клиент
+            window.api.saveFile(abs)
+                .then(msg => console.log(msg))
+                .catch(err => {
+                    const m = (err && err.message) ? err.message : String(err);
+                    if (!m.includes('Отменено')) window.showCustomAlert(m);
+                });
         } else {
             try {
                 const a = document.createElement('a');

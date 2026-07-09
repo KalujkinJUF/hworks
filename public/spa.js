@@ -7,12 +7,17 @@
                 const link = e.target.closest('a');
                 if (!link) return;
                 
-                // Перехват ссылок на GitHub в Tauri для открытия во внешнем браузере
+                // Перехват внешних ссылок (GitHub) в десктоп-клиенте — открываем во внешнем браузере
                 if (link.href && link.href.includes('github.com')) {
                     if (window.__TAURI__) {
                         e.preventDefault();
                         window.__TAURI__.core.invoke('open_url', { url: link.href })
                             .catch(err => console.error("Tauri open_url error:", err));
+                        return;
+                    }
+                    if (window.api && window.api.openUrl) {
+                        e.preventDefault();
+                        window.api.openUrl(link.href).catch(err => console.error("openUrl error:", err));
                         return;
                     }
                 }

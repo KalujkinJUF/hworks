@@ -44,8 +44,37 @@ function initializeChat(myData) {
         let pins = getPinnedChats();
         pins = pins.includes(id) ? pins.filter(x => x !== id) : [id, ...pins];
         localStorage.setItem('pinnedChats', JSON.stringify(pins));
+        // Полный перерендер: он пересортирует список (закреплённые вперёд) без прыжков
         loadFriendsList();
     };
+
+    // #1 Мьют диалогов ЛС (клиентское, localStorage) — как у каналов групп
+    window.isChatMuted = (id) => localStorage.getItem('dmMute_' + id) === '1';
+    window.toggleMuteChat = (id) => {
+        id = String(id);
+        if (window.isChatMuted(id)) localStorage.removeItem('dmMute_' + id);
+        else localStorage.setItem('dmMute_' + id, '1');
+        // Мьют не меняет порядок — просто перерисовываем метки
+        applyPinsAndMutes();
+    };
+
+    // #4 Проход, помечающий закрепление 📌 и мьют 🔕. Порядок НЕ меняет — расстановкой
+    // занимается loadFriendsList (сортирует закреплённые вперёд до вставки), поэтому «прыжков» нет.
+    function applyPinsAndMutes() {
+        const list = document.getElementById("chatFriendsList");
+        if (!list) return;
+        const pins = getPinnedChats();
+        Array.from(list.querySelectorAll('.chat-friend-item')).forEach(el => {
+            const id = el.dataset.id;
+            const isPin = pins.includes(id);
+            const isMute = window.isChatMuted(id);
+            el.classList.toggle('pinned', isPin);
+            const nameEl = el.querySelector('.friend-item-name');
+            if (nameEl && el.dataset.username) {
+                nameEl.textContent = (isPin ? '📌 ' : '') + (isMute ? '🔕 ' : '') + el.dataset.username;
+            }
+        });
+    }
 
     // #22 Ответы в стиле Telegram
     window.setChatReply = function(msgId) {
@@ -57,9 +86,9 @@ function initializeChat(myData) {
         const who = (m.sender_id === currentUserId) ? window.t('you', 'Вы') : currentFriendName;
         const snippet = (m.content && m.content.trim()) ? m.content : (m.image_url ? '📎 ' + window.t('attach_file', 'Вложение') : '');
         preview.innerHTML = `
-            <div style="flex:1; min-width:0; border-left:3px solid #4a90d9; padding-left:8px;">
-                <div style="font-weight:bold; color:#4a90d9; font-size:11px;">${escapeHtml(who || '')}</div>
-                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; opacity:0.85;">${escapeHtml(snippet)}</div>
+            <div class="reply-quote" style="flex:1; min-width:0;">
+                <span class="reply-quote-author">${escapeHtml(who || '')}</span>
+                <span class="reply-quote-text">${escapeHtml(snippet)}</span>
             </div>
             <button id="cancelReplyBtn" type="button" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size:16px; padding:0 6px;">✕</button>
         `;
@@ -131,6 +160,17 @@ function initializeChat(myData) {
         .then(([friends, unreadFriends]) => {
             const unreadIds = new Set((unreadFriends || []).map(uf => uf.sender_id));
             const list = document.getElementById("chatFriendsList");
+            // #4 Закреплённые — вперёд ещё ДО расстановки по индексу, чтобы позиции
+            // сразу совпадали с финальными (иначе элемент прыгает: вниз → потом вверх).
+            const pinOrder = getPinnedChats();
+            friends.sort((a, b) => {
+                const ia = pinOrder.indexOf(String(a.id));
+                const ib = pinOrder.indexOf(String(b.id));
+                if (ia === -1 && ib === -1) return 0;
+                if (ia === -1) return 1;
+                if (ib === -1) return -1;
+                return ia - ib;
+            });
             if (friends.length === 0) {
                 const emptyHTML = `<p class="loading-text">${window.t('chat_no_friends', 'У вас нет друзей')}</p>`;
                 list.innerHTML = emptyHTML;
@@ -248,18 +288,8 @@ function initializeChat(myData) {
                 }
             });
 
-            // #18 Закреплённые диалоги: помечаем 📌 и поднимаем вверх
-            const pins = getPinnedChats();
-            Array.from(list.querySelectorAll('.chat-friend-item')).forEach(el => {
-                const isPin = pins.includes(el.dataset.id);
-                el.classList.toggle('pinned', isPin);
-                const nameEl = el.querySelector('.friend-item-name');
-                if (nameEl && el.dataset.username) nameEl.textContent = (isPin ? '📌 ' : '') + el.dataset.username;
-            });
-            pins.slice().reverse().forEach(id => {
-                const el = list.querySelector(`.chat-friend-item[data-id="${id}"]`);
-                if (el) list.prepend(el);
-            });
+            // #18/#1 Помечаем закрепление 📌 и мьют 🔕 (порядок уже верный — без прыжков)
+            applyPinsAndMutes();
         })
         .catch(err => console.error('Ошибка загрузки друзей и уведомлений:', err));
     }
@@ -404,7 +434,7 @@ function initializeChat(myData) {
                              if (rm) {
                                  const who = (rm.sender_id === currentUserId) ? window.t('you', 'Вы') : currentFriendName;
                                  const snip = (rm.content && rm.content.trim()) ? rm.content : (rm.image_url ? '📎' : '');
-                                 replyQuoteHtml = `<div style="border-left:3px solid #4a90d9; padding:2px 8px; margin-bottom:4px; font-size:11px; background:rgba(255,255,255,0.06); border-radius:4px;"><div style="font-weight:bold; color:#4a90d9;">${escapeHtml(who || '')}</div><div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; opacity:0.85;">${escapeHtml(snip)}</div></div>`;
+                                 replyQuoteHtml = `<div class="reply-quote"><span class="reply-quote-author">${escapeHtml(who || '')}</span><span class="reply-quote-text">${escapeHtml(snip)}</span></div>`;
                              }
                          }
 

@@ -2096,6 +2096,7 @@ body, .post-card, .container, main, header, footer, button, input, textarea, sel
     justify-content: center;
     align-items: center;
     z-index: 10000;
+    animation: modalFadeIn 0.25s ease;
 }
 
 .custom-modal-box {
@@ -2107,6 +2108,7 @@ body, .post-card, .container, main, header, footer, button, input, textarea, sel
     box-sizing: border-box;
     text-align: center;
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    animation: modalPopIn 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .custom-modal-header {
@@ -2143,24 +2145,26 @@ body, .post-card, .container, main, header, footer, button, input, textarea, sel
     transition: all 0.2s ease-in-out;
 }
 
+/* «Да» подтверждает действие (часто опасное, напр. удаление) — красная;
+   «Нет» — безопасная отмена — зелёная. Совпадает с логикой темы Aero. */
 .custom-modal-btn.btn-yes {
-    color: #00ff00;
-    border-color: #00ff00;
-}
-
-.custom-modal-btn.btn-yes:hover {
-    background-color: rgba(0, 255, 0, 0.1);
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-}
-
-.custom-modal-btn.btn-no {
     color: #ff4444;
     border-color: #ff4444;
 }
 
-.custom-modal-btn.btn-no:hover {
+.custom-modal-btn.btn-yes:hover {
     background-color: rgba(255, 68, 68, 0.1);
     box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+}
+
+.custom-modal-btn.btn-no {
+    color: #00ff00;
+    border-color: #00ff00;
+}
+
+.custom-modal-btn.btn-no:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
 }
 
 .custom-modal-btn.btn-ok {
@@ -2598,3 +2602,26 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
 .toggle-slider::before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #888; transition: 0.25s; }
 .toggle-switch input:checked + .toggle-slider { border-color: #00ff00; box-shadow: 0 0 6px rgba(0,255,0,0.4); }
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); background: #00ff00; }
+
+/* #5 Ответы — стиль DOS: стрелка ↱ (вверх-направо), терминальный вид */
+.reply-quote {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    position: relative;
+    font-size: 11px;
+    margin-bottom: 4px;
+    padding-left: 20px;
+    opacity: 0.9;
+}
+.reply-quote::before {
+    content: "\21B1";
+    position: absolute;
+    left: 3px;
+    top: -1px;
+    color: #00ffcc;
+    font-size: 14px;
+    font-weight: bold;
+}
+.reply-quote-author { color: #00ffcc; font-weight: bold; flex-shrink: 0; }
+.reply-quote-text { color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }

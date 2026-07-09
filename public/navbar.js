@@ -504,6 +504,10 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
             const pinned = window.isChatPinned && window.isChatPinned(chatItem.dataset.id);
             items.push({ label: pinned ? window.t('group_unpin', 'Открепить') : window.t('group_pin', 'Закрепить'), action: () => window.togglePinChat(chatItem.dataset.id) });
         }
+        if (chatItem && window.toggleMuteChat) {
+            const muted = window.isChatMuted && window.isChatMuted(chatItem.dataset.id);
+            items.push({ label: muted ? window.t('group_unmute', 'Включить уведомления') : window.t('group_mute', 'Отключить уведомления'), action: () => window.toggleMuteChat(chatItem.dataset.id) });
+        }
         if (groupCard && window.togglePinGroup) {
             const pinned = window.isGroupPinned && window.isGroupPinned(groupCard.dataset.id);
             items.push({ label: pinned ? window.t('group_unpin', 'Открепить') : window.t('group_pin', 'Закрепить'), action: () => window.togglePinGroup(groupCard.dataset.id) });
@@ -824,10 +828,11 @@ function initializeNavbar(myData) {
         .then(res => res.json())
         .then(unreadList => {
             const list = Array.isArray(unreadList) ? unreadList : [];
-            
-            // Общая сумма для кнопки в навбаре
-            const totalCount = list.reduce((acc, item) => acc + item.count, 0);
-            
+            const isDmMuted = (id) => localStorage.getItem('dmMute_' + id) === '1';
+
+            // Общая сумма для кнопки в навбаре (замьюченные чаты не учитываем)
+            const totalCount = list.reduce((acc, item) => acc + (isDmMuted(item.sender_id) ? 0 : item.count), 0);
+
             const btnChat = document.getElementById("nav-chat");
             if (btnChat) {
                 const chatText = window.t('nav_chat', 'Чат');
@@ -847,9 +852,10 @@ function initializeNavbar(myData) {
 
             list.forEach(item => {
                 const prevCount = window.prevUnreadMap[item.sender_id] || 0;
-                if (item.count > prevCount) {
+                // Замьюченные чаты не дают звук/уведомление
+                if (item.count > prevCount && !isDmMuted(item.sender_id)) {
                     gotNewMessage = true;
-                    
+
                     // Если чат с этим другом сейчас НЕ открыт и НЕ активен на экране
                     if (parseInt(item.sender_id) !== activeFriendId) {
                         if (typeof Notification !== 'undefined' && Notification.permission === "granted") {

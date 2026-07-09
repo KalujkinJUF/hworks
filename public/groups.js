@@ -59,9 +59,9 @@ function initializeGroups(myData) {
         const who = (m.sender_id === myUserId) ? window.t('you', 'Вы') : (m.username || '');
         const snippet = (m.content && m.content.trim()) ? m.content : (m.image_url ? '📎 ' + window.t('attach_file', 'Вложение') : '');
         preview.innerHTML = `
-            <div style="flex:1; min-width:0; border-left:3px solid #4a90d9; padding-left:8px;">
-                <div style="font-weight:bold; color:#4a90d9; font-size:11px;">${escapeHtml(who)}</div>
-                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; opacity:0.85;">${escapeHtml(snippet)}</div>
+            <div class="reply-quote" style="flex:1; min-width:0;">
+                <span class="reply-quote-author">${escapeHtml(who)}</span>
+                <span class="reply-quote-text">${escapeHtml(snippet)}</span>
             </div>
             <button id="groupCancelReplyBtn" type="button" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size:16px; padding:0 6px;">✕</button>`;
         preview.style.display = 'flex';
@@ -413,7 +413,7 @@ function initializeGroups(myData) {
                         if (rm) {
                             const who = (rm.sender_id === myUserId) ? window.t('you', 'Вы') : (rm.username || '');
                             const snip = (rm.content && rm.content.trim()) ? rm.content : (rm.image_url ? '📎' : '');
-                            replyQuoteHtml = `<div style="border-left:3px solid #4a90d9; padding:2px 8px; margin-bottom:4px; font-size:11px; background:rgba(255,255,255,0.06); border-radius:4px;"><div style="font-weight:bold; color:#4a90d9;">${escapeHtml(who)}</div><div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; opacity:0.85;">${escapeHtml(snip)}</div></div>`;
+                            replyQuoteHtml = `<div class="reply-quote"><span class="reply-quote-author">${escapeHtml(who)}</span><span class="reply-quote-text">${escapeHtml(snip)}</span></div>`;
                         }
                     }
 

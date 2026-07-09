@@ -196,7 +196,8 @@ router.get('/:id', (req, res) => {
             db.query('SELECT id, name, position FROM group_channels WHERE group_id = ? ORDER BY position ASC, id ASC', [groupId], (e2, channels) => {
                 if (e2) return res.status(500).json({ error: 'Ошибка БД' });
                 db.query(
-                    `SELECT u.id, u.username, u.avatar, u.user_status, gm.role
+                    `SELECT u.id, u.username, u.avatar, gm.role,
+                            IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status
                      FROM group_members gm JOIN users u ON u.id = gm.user_id
                      WHERE gm.group_id = ?
                      ORDER BY (gm.role = 'admin') DESC, u.username ASC`,

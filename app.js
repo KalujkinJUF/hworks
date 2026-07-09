@@ -27,6 +27,7 @@ const userRoutes = require('./routes/userRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const groupRoutes = require('./routes/groupRoutes');
+const voiceRoutes = require('./routes/voiceRoutes');
 const db = require('./config/db');
 const port = process.env.PORT || 3000;
 const adminRoutes = require('./routes/adminRoutes');
@@ -182,6 +183,8 @@ app.use('/api/friends', verifyCsrfToken, friendRoutes);
 app.use('/api/messages', verifyCsrfToken, messageRoutes);
 // Подключаем маршруты групповых чатов с CSRF защитой
 app.use('/api/groups', verifyCsrfToken, groupRoutes);
+// Токены доступа к голосовым комнатам (для voice-сервера)
+app.use('/api/voice', verifyCsrfToken, voiceRoutes);
 // Эндпоинт проверки работоспособности (для клиента)
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });

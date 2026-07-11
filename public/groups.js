@@ -317,6 +317,10 @@ function initializeGroups(myData) {
     // с сервера; для СВОЕГО активного канала — живой voiceState (мгновенный mute + говорящий).
     function renderVoiceParticipants() {
         const activeCh = currentVoiceChannelId();
+        // На светлых темах (DOS Light / Aero Light) тёмный текст — иначе #ccc/#00ff00 не читаются.
+        const dark = window.isDarkTheme ? window.isDarkTheme() : true;
+        const idleColor = dark ? '#ccc' : '#33322a';
+        const speakColor = dark ? '#00ff00' : '#0a7a12';
         document.querySelectorAll('.voice-participants').forEach(box => {
             const chId = box.dataset.channel;
             let users = channelRosters[chId] || [];
@@ -329,7 +333,7 @@ function initializeGroups(myData) {
             if (!users.length) { box.innerHTML = ''; return; }
             box.innerHTML = users.map(u => {
                 const speaking = u.userId === speakingId;
-                const speak = speaking ? 'color:#00ff00;font-weight:bold;' : 'color:#ccc;';
+                const speak = speaking ? `color:${speakColor};font-weight:bold;` : `color:${idleColor};`;
                 const micIcon = u.muted ? '🔇' : (speaking ? '🔊' : '🎤');
                 return `<div style="display:flex;align-items:center;gap:4px;${speak}"><span>${micIcon}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(u.username || '')}</span></div>`;
             }).join('');

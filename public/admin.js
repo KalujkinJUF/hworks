@@ -74,6 +74,13 @@ function initializeAdmin(myData) {
         });
     }
 
+    function badgeChipHtml(k) {
+        return `<span class="badge-chip" data-key="${k}" style="display:inline-flex; align-items:center; gap:4px; border:1px solid; border-radius:10px; padding:1px 6px; font-size:10px; white-space:nowrap;">${window.BADGE_EMOJI[k]} ${window.badgeLabel(k)} <span class="badge-chip-x" data-key="${k}" style="cursor:pointer; font-weight:bold;">✕</span></span>`;
+    }
+    function renderBadgeChips(str) {
+        return window.parseBadges(str).map(badgeChipHtml).join('');
+    }
+
     function renderUsers() {
         usersList.innerHTML = "";
 
@@ -126,6 +133,15 @@ function initializeAdmin(myData) {
                         <span class="user-field-value" style="color: ${color};">${escapeHtml(label)}</span>
                     </div>
                     `}
+                    ${isAdmin ? `
+                    <div class="user-field badge-field">
+                        <label>${window.t('admin_badges_label', 'Бейджи:')}</label>
+                        <div class="badge-chips" data-id="${user.id}" style="display:flex; flex-wrap:wrap; gap:2px; flex:1;">${renderBadgeChips(user.badges)}</div>
+                        <select class="badge-select">${window.BADGE_KEYS.map(k => `<option value="${k}">${window.BADGE_EMOJI[k]} ${window.badgeLabel(k)}</option>`).join('')}</select>
+                        <button class="user-btn btn-badge-add" data-id="${user.id}" title="${window.t('admin_badge_add', 'Добавить бейдж')}">+</button>
+                        <button class="user-btn btn-save-badges" data-id="${user.id}">✓</button>
+                    </div>
+                    ` : ''}
                     <div class="user-field">
                         <label>${window.t('profile_about_title', 'Обо мне')}:</label>
                         ${canEdit ? `
@@ -283,6 +299,47 @@ function initializeAdmin(myData) {
             });
         });
 
+        // Бейджи — только админ
+        if (isAdmin) {
+            // Добавить выбранный бейдж как чип
+            document.querySelectorAll(".btn-badge-add").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const card = btn.closest(".user-card");
+                    const chips = card.querySelector(".badge-chips");
+                    const key = card.querySelector(".badge-select").value;
+                    if (!key || chips.querySelector(`.badge-chip[data-key="${key}"]`)) return;
+                    chips.insertAdjacentHTML("beforeend", badgeChipHtml(key));
+                });
+            });
+            // Удалить чип по клику на ✕ (делегирование)
+            document.querySelectorAll(".badge-chips").forEach(chips => {
+                chips.addEventListener("click", (e) => {
+                    const x = e.target.closest(".badge-chip-x");
+                    if (x) x.closest(".badge-chip").remove();
+                });
+            });
+            // Сохранить бейджи
+            document.querySelectorAll(".btn-save-badges").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = btn.dataset.id;
+                    const card = btn.closest(".user-card");
+                    const keys = [...card.querySelectorAll(".badge-chips .badge-chip")].map(c => c.dataset.key);
+                    fetch(`/api/admin/user/${id}/badges`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: 'include',
+                        body: JSON.stringify({ badges: keys.join(',') })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        adminMessage.textContent = data.message || data.error;
+                        adminMessage.style.color = data.message ? (window.isDarkTheme() ? "#5fe36a" : "#1a7d1a") : "#c0392b";
+                        loadUsers();
+                    });
+                });
+            });
+        }
+
         // Удаление — только админ
         if (isAdmin) {
             document.querySelectorAll(".btn-delete").forEach(btn => {
@@ -311,15 +368,25 @@ function initializeAdmin(myData) {
         adminSearchInput.addEventListener("input", () => renderUsers());
     }
 
-    // Управление сервисом (только для админа)
-    const serviceMgmtDiv = document.querySelector(".service-management");
-    if (serviceMgmtDiv) {
-        if (isAdmin) {
-            serviceMgmtDiv.style.display = "block";
-            initServiceManagement();
-        } else {
-            serviceMgmtDiv.style.display = "none";
-        }
+    // Вкладки админки: «Пользователи» / «Сервис»
+    const tabUsers = document.getElementById("adminTabUsers");
+    const tabService = document.getElementById("adminTabService");
+    const panelUsers = document.getElementById("adminUsersPanel");
+    const panelService = document.getElementById("adminServicePanel");
+    function switchAdminTab(which) {
+        const isUsers = which === 'users';
+        if (panelUsers) panelUsers.style.display = isUsers ? '' : 'none';
+        if (panelService) panelService.style.display = isUsers ? 'none' : '';
+        if (tabUsers) tabUsers.classList.toggle('active', isUsers);
+        if (tabService) tabService.classList.toggle('active', !isUsers);
+    }
+    if (tabUsers) tabUsers.addEventListener('click', () => switchAdminTab('users'));
+    if (tabService) tabService.addEventListener('click', () => switchAdminTab('service'));
+
+    // Вкладка «Сервис» — только для админа
+    if (isAdmin) {
+        if (tabService) tabService.style.display = '';
+        initServiceManagement();
     }
 
     function initServiceManagement() {
@@ -332,16 +399,16 @@ function initializeAdmin(myData) {
 
         function updateMaintenanceUI() {
             if (maintenanceActive) {
-                toggleBtn.textContent = "ВЫКЛЮЧИТЬ ОБСЛУЖИВАНИЕ";
+                toggleBtn.textContent = window.t('admin_maintenance_off', 'ВЫКЛЮЧИТЬ ОБСЛУЖИВАНИЕ');
                 toggleBtn.style.borderColor = "#2ecc71";
                 toggleBtn.style.color = "#2ecc71";
-                statusSpan.textContent = "АКТИВЕН";
+                statusSpan.textContent = window.t('admin_maintenance_active', 'АКТИВЕН');
                 statusSpan.style.color = "#ff4444";
             } else {
-                toggleBtn.textContent = "ВКЛЮЧИТЬ ОБСЛУЖИВАНИЕ";
+                toggleBtn.textContent = window.t('admin_maintenance_on', 'ВКЛЮЧИТЬ ОБСЛУЖИВАНИЕ');
                 toggleBtn.style.borderColor = "#ff4444";
                 toggleBtn.style.color = "#ff4444";
-                statusSpan.textContent = "ВЫКЛЮЧЕН";
+                statusSpan.textContent = window.t('admin_maintenance_inactive', 'ВЫКЛЮЧЕН');
                 statusSpan.style.color = "#2ecc71";
             }
         }
@@ -382,10 +449,10 @@ function initializeAdmin(myData) {
 
         // Обновить сервис
         updateBtn.onclick = async () => {
-            if (!await window.showCustomConfirm("Вы уверены, что хотите обновить сервис? Будет выполнен git pull и перезапуск.")) return;
+            if (!await window.showCustomConfirm(window.t('admin_update_confirm', 'Вы уверены, что хотите обновить сервис? Будет выполнен git pull и перезапуск.'))) return;
             updateBtn.disabled = true;
-            updateStatus.textContent = "Выполняется обновление...";
-            updateStatus.style.color = "yellow";
+            updateStatus.textContent = window.t('admin_update_running', 'Выполняется обновление...');
+            updateStatus.style.color = window.isDarkTheme() ? "#ffcc00" : "#9a6f00";
 
             fetch("/api/admin/update-service", {
                 method: "POST",
@@ -395,19 +462,19 @@ function initializeAdmin(myData) {
             .then(data => {
                 updateBtn.disabled = false;
                 if (data.message) {
-                    updateStatus.textContent = "Обновление завершено успешно!";
-                    updateStatus.style.color = "#00ff00";
-                    window.showCustomAlert("Сервис успешно обновлен!");
+                    updateStatus.textContent = window.t('admin_update_done', 'Обновление завершено успешно!');
+                    updateStatus.style.color = window.isDarkTheme() ? "#5fe36a" : "#1a7d1a";
+                    window.showCustomAlert(window.t('admin_update_done_alert', 'Сервис успешно обновлен!'));
                 } else {
-                    const errMsg = data.error || "Ошибка обновления";
-                    updateStatus.textContent = "Ошибка: " + errMsg;
-                    updateStatus.style.color = "#ff4444";
-                    window.showCustomAlert("Ошибка обновления:\n" + errMsg);
+                    const errMsg = data.error || window.t('admin_update_error', 'Ошибка обновления');
+                    updateStatus.textContent = window.t('error', 'Ошибка') + ": " + errMsg;
+                    updateStatus.style.color = "#c0392b";
+                    window.showCustomAlert(window.t('admin_update_error', 'Ошибка обновления') + ":\n" + errMsg);
                 }
             })
             .catch(err => {
                 updateBtn.disabled = false;
-                updateStatus.textContent = "Ошибка сети при обновлении";
+                updateStatus.textContent = window.t('admin_update_neterr', 'Ошибка сети при обновлении');
                 updateStatus.style.color = "#ff4444";
                 console.error(err);
             });

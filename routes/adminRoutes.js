@@ -15,7 +15,7 @@ const sanitize = (dirty) => sanitizeHtml(dirty, {
 
 // Получить всех пользователей (админ и модератор)
 router.get('/dashboard', verifyToken, requireAdminOrModerator, (req, res) => {
-    db.query('SELECT id, username, role, about, created_at, email FROM users', (error, results) => {
+    db.query('SELECT id, username, role, about, created_at, email, badges FROM users', (error, results) => {
         if (error) {
             return res.status(500).send('Database error');
         }
@@ -41,6 +41,27 @@ router.put('/user/:id/role', verifyToken, requireAdmin, (req, res) => {
         if (error) return res.status(500).json({ error: 'Database error' });
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });
         res.json({ message: `Роль изменена на ${role}` });
+    });
+});
+
+// Выдать/снять бейджи — ТОЛЬКО админ
+const ALLOWED_BADGES = ['alpha_tester', 'bug_hunter', 'early_adopter', 'developer', 'supporter'];
+router.put('/user/:id/badges', verifyToken, requireAdmin, (req, res) => {
+    let { badges } = req.body;
+    // Принимаем массив или строку через запятую
+    if (Array.isArray(badges)) badges = badges.join(',');
+    badges = String(badges || '');
+    const keys = badges.split(',').map(s => s.trim()).filter(Boolean);
+    const invalid = keys.filter(k => !ALLOWED_BADGES.includes(k));
+    if (invalid.length) {
+        return res.status(400).json({ error: 'Неизвестный бейдж: ' + invalid.join(', ') });
+    }
+    // Убираем дубли, сохраняем как строку через запятую (или NULL, если пусто)
+    const value = keys.length ? [...new Set(keys)].join(',') : null;
+    db.query('UPDATE users SET badges = ? WHERE id = ?', [value, req.params.id], (error, result) => {
+        if (error) return res.status(500).json({ error: 'Database error' });
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Пользователь не найден' });
+        res.json({ message: 'Бейджи обновлены', badges: value });
     });
 });
 

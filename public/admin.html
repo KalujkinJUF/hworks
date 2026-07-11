@@ -27,27 +27,35 @@
                 <!-- Внутренняя панель -->
                 <div class="admin-panel">
                     <h1 class="admin-title" data-i18n="admin_panel_title">Админ-панель</h1>
-                    
-                    <!-- Поиск пользователей -->
-                    <div class="search-group" style="margin-bottom: 15px;">
-                        <input type="text" id="adminSearchInput" data-i18n-placeholder="search_input_placeholder" placeholder="Введите имя..." class="search-input" style="max-width: 100%;">
+
+                    <!-- Вкладки админки -->
+                    <div class="admin-tabs" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 18px;">
+                        <button id="adminTabUsers" class="user-btn admin-tab active" style="width: auto; padding: 8px 18px; cursor: pointer;" data-i18n="admin_tab_users">Пользователи</button>
+                        <button id="adminTabService" class="user-btn admin-tab" style="width: auto; padding: 8px 18px; cursor: pointer; display: none;" data-i18n="admin_tab_service">Сервис</button>
                     </div>
 
-                    <!-- Блок со списком пользователей -->
-                    <div id="usersContainer" class="users-container">
-                        <div id="usersList"></div>
-                    </div>
-
-                    <!-- Управление Сервисом -->
-                    <div class="service-management" style="display: none; margin-top: 20px; border-top: 1px dashed white; padding-top: 15px;">
-                        <h2 style="font-size: 14px; color: yellow; margin-bottom: 15px; text-transform: uppercase;">Управление сервисом</h2>
-                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-                            <button id="toggleMaintenanceBtn" class="user-btn" style="padding: 10px; font-size: 11px; cursor: pointer;"></button>
-                            <span id="maintenanceStatus" style="font-size: 11px; font-weight: bold;">Загрузка...</span>
+                    <!-- Вкладка: Пользователи -->
+                    <div id="adminUsersPanel">
+                        <div class="search-group" style="margin-bottom: 15px;">
+                            <input type="text" id="adminSearchInput" data-i18n-placeholder="search_input_placeholder" placeholder="Введите имя..." class="search-input" style="max-width: 100%;">
                         </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <button id="updateServiceBtn" class="user-btn" style="padding: 10px; font-size: 11px; cursor: pointer; border-color: #ff4444; color: #ff4444;">ОБНОВИТЬ СЕРВИС</button>
-                            <span id="updateStatus" style="font-size: 11px; color: #aaa;"></span>
+                        <div id="usersContainer" class="users-container">
+                            <div id="usersList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Вкладка: Сервис и управление сайтом -->
+                    <div id="adminServicePanel" style="display: none;">
+                        <div class="service-management">
+                            <h2 style="font-size: 14px; margin-bottom: 15px; text-transform: uppercase;" data-i18n="admin_service_title">Управление сервисом</h2>
+                            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                                <button id="toggleMaintenanceBtn" class="user-btn" style="padding: 10px; font-size: 11px; cursor: pointer;"></button>
+                                <span id="maintenanceStatus" style="font-size: 11px; font-weight: bold;" data-i18n="loading">Загрузка...</span>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button id="updateServiceBtn" class="user-btn" style="padding: 10px; font-size: 11px; cursor: pointer; border-color: #ff4444; color: #ff4444;" data-i18n="admin_update_service">ОБНОВИТЬ СЕРВИС</button>
+                                <span id="updateStatus" style="font-size: 11px; color: #aaa;"></span>
+                            </div>
                         </div>
                     </div>
 

@@ -467,7 +467,7 @@ router.post('/login', authLimiter, (req, res) => {
 router.get('/profile', verifyToken, verifyNotBanned, async (req, res) => {
     try {
         db.query(
-            `SELECT id, username, email, verified, created_at, about, avatar, role,
+            `SELECT id, username, email, verified, created_at, about, avatar, role, badges,
                     IF(last_active >= NOW() - INTERVAL 5 MINUTE, user_status, 'offline') AS user_status, custom_status,
                     (SELECT COUNT(*) FROM subscriptions WHERE following_id = users.id) AS followers_count,
                     (SELECT COUNT(*) FROM subscriptions WHERE follower_id = users.id) AS following_count
@@ -490,7 +490,8 @@ router.get('/profile', verifyToken, verifyNotBanned, async (req, res) => {
                     user_status: user.user_status,
                     custom_status: user.custom_status,
                     followers_count: user.followers_count,
-                    following_count: user.following_count
+                    following_count: user.following_count,
+                    badges: user.badges
                 });
             }
         );
@@ -522,7 +523,7 @@ router.get('/profile/:username', verifyToken, (req, res) => {
     const { username } = req.params;
     
     const query = `
-        SELECT u.id, u.username, u.created_at, u.about, u.avatar, u.role, 
+        SELECT u.id, u.username, u.created_at, u.about, u.avatar, u.role, u.badges,
                IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status,
                (SELECT COUNT(*) FROM subscriptions WHERE following_id = u.id) AS followers_count,
                (SELECT COUNT(*) FROM subscriptions WHERE follower_id = u.id) AS following_count,

@@ -232,6 +232,10 @@ function initializeProfile(myData) {
         document.getElementById("followersCount").innerText = data.followers_count || 0;
         document.getElementById("followingCount").innerText = data.following_count || 0;
 
+        // Бейджи пользователя (под строкой «Подписчики»)
+        const badgesEl = document.getElementById("profileBadges");
+        if (badgesEl) badgesEl.innerHTML = window.renderBadges ? window.renderBadges(data.badges) : '';
+
         const subscribeBtn = document.getElementById("subscribeBtn");
         const friendBtn = document.getElementById("friendBtn");
 

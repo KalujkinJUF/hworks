@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'offline',
     custom_status ENUM('online', 'offline', 'away', 'dnd') DEFAULT 'online',
     token_version INT NOT NULL DEFAULT 0,
+    badges TEXT DEFAULT NULL,
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -113,6 +114,8 @@ CREATE TABLE IF NOT EXISTS comments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- Корректировка default для поля about в существующей таблице
 ALTER TABLE users MODIFY COLUMN about TEXT DEFAULT NULL;
+-- Бейджи пользователя (список ключей через запятую, напр. "alpha_tester,bug_hunter")
+ALTER TABLE users ADD COLUMN IF NOT EXISTS badges TEXT DEFAULT NULL;
 
 -- Добавление колонки прочтения для личных сообщений
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read TINYINT(1) DEFAULT 0;

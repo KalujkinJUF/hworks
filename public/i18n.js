@@ -37,6 +37,27 @@
             "theme_aero_dark": "Aero (Dark)",
             "theme_default": "DOS (Dark)",
             "theme_dos_light": "DOS (Light)",
+            "badge_alpha_tester": "Alpha Tester",
+            "badge_bug_hunter": "Bug Hunter",
+            "badge_early_adopter": "Early Adopter",
+            "badge_developer": "Developer",
+            "badge_supporter": "Supporter",
+            "admin_tab_users": "Users",
+            "admin_tab_service": "Service",
+            "admin_service_title": "Service management",
+            "admin_update_service": "UPDATE SERVICE",
+            "admin_badges_label": "Badges:",
+            "admin_badge_add": "Add badge",
+            "admin_maintenance_on": "ENABLE MAINTENANCE",
+            "admin_maintenance_off": "DISABLE MAINTENANCE",
+            "admin_maintenance_active": "ACTIVE",
+            "admin_maintenance_inactive": "DISABLED",
+            "admin_update_confirm": "Are you sure you want to update the service? A git pull and restart will run.",
+            "admin_update_running": "Updating...",
+            "admin_update_done": "Update completed successfully!",
+            "admin_update_done_alert": "Service updated successfully!",
+            "admin_update_error": "Update error",
+            "admin_update_neterr": "Network error during update",
             "chat_delete_confirm": "Are you sure you want to delete this message?",
             "confirm_are_you_sure": "Are you sure?",
             "error_forbidden": "Access denied!",
@@ -260,12 +281,22 @@
 
             // About
             "about_title": "About Voidtree",
-            "about_description": "Voidtree is a fully decentralized-style, zero-telemetry, anonymous social network built with privacy by design.",
+            "about_description": "Voidtree is a cozy, retro-styled social network with a DOS-terminal aesthetic and a pixel-art vibe. It brings together posts and a news feed, a personal profile wall with comments, direct messages, group chats with text and voice channels, voice calls, friends and subscriptions — all wrapped in a fast, lightweight interface available both in the browser and as a desktop (Electron) app. Voidtree is built for people who value simplicity, speed and privacy.",
             "about_features_title": "Key Features:",
-            "about_feature_1": "Complete anonymity (no IP tracking, no geolocation, no telemetry).",
-            "about_feature_2": "Zero-knowledge encryption design: personal messages and posts are symmetrically encrypted with AES-256 in the database.",
-            "about_feature_3": "No tracking scripts, cookies are HTTP-only and strict.",
-            "about_feature_4": "Secure media processing (EXIF stripping and safe re-encoding).",
+            "about_feature_1": "Posts, a news feed and a personal profile wall with comments and likes.",
+            "about_feature_2": "Direct messages and group chats with both text and voice channels.",
+            "about_feature_3": "Peer-to-peer voice calls between friends.",
+            "about_feature_4": "Friends, subscriptions and live online presence.",
+            "about_feature_5": "Four interface themes (DOS Dark/Light, Aero Light/Dark) and three languages (EN/RU/UK).",
+            "about_feature_6": "Privacy first: content is encrypted in the database, EXIF is stripped, cookies are HTTP-only, and there is no telemetry.",
+            "about_rules_title": "Community Rules",
+            "about_rule_1": "Be respectful — no harassment, hate speech or threats.",
+            "about_rule_2": "No illegal content, or content promoting violence or self-harm.",
+            "about_rule_3": "No spam, flooding, scams or mass advertising.",
+            "about_rule_4": "No impersonation of other users, staff or the administration.",
+            "about_rule_5": "Respect others' privacy — do not share personal data without consent.",
+            "about_rule_6": "NSFW / shock content is not allowed in public feeds or group chats.",
+            "about_rule_7": "Moderators and admins may warn, mute, restrict or ban at their discretion.",
             "about_back": "Back to Home",
             "eula_title": "End User License Agreement (EULA)",
             "eula_text": "READ THIS AGREEMENT CAREFULLY BEFORE INSTALLING OR USING THE SOFTWARE.\n\nThis End User License Agreement (hereinafter — the 'Agreement') is a legally binding contract between You (an individual or legal entity, hereinafter — the 'User') and the Author of the project (hereinafter — the 'Licensor') regarding the software, including all related components, files, documentation and updates (hereinafter collectively — the 'Software').\n\nInstalling, running, copying or otherwise using the Software constitutes the User's full, unconditional and unreserved acceptance of all terms of this Agreement. If You do not agree with the terms of the Agreement, You may not install or use the Software and must immediately delete all copies of it from Your devices.\n\n1. GRANT OF LICENSE\n1.1. Limited license. The Licensor grants the User a non-exclusive, personal, non-transferable, revocable license to install and use the Software on devices lawfully owned by the User, solely for the purposes and in the ways provided by the technical documentation and this Agreement.\n1.2. Term. The license is granted for the entire term of the copyright in the Software, unless otherwise limited by the terms of acquisition of a specific version or the type of subscription.\n1.3. Reservation of rights. The Software is licensed, not sold. All ownership rights, copyrights and other intellectual property rights in the Software remain with the Licensor.\n\n2. RESTRICTIONS ON USE\n2.1. The User agrees not to perform, and not to allow third parties to perform, the following actions:\n- Reverse engineer, decompile, disassemble, modify, adapt, translate or otherwise attempt to derive the source code of the Software or any part thereof.\n- Create derivative works based on the Software.\n- Remove, alter, obscure or render invisible any copyright, trademark, service mark or other proprietary notices of the Licensor.\n- Use the Software to distribute malware, carry out cyberattacks, violate applicable law or infringe the rights of third parties.\n- Rent, lease, sublicense the Software or use it to provide commercial services to third parties without the prior written consent of the Licensor.\n\n3. FULL DISCLAIMER OF WARRANTIES\n3.1. Provided 'As Is'. The Software is provided to the User on an 'AS IS' and 'AS AVAILABLE' basis. The Licensor makes no warranties of any kind, whether express or implied, statutory or otherwise.\n3.2. Exclusion of implied warranties. The Licensor expressly disclaims any implied warranties, including, but not limited to: warranties of merchantability, fitness for a particular or specific purpose, uninterrupted and error-free operation of the Software, compatibility with any other software or hardware, as well as warranties of non-infringement of the rights of third parties.\n3.3. Responsibility for selection. The User is solely and fully responsible for selecting the Software to achieve the results they require, as well as for the installation, use and results obtained with the Software. All risks relating to the quality and performance of the Software rest solely with the User.\n\n4. LIMITATION OF LIABILITY AND WAIVER OF DAMAGES\n4.1. Exclusion of liability. Under no circumstances shall the Licensor, its partners, employees, agents or suppliers be liable to the User or any third parties for any direct, indirect, incidental, special, punitive or consequential damages arising from the use of or inability to use the Software.\n4.2. Types of excluded damages. This limitation applies, among other things, to:\n- Lost profit, loss of anticipated profit, commercial revenue or savings;\n- Loss, damage, corruption or destruction of data, databases or other information;\n- Termination or suspension of business activity, production downtime;\n- Failures of computer, server or network equipment;\n- Any other tangible or intangible losses arising under contract, tort (including negligence), breach of warranty or other legal grounds, even if the Licensor was warned in advance of the possibility of such damages or could have foreseen them.\n\n5. PRIVACY POLICY AND DATA PROTECTION\n5.1. Privacy first. The Licensor respects the User's right to privacy. The Software is designed to minimize the processing of any data.\n5.2. No collection of personal data. The Software does not collect, transmit, store or process the User's personal data (including, but not limited to: names, email addresses, passwords, payment information, IP addresses, geolocation or files on the device).\n5.3. Local processing. All data entered by the User, generated by the Software or processed during its operation is stored and processed solely on the User's local device. The Software does not send this data to external servers of the Licensor or third parties.\n5.4. Anonymous technical diagnostics. The Software may send the Licensor automatic error reports (crash reports) solely for the purpose of improving software stability. Such reports are fully anonymized and contain only technical parameters (for example, the Software version, the operating system type, the error call stack). This data cannot be used to identify the User and is never disclosed to third parties.\n\n6. TERMINATION OF THE AGREEMENT\n6.1. This Agreement is effective until terminated.\n6.2. The User may terminate the Agreement at any time by ceasing to use the Software and completely deleting the Software and all copies of it from all of their devices.\n6.3. The Agreement terminates automatically and immediately, without any notice from the Licensor, if the User breaches any of the terms of this Agreement (including the restrictions in Section 2). Upon termination of the Agreement, the User must immediately cease using the Software and destroy all copies of it.\n\n7. FINAL PROVISIONS\n7.1. Severability. If any provision of this Agreement is held by a court of competent jurisdiction to be invalid, illegal or unenforceable, this shall not affect the validity and enforceability of the remaining provisions of the Agreement, which shall remain in full force.\n7.2. Entire agreement. This Agreement constitutes the entire agreement between the User and the Licensor regarding the Software and supersedes any prior oral or written arrangements, agreements or representations.\n7.3. Amendments. The Licensor reserves the right to change the terms of this Agreement when releasing Software updates. Continued use of the Software after changes are made constitutes the User's acceptance of the new version of the Agreement.\n\nCopyright (c) 2026, hworks.space. All rights reserved.",
@@ -368,6 +399,27 @@
             "theme_aero_dark": "Aero (Dark)",
             "theme_default": "DOS (Dark)",
             "theme_dos_light": "DOS (Light)",
+            "badge_alpha_tester": "Альфа-тестер",
+            "badge_bug_hunter": "Баг-хантер",
+            "badge_early_adopter": "Ранний участник",
+            "badge_developer": "Разработчик",
+            "badge_supporter": "Меценат",
+            "admin_tab_users": "Пользователи",
+            "admin_tab_service": "Сервис",
+            "admin_service_title": "Управление сервисом",
+            "admin_update_service": "ОБНОВИТЬ СЕРВИС",
+            "admin_badges_label": "Бейджи:",
+            "admin_badge_add": "Добавить бейдж",
+            "admin_maintenance_on": "ВКЛЮЧИТЬ ОБСЛУЖИВАНИЕ",
+            "admin_maintenance_off": "ВЫКЛЮЧИТЬ ОБСЛУЖИВАНИЕ",
+            "admin_maintenance_active": "АКТИВЕН",
+            "admin_maintenance_inactive": "ВЫКЛЮЧЕН",
+            "admin_update_confirm": "Вы уверены, что хотите обновить сервис? Будет выполнен git pull и перезапуск.",
+            "admin_update_running": "Выполняется обновление...",
+            "admin_update_done": "Обновление завершено успешно!",
+            "admin_update_done_alert": "Сервис успешно обновлен!",
+            "admin_update_error": "Ошибка обновления",
+            "admin_update_neterr": "Ошибка сети при обновлении",
             "chat_delete_confirm": "Вы уверены, что хотите удалить это сообщение?",
             "confirm_are_you_sure": "Вы уверены?",
             "error_forbidden": "Доступ запрещён!",
@@ -591,12 +643,22 @@
 
             // About
             "about_title": "О Voidtree",
-            "about_description": "Voidtree — это полностью децентрализованная, анонимная социальная сеть с нулевой телеметрией, созданная с приоритетом конфиденциальности.",
+            "about_description": "Voidtree — уютная социальная сеть в ретро-стиле с эстетикой DOS-терминала и пиксель-арта. Здесь собраны посты и лента новостей, личная стена профиля с комментариями, личные сообщения, групповые чаты с текстовыми и голосовыми каналами, звонки, друзья и подписки — всё в быстром и лёгком интерфейсе, доступном как в браузере, так и как десктоп-приложение (Electron). Voidtree создан для тех, кто ценит простоту, скорость и приватность.",
             "about_features_title": "Ключевые особенности:",
-            "about_feature_1": "Полная анонимность (без отслеживания IP, геолокации и сбора телеметрии).",
-            "about_feature_2": "Концепция Zero-Knowledge: личные сообщения и посты шифруются в базе данных по стандарту AES-256.",
-            "about_feature_3": "Никаких скриптов слежки, строгие httpOnly cookie.",
-            "about_feature_4": "Безопасная обработка медиафайлов (очистка EXIF и перекодирование).",
+            "about_feature_1": "Посты, лента новостей и личная стена профиля с комментариями и лайками.",
+            "about_feature_2": "Личные сообщения и групповые чаты с текстовыми и голосовыми каналами.",
+            "about_feature_3": "Голосовые звонки между друзьями (P2P).",
+            "about_feature_4": "Друзья, подписки и отображение статуса «в сети».",
+            "about_feature_5": "Четыре темы оформления (DOS Dark/Light, Aero Light/Dark) и три языка (EN/RU/UK).",
+            "about_feature_6": "Приватность прежде всего: контент шифруется в БД, очистка EXIF, httpOnly-cookie, без телеметрии.",
+            "about_rules_title": "Правила сообщества",
+            "about_rule_1": "Уважайте друг друга — никакой травли, разжигания ненависти и угроз.",
+            "about_rule_2": "Запрещён незаконный контент, а также призывы к насилию или самоповреждению.",
+            "about_rule_3": "Запрещены спам, флуд, мошенничество и массовая реклама.",
+            "about_rule_4": "Запрещено выдавать себя за других пользователей, персонал или администрацию.",
+            "about_rule_5": "Уважайте чужую приватность — не публикуйте личные данные без согласия.",
+            "about_rule_6": "NSFW / шок-контент запрещён в публичных лентах и групповых чатах.",
+            "about_rule_7": "Модераторы и администраторы вправе выдавать предупреждения, мьют, ограничения или бан на своё усмотрение.",
             "about_back": "Вернуться на главную",
             "eula_title": "Лицензионное соглашение (EULA)",
             "eula_text": "ВНИМАТЕЛЬНО ОЗНАКОМЬТЕСЬ С НАСТОЯЩИМ СОГЛАШЕНИЕМ ПЕРЕД УСТАНОВКОЙ ИЛИ ИСПОЛЬЗОВАНИЕМ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ.\n\nНастоящее Лицензионное соглашение с конечным пользователем (далее — «Соглашение») является юридически обязательным договором, заключенным между Вами (физическим или юридическим лицом, далее — «Пользователь») и Автором проекта (далее — «Лицензиар»), в отношении программного обеспечения, включая все связанные с ним компоненты, файлы, документацию и обновления (далее совместно — «Программа»).\n\nУстановка, запуск, копирование или иное использование Программы означает полное, безусловное и безоговорочное согласие Пользователя со всеми условиями настоящего Соглашения. Если Вы не согласны с условиями Соглашения, Вы не имеете права устанавливать или использовать Программу и обязаны немедленно удалить все ее копии со своих устройств.\n\n1. ПРЕДОСТАВЛЕНИЕ ЛИЦЕНЗИИ\n1.1. Ограниченная лицензия. Лицензиар предоставляет Пользователю неисключительную, личную, непередаваемую, отзывную лицензию на установку и использование Программы на устройствах, находящихся в законном владении Пользователя, исключительно в целях и способами, предусмотренными технической документацией и настоящим Соглашением.\n1.2. Срок действия. Лицензия предоставляется на весь срок действия авторских прав на Программу, если иное не ограничено условиями приобретения конкретной версии или типом подписки.\n1.3. Сохранение прав. Программа лицензируется, а не продается. Все права собственности, авторские права и иные права интеллектуальной собственности на Программу остаются за Лицензиаром.\n\n2. ОГРАНИЧЕНИЯ ИСПОЛЬЗОВАНИЯ\n2.1. Пользователь обязуется не совершать лично и не разрешать третьим лицам совершать следующие действия:\n- Вскрывать технологию, декомпилировать, разбирать, деассемблировать, модифицировать, адаптировать, переводить или иным образом пытаться извлечь исходный код Программы или любой ее части.\n- Создавать производные продукты на основе Программы.\n- Удалять, изменять, скрывать или делать невидимыми любые уведомления об авторских правах, товарных знаках, торговых марках или иных правах собственности Лицензиара.\n- Использовать Программу для распространения вредоносного ПО, совершения кибератак, нарушения применимого законодательства или ущемления прав третьих лиц.\n- Сдавать Программу в аренду, прокат, сублицензировать или использовать ее для предоставления коммерческих услуг третьим лицам без предварительного письменного согласия Лицензиара.\n\n3. ПОЛНЫЙ ОТКАЗ ОТ ГАРАНТИЙ\n3.1. Предоставление «Как есть». Программа предоставляется Пользователю на условиях «КАК ЕСТЬ» (AS IS) и «ПО МЕРЕ ДОСТУПНОСТИ» (AS AVAILABLE). Лицензиар не предоставляет никаких гарантий, явных или подразумеваемых, законодательных или иных.\n3.2. Исключение подразумеваемых гарантий. Лицензиар прямо отказывается от любых подразумеваемых гарантий, включая, помимо прочего: гарантии товарного состояния (коммерческой ценности), пригодности для конкретной или определенной цели, бесперебойной и безошибочной работы Программы, совместимости с любым другим программным обеспечением или аппаратными средствами, а также гарантии отсутствия нарушений прав третьих лиц.\n3.3. Ответственность за выбор. Пользователь единолично несет полную ответственность за выбор Программы для достижения необходимых ему результатов, а также за установку, использование и результаты, полученные с помощью Программы. Все риски, связанные с качеством и производительностью Программы, лежат исключительно на Пользователе.\n\n4. ОГРАНИЧЕНИЕ ОТВЕТСТВЕННОСТИ И ОСВОБОЖДЕНИЕ ОТ УБЫТКОВ\n4.1. Исключение ответственности. Ни при каких обстоятельствах Лицензиар, его партнеры, сотрудники, агенты или поставщики не несут ответственности перед Пользователем или любыми третьими лицами за любые прямые, косвенные, случайные, специальные, штрафные или последующие убытки, возникшие в результате использования или невозможности использования Программы.\n4.2. Виды исключенных убытков. Настоящее ограничение распространяется, помимо прочего, на:\n- Упущенную выгоду, потерю ожидаемой прибыли, коммерческого дохода или сбережений;\n- Потерю, повреждение, искажение или уничтожение данных, баз данных или иной информации;\n- Прекращение или приостановку деловой активности, простои производства;\n- Сбои в работе компьютерного, serverного или сетевого оборудования;\n- Любые иные материальные или нематериальные потери, возникшие на основании договора, деликта (включая небрежность), нарушения гарантий или иных правовых оснований, даже если Лицензиар был заранее предупрежден о возможности наступления таких убытков или мог их предвидеть.\n\n5. ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ И ЗАЩИТА ДАННЫХ\n5.1. Приоритет приватности. Лицензиар уважает право Пользователя на конфиденциальность. Программа спроектирована таким образом, чтобы минимизировать обработку любых данных.\n5.2. Отсутствие сбора персональных данных. Программа не собирает, не передает, не хранит и не обрабатывает персональные данные Пользователя (включая, но не ограничиваясь: имена, адреса электронной почты, пароли, платежную информацию, IP-адреса, геолокацию или файлы на устройстве).\n5.3. Локальная обработка. Все данные, вводимые Пользователем, генерируемые Программой или обрабатываемые в ходе ее работы, хранятся и обрабатываются исключительно на локальном устройстве Пользователя. Программа не отправляет эти данные на внешние серверы Лицензиара или третьих лиц.\n5.4. Анонимная техническая диагностика. Программа может отправлять Лицензиару автоматические отчеты об ошибках (crash reports) исключительно в целях улучшения стабильности ПО. Данные отчеты являются полностью обезличенными (анонимными) и содержат только технические параметры (например, версия Программы, тип операционной системы, стек вызовов ошибки). Эти данные не могут быть использованы для идентификации личности Пользователя и никогда не передаются третьим сторонам.\n\n6. ПРЕКРАЩЕНИЕ ДЕЙСТВИЯ СОГЛАШЕНИЯ\n6.1. Настоящее Соглашение действует до момента его расторжения.\n6.2. Пользователь может расторгнуть Соглашение в любой момент, прекратив использование Программы и полностью удалив Программу и все ее копии со всех своих устройств.\n6.3. Соглашение прекращает свое действие автоматически и незамедлительно, без какого-либо уведомления со стороны Лицензиара, в случае нарушения Пользователем любого из условий настоящего Соглашения (включая ограничения раздела 2). При прекращении действия Соглашения Пользователь обязан немедленно прекратить использование Программы и уничтожить все ее копии.\n\n7. ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ\n7.1. Автономность положений. Если какое-либо положение настоящего Соглашения будет признано судом компетентной юрисдикции недействительным, незаконным или не имеющим юридической силы, это не повлияет на действительность и применимость остальных положений Соглашения, которые сохранят полную силу.\n7.2. Полнота Соглашения. Настоящее Соглашение представляет собой полное соглашение между Пользователем и Лицензиаром в отношении Программы и заменяет собой любые предшествующие устные или письменные договоренности, соглашения или заявления.\n7.3. Изменения. Лицензиар оставляет за собой право изменять условия настоящего Соглашения при выпуске обновлений Программы. Продолжение использования Программы после внесения изменений означает согласие Пользователя с новой редакцией Соглашения.\n\nCopyright (c) 2026, hworks.space. Все права защищены.",
@@ -699,6 +761,27 @@
             "theme_aero_dark": "Aero (Dark)",
             "theme_default": "DOS (Dark)",
             "theme_dos_light": "DOS (Light)",
+            "badge_alpha_tester": "Альфа-тестер",
+            "badge_bug_hunter": "Баг-хантер",
+            "badge_early_adopter": "Ранній учасник",
+            "badge_developer": "Розробник",
+            "badge_supporter": "Меценат",
+            "admin_tab_users": "Користувачі",
+            "admin_tab_service": "Сервіс",
+            "admin_service_title": "Керування сервісом",
+            "admin_update_service": "ОНОВИТИ СЕРВІС",
+            "admin_badges_label": "Бейджі:",
+            "admin_badge_add": "Додати бейдж",
+            "admin_maintenance_on": "УВІМКНУТИ ОБСЛУГОВУВАННЯ",
+            "admin_maintenance_off": "ВИМКНУТИ ОБСЛУГОВУВАННЯ",
+            "admin_maintenance_active": "АКТИВНИЙ",
+            "admin_maintenance_inactive": "ВИМКНЕНО",
+            "admin_update_confirm": "Ви впевнені, що хочете оновити сервіс? Буде виконано git pull і перезапуск.",
+            "admin_update_running": "Виконується оновлення...",
+            "admin_update_done": "Оновлення завершено успішно!",
+            "admin_update_done_alert": "Сервіс успішно оновлено!",
+            "admin_update_error": "Помилка оновлення",
+            "admin_update_neterr": "Помилка мережі під час оновлення",
             "chat_delete_confirm": "Ви впевнені, що хочете видалити це повідомлення?",
             "confirm_are_you_sure": "Ви впевнені?",
             "error_forbidden": "Доступ заборонено!",
@@ -922,12 +1005,22 @@
 
             // About
             "about_title": "Про Voidtree",
-            "about_description": "Voidtree — це повністю децентралізована, анонімна соціальна мережа з нульовою телеметрією, створена з пріоритетом конфіденційності.",
+            "about_description": "Voidtree — затишна соціальна мережа в ретро-стилі з естетикою DOS-термінала та піксель-арту. Тут зібрані пости й стрічка новин, особиста стіна профілю з коментарями, особисті повідомлення, групові чати з текстовими та голосовими каналами, дзвінки, друзі та підписки — усе у швидкому й легкому інтерфейсі, доступному як у браузері, так і як десктоп-застосунок (Electron). Voidtree створений для тих, хто цінує простоту, швидкість і приватність.",
             "about_features_title": "Ключові особливості:",
-            "about_feature_1": "Повна анонімність (без відстеження IP, геолокації та збору телеметрії).",
-            "about_feature_2": "Концепція Zero-Knowledge: особисті повідомлення та пости шифруються в базі даних за стандартом AES-256.",
-            "about_feature_3": "Ніяких скриптів стеження, суворі httpOnly cookie.",
-            "about_feature_4": "Безпечна обробка медіафайлів (очищення EXIF та перекодування).",
+            "about_feature_1": "Пости, стрічка новин та особиста стіна профілю з коментарями й лайками.",
+            "about_feature_2": "Особисті повідомлення та групові чати з текстовими й голосовими каналами.",
+            "about_feature_3": "Голосові дзвінки між друзями (P2P).",
+            "about_feature_4": "Друзі, підписки та відображення статусу «у мережі».",
+            "about_feature_5": "Чотири теми оформлення (DOS Dark/Light, Aero Light/Dark) та три мови (EN/RU/UK).",
+            "about_feature_6": "Приватність передусім: контент шифрується в БД, очищення EXIF, httpOnly-cookie, без телеметрії.",
+            "about_rules_title": "Правила спільноти",
+            "about_rule_1": "Поважайте одне одного — жодних цькувань, розпалювання ненависті чи погроз.",
+            "about_rule_2": "Заборонено незаконний контент, а також заклики до насильства чи самоушкодження.",
+            "about_rule_3": "Заборонені спам, флуд, шахрайство та масова реклама.",
+            "about_rule_4": "Заборонено видавати себе за інших користувачів, персонал чи адміністрацію.",
+            "about_rule_5": "Поважайте чужу приватність — не публікуйте особисті дані без згоди.",
+            "about_rule_6": "NSFW / шок-контент заборонено в публічних стрічках і групових чатах.",
+            "about_rule_7": "Модератори та адміністратори мають право видавати попередження, м'ют, обмеження чи бан на власний розсуд.",
             "about_back": "На головну",
             "eula_title": "Ліцензійна угода (EULA)",
             "eula_text": "УВАЖНО ОЗНАЙОМТЕСЯ З ЦІЄЮ УГОДОЮ ПЕРЕД ВСТАНОВЛЕННЯМ АБО ВИКОРИСТАННЯМ ПРОГРАМНОГО ЗАБЕЗПЕЧЕННЯ.\n\nЦя Ліцензійна угода з кінцевим користувачем (далі — «Угода») є юридично обов'язковим договором, укладеним між Вами (фізичною або юридичною особою, далі — «Користувач») та Автором проєкту (далі — «Ліцензіар»), щодо програмного забезпечення, включно з усіма пов'язаними з ним компонентами, файлами, документацією та оновленнями (далі спільно — «Програма»).\n\nВстановлення, запуск, копіювання або інше використання Програми означає повну, безумовну та беззастережну згоду Користувача з усіма умовами цієї Угоди. Якщо Ви не згодні з умовами Угоди, Ви не маєте права встановлювати або використовувати Програму та зобов'язані негайно видалити всі її копії зі своїх пристроїв.\n\n1. НАДАННЯ ЛІЦЕНЗІЇ\n1.1. Обмежена ліцензія. Ліцензіар надає Користувачеві невиключну, особисту, непередавану, відкличну ліцензію на встановлення та використання Програми на пристроях, що перебувають у законному володінні Користувача, виключно з метою та у спосіб, передбачені технічною документацією та цією Угодою.\n1.2. Строк дії. Ліцензія надається на весь строк дії авторських прав на Програму, якщо інше не обмежено умовами придбання конкретної версії або типом підписки.\n1.3. Збереження прав. Програма ліцензується, а не продається. Усі права власності, авторські права та інші права інтелектуальної власності на Програму залишаються за Ліцензіаром.\n\n2. ОБМЕЖЕННЯ ВИКОРИСТАННЯ\n2.1. Користувач зобов'язується не вчиняти особисто та не дозволяти третім особам вчиняти такі дії:\n- Розкривати технологію, декомпілювати, розбирати, дизасемблювати, модифікувати, адаптувати, перекладати або іншим чином намагатися отримати вихідний код Програми чи будь-якої її частини.\n- Створювати похідні продукти на основі Програми.\n- Видаляти, змінювати, приховувати або робити невидимими будь-які повідомлення про авторські права, товарні знаки, торгові марки чи інші права власності Ліцензіара.\n- Використовувати Програму для розповсюдження шкідливого ПЗ, здійснення кібератак, порушення чинного законодавства або утиску прав третіх осіб.\n- Здавати Програму в оренду, прокат, субліцензувати або використовувати її для надання комерційних послуг третім особам без попередньої письмової згоди Ліцензіара.\n\n3. ПОВНА ВІДМОВА ВІД ГАРАНТІЙ\n3.1. Надання «Як є». Програма надається Користувачеві на умовах «ЯК Є» (AS IS) та «У МІРУ ДОСТУПНОСТІ» (AS AVAILABLE). Ліцензіар не надає жодних гарантій, явних чи неявних, законодавчих чи інших.\n3.2. Виключення неявних гарантій. Ліцензіар прямо відмовляється від будь-яких неявних гарантій, включно, зокрема: гарантії товарного стану (комерційної цінності), придатності для конкретної або визначеної мети, безперебійної та безпомилкової роботи Програми, сумісності з будь-яким іншим програмним забезпеченням чи апаратними засобами, а також гарантії відсутності порушень прав третіх осіб.\n3.3. Відповідальність за вибір. Користувач одноосібно несе повну відповідальність за вибір Програми для досягнення необхідних йому результатів, а також за встановлення, використання та результати, отримані за допомогою Програми. Усі ризики, пов'язані з якістю та продуктивністю Програми, лежать виключно на Користувачі.\n\n4. ОБМЕЖЕННЯ ВІДПОВІДАЛЬНОСТІ ТА ЗВІЛЬНЕННЯ ВІД ЗБИТКІВ\n4.1. Виключення відповідальності. За жодних обставин Ліцензіар, його партнери, співробітники, агенти чи постачальники не несуть відповідальності перед Користувачем або будь-якими третіми особами за будь-які прямі, непрямі, випадкові, спеціальні, штрафні чи подальші збитки, що виникли внаслідок використання або неможливості використання Програми.\n4.2. Види виключених збитків. Це обмеження поширюється, зокрема, на:\n- Упущену вигоду, втрату очікуваного прибутку, комерційного доходу чи заощаджень;\n- Втрату, пошкодження, спотворення чи знищення даних, баз даних або іншої інформації;\n- Припинення або призупинення ділової активності, простої виробництва;\n- Збої в роботі комп'ютерного, серверного чи мережевого обладнання;\n- Будь-які інші матеріальні чи нематеріальні втрати, що виникли на підставі договору, делікту (включно з недбалістю), порушення гарантій чи інших правових підстав, навіть якщо Ліцензіара було заздалегідь попереджено про можливість настання таких збитків або він міг їх передбачити.\n\n5. ПОЛІТИКА КОНФІДЕНЦІЙНОСТІ ТА ЗАХИСТ ДАНИХ\n5.1. Пріоритет приватності. Ліцензіар поважає право Користувача на конфіденційність. Програму спроєктовано таким чином, щоб мінімізувати обробку будь-яких даних.\n5.2. Відсутність збору персональних даних. Програма не збирає, не передає, не зберігає та не обробляє персональні дані Користувача (включно, але не обмежуючись: імена, адреси електронної пошти, паролі, платіжну інформацію, IP-адреси, геолокацію чи файли на пристрої).\n5.3. Локальна обробка. Усі дані, що вводяться Користувачем, генеруються Програмою або обробляються під час її роботи, зберігаються та обробляються виключно на локальному пристрої Користувача. Програма не надсилає ці дані на зовнішні сервери Ліцензіара чи третіх осіб.\n5.4. Анонімна технічна діагностика. Програма може надсилати Ліцензіару автоматичні звіти про помилки (crash reports) виключно з метою покращення стабільності ПЗ. Ці звіти є повністю знеособленими (анонімними) та містять лише технічні параметри (наприклад, версія Програми, тип операційної системи, стек викликів помилки). Ці дані не можуть бути використані для ідентифікації особи Користувача та ніколи не передаються третім сторонам.\n\n6. ПРИПИНЕННЯ ДІЇ УГОДИ\n6.1. Ця Угода діє до моменту її розірвання.\n6.2. Користувач може розірвати Угоду будь-якої миті, припинивши використання Програми та повністю видаливши Програму й усі її копії з усіх своїх пристроїв.\n6.3. Угода припиняє свою дію автоматично та негайно, без будь-якого повідомлення з боку Ліцензіара, у разі порушення Користувачем будь-якої з умов цієї Угоди (включно з обмеженнями розділу 2). При припиненні дії Угоди Користувач зобов'язаний негайно припинити використання Програми та знищити всі її копії.\n\n7. ЗАКЛЮЧНІ ПОЛОЖЕННЯ\n7.1. Автономність положень. Якщо будь-яке положення цієї Угоди буде визнано судом компетентної юрисдикції недійсним, незаконним чи таким, що не має юридичної сили, це не вплине на дійсність та застосовність решти положень Угоди, які збережуть повну силу.\n7.2. Повнота Угоди. Ця Угода становить повну угоду між Користувачем та Ліцензіаром щодо Програми та замінює собою будь-які попередні усні чи письмові домовленості, угоди або заяви.\n7.3. Зміни. Ліцензіар залишає за собою право змінювати умови цієї Угоди при випуску оновлень Програми. Продовження використання Програми після внесення змін означає згоду Користувача з новою редакцією Угоди.\n\nCopyright (c) 2026, hworks.space. Усі права захищено.",
@@ -1127,6 +1220,25 @@
     };
     // Дефолтный цвет ника (обычный пользователь без роли).
     window.defaultNameColor = function () { return window.isDarkTheme() ? '#ffffff' : '#33322a'; };
+    // ── Бейджи пользователей ──────────────────────────────────────────
+    window.BADGE_KEYS = ['alpha_tester', 'bug_hunter', 'early_adopter', 'developer', 'supporter'];
+    window.BADGE_EMOJI = {
+        alpha_tester: '🧪', bug_hunter: '🐛', early_adopter: '🌱', developer: '⚙️', supporter: '💛'
+    };
+    window.badgeLabel = function (key) { return (window.t ? window.t('badge_' + key, key) : key); };
+    // Парсит строку "a,b,c" в массив валидных ключей
+    window.parseBadges = function (str) {
+        return String(str || '').split(',').map(s => s.trim()).filter(k => window.BADGE_EMOJI[k]);
+    };
+    // HTML-цепочка бейджей. Рамка использует currentColor => адаптируется под тему.
+    window.renderBadges = function (str) {
+        const keys = window.parseBadges(str);
+        if (!keys.length) return '';
+        return keys.map(k =>
+            `<span class="user-badge" title="${window.badgeLabel(k)}" style="display:inline-block;border:1px solid;border-radius:12px;padding:2px 8px;font-size:11px;margin:3px 6px 0 0;white-space:nowrap;opacity:0.95;">${window.BADGE_EMOJI[k]} ${window.badgeLabel(k)}</span>`
+        ).join('');
+    };
+
     // Цвета статусов (online/away и т.п.) — на светлых темах затемнены для читаемости.
     window.getStatusColors = function () {
         return window.isDarkTheme() ? {

@@ -171,7 +171,7 @@ router.post('/', groupActionLimiter, (req, res) => {
         const groupId = result.insertId;
         db.query("INSERT INTO group_members (group_id, user_id, role) VALUES (?, ?, 'admin')", [groupId, userId], (e1) => {
             if (e1) { logger.error('Ошибка БД при добавлении владельца группы'); return res.status(500).json({ error: 'Внутренняя ошибка сервера' }); }
-            db.query("INSERT INTO group_channels (group_id, name, position) VALUES (?, 'общий', 0)", [groupId], (e2, chRes) => {
+            db.query("INSERT INTO group_channels (group_id, name, position) VALUES (?, 'general', 0)", [groupId], (e2, chRes) => {
                 if (e2) { logger.error('Ошибка БД при создании канала'); return res.status(500).json({ error: 'Внутренняя ошибка сервера' }); }
                 res.status(201).json({ id: groupId, name, is_admin: true, default_channel_id: chRes.insertId });
             });

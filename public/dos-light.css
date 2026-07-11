@@ -2703,3 +2703,15 @@ textarea::placeholder { color: rgba(0, 0, 0, 0.5) !important; }
     color: #8a6d00 !important;
     border-color: #8a6d00 !important;
 }
+
+/* 8. Группы (DOS Light): белые инлайн-заголовки -> тёмные; зелёная «+ Канал» -> тёмная */
+.groups-layout h2,
+#groupNameTitle,
+.group-members-column .chat-header h2 { color: #33322a !important; }
+#addChannelBtn { color: #0a7a12 !important; border-color: #0a7a12 !important; }
+
+/* 9. Страница «О проекте» (DOS Light): золото/циан заголовков и тёмный бокс EULA */
+.about-section h2 { color: #8a6d00 !important; border-bottom-color: #33322a !important; }
+.about-section h3 { color: #0077aa !important; }
+.about-section a { color: #0077aa !important; }
+.about-section details { background: rgba(0, 0, 0, 0.04) !important; border-color: rgba(0, 0, 0, 0.35) !important; }

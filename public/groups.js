@@ -3,6 +3,15 @@
 let _groupsInterval = null;
 document.addEventListener('spa:unload', () => {
     if (_groupsInterval) clearInterval(_groupsInterval);
+    // ВАЖНО: НЕ выходим из голоса при переходе по страницам — голос переживает навигацию
+    // (постоянная плашка живёт в body, см. voice.js renderDock). Выход — только явный.
+});
+// Единый слушатель состояния голоса: держим последний снимок и, если страница групп
+// открыта, обновляем её UI — независимо от того, кто запустил голос (канал или ЛС-звонок).
+let _latestVoiceState = null;
+document.addEventListener('voice:state', (e) => {
+    _latestVoiceState = e.detail;
+    if (typeof window._groupsOnVoiceState === 'function') window._groupsOnVoiceState(e.detail);
 });
 document.addEventListener('spa:navigate', () => {
     if (!document.getElementById('groupsRoot')) return;
@@ -22,9 +31,29 @@ document.addEventListener('spa:navigate', () => {
 
 function initializeGroups(myData) {
     const myUserId = myData.id;
+    const myUsername = myData.username || '';
 
     let currentGroupId = null;
     let currentChannelId = null;
+    let voiceState = _latestVoiceState;   // восстанавливаем при возврате на страницу групп
+    let channelRosters = {};              // channelId -> [{userId,username,muted}] (кто в канале, с сервера)
+    // Мост от глобального слушателя voice:state к рендеру этой инстанции страницы
+    window._groupsOnVoiceState = (s) => { voiceState = s; renderVoiceParticipants(); };
+
+    // Опрос ростеров голосовых каналов группы (кто сейчас сидит в каждом) для показа под каналами.
+    // Идёт через основной API (он проверяет членство и проксирует к voice-серверу) — присутствие
+    // не отдаётся напрямую наружу.
+    async function refreshRosters() {
+        if (!currentGroupId) return;
+        if (!document.querySelector('.voice-participants')) return;
+        try {
+            const res = await fetch('/api/voice/rosters/' + currentGroupId, { credentials: 'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            channelRosters = data.rosters || {};   // { channelId: [{userId,username,muted}] }
+            renderVoiceParticipants();
+        } catch (e) { /* тихо: не роняем UI */ }
+    }
     let isGroupAdmin = false;
     let currentGroupLocked = false;
     let groupOwnerId = null;
@@ -154,14 +183,17 @@ function initializeGroups(myData) {
 
                 document.getElementById('groupNameTitle').textContent = group.name;
                 renderChannels(group.channels || []);
+                refreshRosters();   // сразу подтянуть, кто уже в голосовых каналах
                 renderMembers(currentMembers);
                 setupControls();
 
                 if (window.applyTranslations) window.applyTranslations();
 
-                // Выбираем канал: предпочтительный или первый
+                // Выбираем текстовый канал для основного вида: предпочтительный или первый
+                // текстовый (голосовые каналы не открываются как текстовый чат).
                 const channels = group.channels || [];
-                let ch = channels.find(c => String(c.id) === String(preferChannelId)) || channels[0];
+                const textChannels = channels.filter(c => c.type !== 'voice');
+                let ch = textChannels.find(c => String(c.id) === String(preferChannelId)) || textChannels[0];
                 if (ch) selectChannel(ch.id, ch.name);
             })
             .catch(() => {
@@ -171,6 +203,7 @@ function initializeGroups(myData) {
     }
 
     function backToGroups() {
+        // Голос НЕ покидаем — он остаётся активным (плашка в body), уходим только по кнопке выхода.
         currentGroupId = null;
         currentChannelId = null;
         groupView.style.display = 'none';
@@ -184,18 +217,99 @@ function initializeGroups(myData) {
         const list = document.getElementById('channelsList');
         list.innerHTML = '';
         channels.forEach(c => {
+            const isVoice = c.type === 'voice';
             const item = document.createElement('div');
-            item.className = 'channel-item' + (String(c.id) === String(currentChannelId) ? ' active' : '');
+            item.className = 'channel-item' + (!isVoice && String(c.id) === String(currentChannelId) ? ' active' : '');
             item.dataset.id = c.id;
             item.dataset.name = c.name;
-            const muted = localStorage.getItem('gMute_' + c.id) === '1';
-            const muteBtn = `<span class="channel-mute" data-id="${c.id}" title="${muted ? window.t('group_unmute', 'Включить уведомления') : window.t('group_mute', 'Отключить уведомления')}">${muted ? '🔕' : '🔔'}</span>`;
+            item.dataset.type = c.type || 'text';
             const delBtn = (isGroupAdmin && channels.length > 1)
                 ? `<span class="channel-del" data-id="${c.id}" title="${window.t('delete', 'Удалить')}">✕</span>` : '';
-            item.innerHTML = `<span class="channel-hash">#</span><span class="channel-name">${escapeHtml(c.name)}</span>${muteBtn}${delBtn}`;
-            list.appendChild(item);
+            if (isVoice) {
+                // Голосовой канал: иконка 🔊, клик = вход в голос (без уведомлений-мьюта)
+                item.innerHTML = `<span class="channel-hash">🔊</span><span class="channel-name">${escapeHtml(c.name)}</span>${delBtn}`;
+                list.appendChild(item);
+                // Живой список участников голоса под каналом
+                const parts = document.createElement('div');
+                parts.className = 'voice-participants';
+                parts.dataset.channel = c.id;
+                parts.style.cssText = 'margin: 2px 0 6px 18px; font-size: 11px;';
+                list.appendChild(parts);
+            } else {
+                const muted = localStorage.getItem('gMute_' + c.id) === '1';
+                const muteBtn = `<span class="channel-mute" data-id="${c.id}" title="${muted ? window.t('group_unmute', 'Включить уведомления') : window.t('group_mute', 'Отключить уведомления')}">${muted ? '🔕' : '🔔'}</span>`;
+                item.innerHTML = `<span class="channel-hash">#</span><span class="channel-name">${escapeHtml(c.name)}</span>${muteBtn}${delBtn}`;
+                list.appendChild(item);
+            }
         });
         document.getElementById('channelAdminBox').style.display = isGroupAdmin ? 'block' : 'none';
+        renderVoiceParticipants();
+    }
+
+    // ─────────────── голос ───────────────
+
+    function currentVoiceChannelId() {
+        if (!voiceState || !voiceState.roomId) return null;
+        const m = String(voiceState.roomId).match(/^voice:channel:(\d+)$/);
+        return m ? m[1] : null;
+    }
+
+    // Обновляет списки участников под голосовыми каналами. Для каждого канала берёт ростер
+    // с сервера; для СВОЕГО активного канала — живой voiceState (мгновенный mute + говорящий).
+    function renderVoiceParticipants() {
+        const activeCh = currentVoiceChannelId();
+        document.querySelectorAll('.voice-participants').forEach(box => {
+            const chId = box.dataset.channel;
+            let users = channelRosters[chId] || [];
+            let speakingId = null;
+            if (String(chId) === String(activeCh) && voiceState) {
+                const self = { userId: voiceState.self.id, username: myUsername, muted: voiceState.muted };
+                users = [self, ...voiceState.peers.map(p => ({ userId: p.userId, username: p.username, muted: p.muted }))];
+                speakingId = voiceState.speakingUserId;
+            }
+            if (!users.length) { box.innerHTML = ''; return; }
+            box.innerHTML = users.map(u => {
+                const speaking = u.userId === speakingId;
+                const speak = speaking ? 'color:#00ff00;font-weight:bold;' : 'color:#ccc;';
+                const micIcon = u.muted ? '🔇' : (speaking ? '🔊' : '🎤');
+                return `<div style="display:flex;align-items:center;gap:4px;${speak}"><span>${micIcon}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(u.username || '')}</span></div>`;
+            }).join('');
+        });
+        renderVoiceBar();
+    }
+
+    function renderVoiceBar() {
+        // Управление голосом вынесено в постоянную body-плашку (voice.js renderDock),
+        // видимую на всех страницах. Прячем старую внутристраничную плашку, чтобы не дублировать.
+        const bar = document.getElementById('voiceBar');
+        if (bar) bar.style.display = 'none';
+    }
+
+    async function joinVoiceChannel(channelId, channelName) {
+        if (!window.voiceClient) { window.showCustomAlert(window.t('voice_unavailable', 'Голос недоступен')); return; }
+        const roomId = 'voice:channel:' + channelId;
+        // Уже в этом канале — выходим (toggle)
+        if (window.voiceClient.currentRoom === roomId) { await leaveVoice(); return; }
+        // Идёт ЛС-звонок? Корректно завершаем его (с уведомлением собеседника), прежде чем
+        // занять общий voiceClient групповым каналом — иначе у собеседника «зависнет» звонок.
+        if (window.voiceCall && window.voiceCall.isBusy && window.voiceCall.isBusy()) {
+            try { window.voiceCall.hangup(); } catch (e) {}
+        }
+        try {
+            await window.voiceClient.join(roomId, { id: myUserId, username: myUsername }, {
+                onStateChange: (s) => { voiceState = s; renderVoiceParticipants(); },
+                onError: (msg) => { window.showCustomAlert(window.t('voice_error', 'Ошибка голоса') + ': ' + msg); }
+            }, undefined, channelName);
+        } catch (e) {
+            voiceState = null;
+            renderVoiceParticipants();
+        }
+    }
+
+    async function leaveVoice() {
+        if (window.voiceClient) await window.voiceClient.leave();
+        voiceState = null;
+        renderVoiceParticipants();
     }
 
     function selectChannel(channelId, channelName) {
@@ -560,6 +674,15 @@ function initializeGroups(myData) {
 
     document.getElementById('backToGroupsBtn').addEventListener('click', backToGroups);
 
+    // Кнопки голосовой плашки (mute / deafen / выход)
+    document.getElementById('voiceMuteBtn').addEventListener('click', () => {
+        if (window.voiceClient && window.voiceClient.currentRoom) window.voiceClient.toggleMute();
+    });
+    document.getElementById('voiceDeafenBtn').addEventListener('click', () => {
+        if (window.voiceClient && window.voiceClient.currentRoom) window.voiceClient.toggleDeafen();
+    });
+    document.getElementById('voiceLeaveBtn').addEventListener('click', () => { leaveVoice(); });
+
     // Клики по каналам (выбор / мьют / удаление)
     document.getElementById('channelsList').addEventListener('click', async (e) => {
         const mute = e.target.closest('.channel-mute');
@@ -586,7 +709,10 @@ function initializeGroups(myData) {
             return;
         }
         const item = e.target.closest('.channel-item');
-        if (item) selectChannel(item.dataset.id, item.dataset.name);
+        if (item) {
+            if (item.dataset.type === 'voice') joinVoiceChannel(item.dataset.id, item.dataset.name);
+            else selectChannel(item.dataset.id, item.dataset.name);
+        }
     });
 
     // Создание канала
@@ -604,14 +730,16 @@ function initializeGroups(myData) {
         document.getElementById('submitChannelBtn').addEventListener('click', () => {
             const name = document.getElementById('newChannelName').value.trim();
             if (!name) return;
+            const type = document.getElementById('newChannelType').value === 'voice' ? 'voice' : 'text';
             fetch(`/api/groups/${currentGroupId}/channels`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-                body: JSON.stringify({ name })
+                body: JSON.stringify({ name, type })
             })
                 .then(res => res.json())
                 .then(data => {
                     if (data.id) {
                         document.getElementById('newChannelName').value = '';
+                        document.getElementById('newChannelType').value = 'text';
                         createChannelForm.style.display = 'none';
                         openGroup(currentGroupId, data.id);
                     } else {
@@ -721,8 +849,10 @@ function initializeGroups(myData) {
 
     // Polling: сообщения активного канала каждые 2с
     if (_groupsInterval) clearInterval(_groupsInterval);
+    let _rosterTick = 0;
     _groupsInterval = setInterval(() => {
         if (currentChannelId) loadMessages(false);
+        if (_rosterTick++ % 2 === 0) refreshRosters();   // ~каждые 4с — бережём основной API
     }, 2000);
 
     // Стартовое состояние: список или авто-открытие группы по ?group=

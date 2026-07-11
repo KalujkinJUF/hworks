@@ -10,3 +10,6 @@ public/uploads/
 db-error.log
 crash.log
 backup/
+client-electron/node_modules/
+client-electron/dist/
+client-electron/dist-manual/

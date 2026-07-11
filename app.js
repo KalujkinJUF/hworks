@@ -137,7 +137,12 @@ app.use(helmet({
             scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             imgSrc: ["'self'", "data:", "blob:"],
-            connectSrc: ["'self'", process.env.CLIENT_URL, "https://challenges.cloudflare.com"],
+            // 'self' покрывает same-origin. Голосовой сигналинг (Socket.IO/WebSocket) на
+            // проде идёт на wss://hworks.space (Caddy проксирует /voice), локально — на :4000.
+            connectSrc: ["'self'", process.env.CLIENT_URL, "https://challenges.cloudflare.com",
+                "wss://hworks.space", "https://hworks.space", process.env.VOICE_PUBLIC_URL,
+                ...(process.env.NODE_ENV === 'production' ? [] : ["ws://localhost:4000", "http://localhost:4000"])
+            ].filter(Boolean),
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             frameSrc: ["'self'", "https://challenges.cloudflare.com"],
             workerSrc: ["'self'", "blob:"],
@@ -191,7 +196,7 @@ app.get('/api/health', (req, res) => {
 });
 // Эндпоинт получения текущей версии
 app.get('/api/version', (req, res) => {
-    res.json({ version: 'a0.2.10' });
+    res.json({ version: 'a0.2.11' });
 });
 
 // Раздача всего из папки public

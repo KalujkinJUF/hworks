@@ -319,6 +319,16 @@ function initializeChat(myData) {
         const statusEl = document.getElementById("friendStatus");
         statusEl.style.display = 'none';
 
+        // Кнопка звонка (Фаза 3): звоним текущему собеседнику
+        const callBtn = document.getElementById("callBtn");
+        if (callBtn) {
+            callBtn.style.display = 'inline-block';
+            callBtn.onclick = () => {
+                if (window.voiceCall && window.voiceCall.startCall) window.voiceCall.startCall(currentFriendId, currentFriendName);
+                else if (window.showCustomAlert) window.showCustomAlert(window.t('voice_unavailable', 'Голос недоступен'));
+            };
+        }
+
         loadMessages();
         if (window.updateNavbarNotifications) {
             window.updateNavbarNotifications();

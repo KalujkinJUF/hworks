@@ -60,12 +60,29 @@
                             <div id="createChannelForm" style="display: none; flex-direction: column; gap: 6px; margin-bottom: 8px;">
                                 <input type="text" id="newChannelName" maxlength="40" data-i18n-placeholder="groups_channel_placeholder" placeholder="Название канала"
                                     style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                                <select id="newChannelType"
+                                    style="background: black; color: white; border: 2px solid white; padding: 6px; font-family: inherit; font-size: 11px; outline: none;">
+                                    <option value="text" data-i18n="voice_type_text"># Текстовый</option>
+                                    <option value="voice" data-i18n="voice_type_voice">🔊 Голосовой</option>
+                                </select>
                                 <div style="display: flex; gap: 6px;">
                                     <button id="submitChannelBtn" class="auth-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer;" data-i18n="create">Создать</button>
                                     <button id="cancelChannelBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 10px; margin: 0; cursor: pointer; border-color:#aaa; color:#aaa;" data-i18n="cancel">Отмена</button>
                                 </div>
                             </div>
                             <button id="addChannelBtn" class="user-btn" style="width: 100%; padding: 6px; font-size: 11px; margin: 0; cursor: pointer; border-color: #00ff00; color: #00ff00;" data-i18n="groups_add_channel">+ Канал</button>
+                        </div>
+                        <!-- Плашка активного голосового канала (mute/deafen/выход) -->
+                        <div id="voiceBar" style="display: none; margin-top: 10px; padding: 8px; border: 2px solid #00ff00; border-radius: 4px;">
+                            <div style="font-size: 10px; color: #00ff00; text-transform: uppercase; margin-bottom: 6px;">
+                                🔊 <span id="voiceBarRoom" data-i18n="voice_connected">В голосовом канале</span>
+                            </div>
+                            <div id="voiceBarChannel" style="font-size: 12px; color: white; margin-bottom: 8px; word-break: break-word;"></div>
+                            <div style="display: flex; gap: 6px;">
+                                <button id="voiceMuteBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 14px; margin: 0; cursor: pointer;" title="Микрофон">🎤</button>
+                                <button id="voiceDeafenBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 14px; margin: 0; cursor: pointer;" title="Звук">🎧</button>
+                                <button id="voiceLeaveBtn" class="user-btn" style="flex:1; padding: 5px; font-size: 14px; margin: 0; cursor: pointer; border-color: red; color: red;" title="Выйти">✕</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -150,6 +167,9 @@
     <script src="index.js"></script>
     <script src="profile.js"></script>
     <script src="chat.js"></script>
+    <script src="vendor/socket.io.min.js"></script>
+    <script src="vendor/mediasoup-client.min.js"></script>
+    <script src="voice.js"></script>
     <script src="groups.js"></script>
     <script src="friends.js"></script>
     <script src="admin.js"></script>

@@ -226,6 +226,7 @@ CREATE TABLE IF NOT EXISTS group_invites (
 
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS msg_type ENUM('text', 'group_invite') DEFAULT 'text';
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS group_invite_id INT DEFAULT NULL;
+ALTER TABLE group_channels ADD COLUMN IF NOT EXISTS type ENUM('text', 'voice') DEFAULT 'text';
 `;
 
 

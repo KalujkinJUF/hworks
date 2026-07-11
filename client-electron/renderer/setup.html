@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voidtree</title>
+    <link rel="stylesheet" href="setup.css">
+    <!-- window.api предоставляется preload'ом Electron (contextBridge) — мост Tauri не нужен -->
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>VOIDTREE</h1>
+        </header>
+
+        <main>
+            <!-- Вид загрузки подключения -->
+            <div id="loading-view" class="status-view">
+                <div class="spinner"></div>
+                <h2 id="loading-text" style="font-size: 14px; text-transform: uppercase;">Подключение к сети...</h2>
+            </div>
+
+            <!-- Вид ошибки подключения / технических работ -->
+            <div id="maintenance-view" class="status-view" style="display: none; text-align: center;">
+                <h2 style="color: #ff4444; font-size: 14px; margin-bottom: 20px; text-transform: uppercase;">Сервис на обслуживании</h2>
+                <p style="font-size: 10px; line-height: 1.8; margin-bottom: 25px; color: #ccc;">
+                    В данный момент проводятся технические работы<br>или отсутствует интернет-соединение.
+                </p>
+                <button type="button" id="retry-btn" class="auth-btn" style="border-color: yellow; color: yellow;">ПОВТОРИТЬ ПОДКЛЮЧЕНИЕ</button>
+            </div>
+        </main>
+
+        <footer>
+            build <span id="app-version">...</span>
+        </footer>
+    </div>
+    <script src="setup.js"></script>
+</body>
+</html>

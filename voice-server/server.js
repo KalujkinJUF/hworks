@@ -15,6 +15,8 @@ const RTC_MIN = parseInt(process.env.MEDIASOUP_MIN_PORT || '40000', 10);
 const RTC_MAX = parseInt(process.env.MEDIASOUP_MAX_PORT || '40100', 10);
 const CLIENT_URL = process.env.CLIENT_URL || '*';
 
+function log(...args) { console.log(new Date().toISOString(), '[voice]', ...args); }
+
 if (!VOICE_SECRET) {
     console.error('КРИТИЧЕСКАЯ ОШИБКА: не задан VOICE_SECRET (должен совпадать с основным API).');
     process.exit(1);
@@ -74,20 +76,50 @@ async function getOrCreateRoom(roomId) {
 }
 
 async function createWebRtcTransport(router) {
-    return router.createWebRtcTransport({
+    const transport = await router.createWebRtcTransport({
         listenIps: [{ ip: '0.0.0.0', announcedIp: ANNOUNCED_IP }],
         enableUdp: true,
         enableTcp: true,
         preferUdp: true,
         initialAvailableOutgoingBitrate: 300000
     });
+    return transport;
 }
 
 // ─────────────────────────── HTTP + Socket.IO ───────────────────────────
-const httpServer = http.createServer();
+// Внутренний эндпоинт для основного API: отдаёт ростеры комнат (кто сейчас в каждой).
+// Доступ только с localhost + общий секрет. Проверку членства делает основной API.
+// (Порт 4000 закрыт UFW снаружи; Socket.IO использует свой путь /voice и upgrade-события,
+//  поэтому обычные HTTP-запросы к /internal/* не конфликтуют.)
+function handleInternalRequest(req, res) {
+    if (!req.url.startsWith('/internal/')) { res.writeHead(404); res.end(); return; }
+    const ip = req.socket.remoteAddress;
+    const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    if (!isLocal || req.headers['x-internal-secret'] !== VOICE_SECRET) { res.writeHead(403); res.end(); return; }
+    const u = new URL(req.url, 'http://localhost');
+    if (u.pathname === '/internal/rosters') {
+        const roomIds = (u.searchParams.get('rooms') || '').split(',').filter(Boolean);
+        const out = {};
+        roomIds.forEach((rid) => {
+            const room = rooms.get(rid);
+            out[rid] = room
+                ? [...room.peers.entries()].map(([uid, p]) => ({ userId: uid, username: p.username, muted: !!p.muted }))
+                : [];
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ rosters: out }));
+        return;
+    }
+    res.writeHead(404); res.end();
+}
+
+const httpServer = http.createServer(handleInternalRequest);
 const io = new Server(httpServer, {
     path: '/voice',
-    cors: { origin: CLIENT_URL, credentials: true }
+    cors: { origin: CLIENT_URL, credentials: true },
+    // Быстрее замечаем мёртвые соединения (подстраховка к клиентскому ICE-триггеру reconnect)
+    pingInterval: 10000,
+    pingTimeout: 10000
 });
 
 // Авторизация по тикету (JWT, подписан VOICE_SECRET основным API)
@@ -98,14 +130,71 @@ io.use((socket, next) => {
         socket.data.userId = payload.userId;
         socket.data.roomId = payload.roomId;
         socket.data.username = payload.username || '';
+        socket.data.presence = !!payload.presence;   // presence-тикет (Фаза 3): без комнаты, для входящих звонков
         next();
     } catch (e) {
         next(new Error('unauthorized'));
     }
 });
 
+// ───────────── presence + сигналинг звонков ЛС (Фаза 3) ─────────────
+// Пока пользователь залогинен, он держит лёгкое presence-соединение (без комнаты),
+// чтобы принимать входящие звонки. Медиа звонка идёт через обычную комнату dm:<a>-<b>.
+const presence = new Map(); // userId -> Set<socket>
+
+function emitToUser(userId, event, data) {
+    const set = presence.get(userId);
+    if (!set || !set.size) return false;
+    set.forEach(s => { try { s.emit(event, data); } catch (e) {} });
+    return true;
+}
+function dmPeers(roomId) {
+    const m = /^dm:(\d+)-(\d+)$/.exec(String(roomId || ''));
+    return m ? [parseInt(m[1], 10), parseInt(m[2], 10)] : null;
+}
+
+function setupPresence(socket, userId) {
+    if (!presence.has(userId)) presence.set(userId, new Set());
+    presence.get(userId).add(socket);
+
+    // Звонящий доказывает право на комнату dm-тикетом (в нём проверена дружба основным API)
+    socket.on('call-invite', ({ ticket }) => {
+        try {
+            const p = jwt.verify(ticket, VOICE_SECRET);
+            if (p.userId !== userId) return;
+            const peers = dmPeers(p.roomId);
+            if (!peers || !peers.includes(userId)) return;
+            const to = peers.find(x => x !== userId);
+            const ok = emitToUser(to, 'incoming-call', { fromUserId: userId, fromUsername: socket.data.username, roomId: p.roomId });
+            if (!ok) socket.emit('call-unavailable', { roomId: p.roomId, toUserId: to });
+        } catch (e) {}
+    });
+
+    // Реле служебных сигналов между двумя участниками dm-комнаты
+    function relay(inEvent, outEvent) {
+        socket.on(inEvent, ({ roomId, toUserId }) => {
+            const peers = dmPeers(roomId);
+            const to = Number(toUserId);
+            if (!peers || !peers.includes(userId) || !peers.includes(to)) return;
+            emitToUser(to, outEvent, { fromUserId: userId, roomId });
+        });
+    }
+    relay('call-accept', 'call-accepted');
+    relay('call-reject', 'call-rejected');
+    relay('call-cancel', 'call-canceled');
+    relay('call-ended', 'call-ended');
+
+    socket.on('disconnect', () => {
+        const set = presence.get(userId);
+        if (set) { set.delete(socket); if (!set.size) presence.delete(userId); }
+    });
+}
+
 io.on('connection', (socket) => {
     const userId = socket.data.userId;
+    // Presence-соединение (Фаза 3): без комнаты, только сигналинг звонков
+    if (socket.data.presence) { setupPresence(socket, userId); return; }
+
     const roomId = socket.data.roomId;
     let room = null;
     let peer = null;
@@ -114,11 +203,15 @@ io.on('connection', (socket) => {
         if (!room || !peer) return;
         peer.producers.forEach(p => { try { p.close(); } catch (e) {} });
         peer.transports.forEach(t => { try { t.close(); } catch (e) {} });
-        room.peers.delete(userId);
-        socket.to(roomId).emit('peer-left', { userId });
-        if (room.peers.size === 0) {
-            try { room.router.close(); } catch (e) {}
-            rooms.delete(roomId);
+        // Guard от гонки реконнекта: если этого же userId уже перезанял НОВЫЙ сокет
+        // (быстрый disconnect→join), не удаляем его пира и не шлём peer-left.
+        if (room.peers.get(userId) === peer) {
+            room.peers.delete(userId);
+            socket.to(roomId).emit('peer-left', { userId });
+            if (room.peers.size === 0) {
+                try { room.router.close(); } catch (e) {}
+                rooms.delete(roomId);
+            }
         }
         room = null; peer = null;
     }
@@ -141,6 +234,7 @@ io.on('connection', (socket) => {
                 .map(([id, p]) => ({ userId: id, username: p.username, muted: p.muted, producers: [...p.producers.keys()] }));
 
             socket.to(roomId).emit('peer-joined', { userId, username: peer.username });
+            log(`join room=${roomId} user=${userId} peers-now=${room.peers.size}`);
             cb({ rtpCapabilities: room.router.rtpCapabilities, peers });
         } catch (e) {
             cb({ error: String(e && e.message || e) });
@@ -201,8 +295,8 @@ io.on('connection', (socket) => {
         if (peer) { peer.muted = !!muted; socket.to(roomId).emit('peer-mute', { userId, muted: peer.muted }); }
     });
 
-    socket.on('leave-room', () => cleanup());
-    socket.on('disconnect', () => cleanup());
+    socket.on('leave-room', () => { log(`leave-room room=${roomId} user=${userId}`); cleanup(); });
+    socket.on('disconnect', (reason) => { log(`disconnect room=${roomId} user=${userId} reason=${reason}`); cleanup(); });
 });
 
 // ─────────────────────────── запуск ───────────────────────────

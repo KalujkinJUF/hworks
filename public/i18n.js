@@ -1114,6 +1114,12 @@
 
     let currentLang = localStorage.getItem('lang') || 'en';
 
+    // Сообщаем серверу выбранный язык (для локализации серверных message/error).
+    function setLangCookie(lang) {
+        try { document.cookie = 'app_lang=' + lang + '; path=/; max-age=31536000; SameSite=Lax'; } catch (e) {}
+    }
+    setLangCookie(currentLang);
+
     window.getCurrentLanguage = function() {
         return currentLang;
     };
@@ -1161,6 +1167,7 @@
         if (!translations[lang] || lang === currentLang) return;
         localStorage.setItem('lang', lang);
         currentLang = lang;
+        setLangCookie(lang);
         document.dispatchEvent(new CustomEvent('lang:changed', { detail: { lang } }));
         // Бесшовная смена языка без полной перезагрузки: перерисовываем текущую страницу
         // через SPA (голосовой канал/звонок живут на body и переживают SPA-навигацию, в

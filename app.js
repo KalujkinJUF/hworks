@@ -179,6 +179,9 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(bodyParser.json({ limit: '1mb' }));
 
+// Локализация серверных сообщений (message/error) по языку клиента из cookie app_lang
+app.use('/api', require('./middleware/i18nResponses'));
+
 // Подключаем маршруты (после middleware) с CSRF защитой для state-changing методов
 app.use('/api/admin', verifyCsrfToken, adminRoutes);
 

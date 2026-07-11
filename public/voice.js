@@ -36,6 +36,7 @@
         connecting: false,
         connectedAt: 0,         // время входа в канал (для таймера длительности), переживает reconnect
         muted: false,
+        adminMuted: false,      // микрофон принудительно отключён админом группы
         deafened: false,
         speakingUserId: null,   // текущий говорящий (или null)
         self: { id: null, username: '' },
@@ -48,6 +49,11 @@
     let recvTransport = null;
     let micTrack = null;
     let micStream = null;
+    // Ноис-гейт (WebAudio): audioCtx + ScriptProcessor обрабатывают сырой микрофон,
+    // micTrack = уже обработанный (загейченный) поток.
+    let audioCtx = null;
+    let gateNode = null;
+    let gateDest = null;
     const consumers = new Map();   // consumerId -> { consumer, audioEl, userId }
     let handlers = {};
     // Авто-reconnect: при обрыве сокета пересобираем mediasoup-сессию, сохраняя микрофон/device.
@@ -77,6 +83,7 @@
             connecting: state.connecting,
             connectedAt: state.connectedAt,
             muted: state.muted,
+            adminMuted: state.adminMuted,
             deafened: state.deafened,
             speakingUserId: state.speakingUserId,
             self: { id: state.self.id, username: state.self.username },
@@ -100,6 +107,8 @@
         return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
     }
     const sfxClick = () => { if (window.sfx && window.sfx.click) { try { window.sfx.click(); } catch (e) {} } };
+    const sfxJoin = () => { if (window.sfx && window.sfx.userJoin) { try { window.sfx.userJoin(); } catch (e) {} } };
+    const sfxLeave = () => { if (window.sfx && window.sfx.userLeave) { try { window.sfx.userLeave(); } catch (e) {} } };
     const dockIsAero = () => window.isAeroTheme();
 
     function renderDock(s) {
@@ -151,11 +160,13 @@
             return `<div style="display:flex;align-items:center;gap:4px;${spk}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span>${icon}</span><span>${esc(p.username)}</span></div>`;
         }).join('');
         const timerHtml = s.connected ? ` · <span id="vdTimer" style="${th.timer}">${fmtDockElapsed()}</span>` : (s.connecting ? ' …' : '');
+        const muteIcon = s.adminMuted ? '🔒' : (s.muted ? '🔇' : '🎤');
+        const muteTitle = s.adminMuted ? T('voice_admin_muted', 'Микрофон отключён администратором') : T('voice_mic', 'Микрофон');
         dock.innerHTML = `
             <div style="${th.label}">🔊 ${label}${timerHtml}</div>
             <div style="font-size:12px;margin-bottom:8px;max-height:120px;overflow:auto;">${rows}</div>
             <div style="display:flex;gap:6px;">
-                <button id="vdMute" title="${T('voice_mic', 'Микрофон')}" style="${th.btn}${s.muted ? 'color:red;border-color:red;' : ''}">${s.muted ? '🔇' : '🎤'}</button>
+                <button id="vdMute" title="${muteTitle}" style="${th.btn}${(s.muted || s.adminMuted) ? 'color:red;border-color:red;' : ''}${s.adminMuted ? 'opacity:.7;cursor:not-allowed;' : ''}">${muteIcon}</button>
                 <button id="vdDeaf" title="${T('voice_deafen', 'Оглушить')}" style="${th.btn}${s.deafened ? 'color:red;border-color:red;' : ''}">${s.deafened ? '🔴' : '🎧'}</button>
                 <button id="vdLeave" title="${T('voice_leave', 'Выйти')}" style="${th.btnLeave}">📴</button>
             </div>`;
@@ -254,11 +265,23 @@
             audioEl.play().catch(() => {});
             document.body.appendChild(audioEl);
             consumers.set(consumer.id, { consumer, audioEl, userId: ownerUserId });
+            applyDucking();   // выставить громкость новому потоку с учётом текущего говорящего
             await request('resume-consumer', { consumerId: consumer.id });
         } catch (e) {
             // не роняем всю сессию из-за одного пира
             console.warn('voice consume failed', e && e.message);
         }
+    }
+
+    // Ducking: пока есть доминирующий говорящий (по audioLevelObserver), громкость остальных
+    // снижается — одновременный галдёж перестаёт превращаться в кашу, слышно хотя бы главного.
+    const DUCK_VOLUME = 0.32;
+    function applyDucking() {
+        const active = state.speakingUserId;
+        consumers.forEach(c => {
+            if (!c.audioEl) return;
+            c.audioEl.volume = (active && c.userId !== active) ? DUCK_VOLUME : 1.0;
+        });
     }
 
     function closeConsumer(consumerId) {
@@ -279,6 +302,57 @@
         state.peers = new Map();
     }
 
+    // Ноис-гейт с порогом -60 дБ: пропускает звук только когда уровень выше порога, ниже —
+    // плавно глушит (режет фоновый шип/дыхание, не трогая речь). Обработка в ScriptProcessor
+    // идёт на аудиопотоке — не троттлится, когда окно свёрнуто (в отличие от setInterval).
+    // Возвращает обработанную дорожку; при сбое WebAudio — сырую (без гейта).
+    function buildGatedMicTrack(rawStream) {
+        try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return rawStream.getAudioTracks()[0];
+            audioCtx = new AC();
+            try { audioCtx.resume(); } catch (e) {}
+            const source = audioCtx.createMediaStreamSource(rawStream);
+            gateDest = audioCtx.createMediaStreamDestination();
+            const bufferSize = 1024;
+            gateNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+
+            const sr = audioCtx.sampleRate || 48000;
+            const THRESH = 0.001;                                       // 10^(-60/20) ≈ -60 дБ (линейно)
+            const holdBlocks = Math.max(1, Math.round(0.15 * sr / bufferSize)); // удержание ~150 мс после речи
+            const atk = 1 - Math.exp(-1 / (0.003 * sr));                // атака ~3 мс (быстро открыть)
+            const rel = 1 - Math.exp(-1 / (0.05 * sr));                 // спад ~50 мс (плавно закрыть, без щелчков)
+            let env = 0, hold = 0;
+
+            gateNode.onaudioprocess = (e) => {
+                const inp = e.inputBuffer.getChannelData(0);
+                const out = e.outputBuffer.getChannelData(0);
+                let sum = 0;
+                for (let i = 0; i < inp.length; i++) sum += inp[i] * inp[i];
+                const rms = Math.sqrt(sum / inp.length);
+                if (rms >= THRESH) hold = holdBlocks; else if (hold > 0) hold--;
+                const target = hold > 0 ? 1 : 0;
+                for (let i = 0; i < inp.length; i++) {
+                    env += (target - env) * (target > env ? atk : rel);
+                    out[i] = inp[i] * env;
+                }
+            };
+            source.connect(gateNode);
+            gateNode.connect(gateDest);
+            return gateDest.stream.getAudioTracks()[0];
+        } catch (e) {
+            console.warn('noise gate init failed, using raw mic:', e && e.message);
+            return rawStream.getAudioTracks()[0];
+        }
+    }
+
+    function teardownGate() {
+        try { if (gateNode) { gateNode.onaudioprocess = null; gateNode.disconnect(); } } catch (e) {}
+        try { if (gateDest) gateDest.disconnect(); } catch (e) {}
+        try { if (audioCtx) audioCtx.close(); } catch (e) {}
+        gateNode = null; gateDest = null; audioCtx = null;
+    }
+
     // Собирает медиа-сессию поверх уже подключённого сокета. Переиспользуется и при первом
     // входе, и при переподключении (device и микрофон создаются один раз на сессию).
     async function establishMedia() {
@@ -289,13 +363,32 @@
         await createRecvTransport();
         if (!micTrack) {
             micStream = await navigator.mediaDevices.getUserMedia({
-                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                // Усиленный шумодав: стандартные флаги + Chromium-специфичные goog-констрейнты
+                // (в Electron это Chromium). Моно + фикс. частота дискретизации для стабильности.
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    channelCount: 1,
+                    googEchoCancellation: true,
+                    googNoiseSuppression: true,
+                    googNoiseSuppression2: true,
+                    googHighpassFilter: true,
+                    googAutoGainControl: true,
+                    googTypingNoiseDetection: true
+                },
                 video: false
             });
-            micTrack = micStream.getAudioTracks()[0];
+            // micStream — сырой микрофон; micTrack — уже прошедший ноис-гейт (-60 дБ).
+            micTrack = buildGatedMicTrack(micStream);
         }
         micTrack.enabled = !state.muted;   // сохраняем состояние mute между переподключениями
-        await sendTransport.produce({ track: micTrack, appData: { mediaTag: 'mic' } });
+        // Opus до 128 кбит/с + FEC (устойчивость к потерям) + DTX (тишина не шлётся).
+        await sendTransport.produce({
+            track: micTrack,
+            appData: { mediaTag: 'mic' },
+            codecOptions: { opusStereo: false, opusFec: true, opusDtx: true, opusMaxAverageBitrate: 128000 }
+        });
         if (state.muted && socket) { try { socket.emit('mute', { muted: true }); } catch (e) {} }
         (peers || []).forEach((p) => {
             state.peers.set(p.userId, { username: p.username || '', muted: !!p.muted, speaking: false });
@@ -355,6 +448,7 @@
             // Полное пересоздание (свежие микрофон и device) — как в ручном перезаходе, он стабилен.
             if (micTrack) { try { micTrack.stop(); } catch (e) {} }
             if (micStream) { micStream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} }); }
+            teardownGate();
             micTrack = null; micStream = null;
             device = null;
             await openSocketAndEstablish(null);   // всегда свежий тикет
@@ -386,14 +480,18 @@
     }
 
     function bindSocketEvents() {
+        // Звук входа/выхода — только для голосовых каналов. У ЛС-звонков свои сигналы (call.js).
+        const isChannelRoom = () => state.roomId && /^voice:channel:/.test(state.roomId);
         socket.on('peer-joined', ({ userId, username }) => {
             state.peers.set(userId, { username: username || '', muted: false, speaking: false });
+            if (isChannelRoom()) sfxJoin();
             emitState();
         });
         socket.on('peer-left', ({ userId }) => {
             state.peers.delete(userId);
             // закрыть его consumers
             [...consumers.entries()].forEach(([cid, c]) => { if (c.userId === userId) closeConsumer(cid); });
+            if (isChannelRoom()) sfxLeave();
             emitState();
         });
         socket.on('new-producer', ({ userId, producerId }) => {
@@ -403,8 +501,21 @@
             const p = state.peers.get(userId);
             if (p) { p.muted = muted; emitState(); }
         });
+        // Админ группы отключил/включил наш микрофон. При отключении глушим дорожку локально,
+        // но НЕ шлём 'mute' (иначе сервер сочтёт это self-mute и не возобновит продюсер при
+        // разблокировке). При включении просто снимаем флаг — сервер сам возобновляет продюсер;
+        // пользователь остаётся замьюченным и включает микрофон кнопкой (без «горячего» микрофона).
+        socket.on('admin-mute', ({ muted }) => {
+            state.adminMuted = !!muted;
+            if (muted) {
+                state.muted = true;
+                if (micTrack) micTrack.enabled = false;
+            }
+            emitState();
+        });
         socket.on('active-speaker', ({ userId }) => {
             state.speakingUserId = userId;
+            applyDucking();
             emitState();
         });
         socket.on('consumer-closed', ({ consumerId }) => {
@@ -464,6 +575,7 @@
         consumers.clear();
         if (micTrack) { try { micTrack.stop(); } catch (e) {} }
         if (micStream) { micStream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} }); }
+        teardownGate();
         try { if (sendTransport) sendTransport.close(); } catch (e) {}
         try { if (recvTransport) recvTransport.close(); } catch (e) {}
         try { if (socket) socket.disconnect(); } catch (e) {}
@@ -486,6 +598,8 @@
     }
 
     function setMuted(m) {
+        // Пока админ держит наш микрофон отключённым — сами включить не можем.
+        if (state.adminMuted && !m) return;
         state.muted = !!m;
         // Ручное включение микрофона снимает и оглушение (нельзя говорить «вглухую»).
         if (!state.muted && state.deafened) {

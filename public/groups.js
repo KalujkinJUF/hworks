@@ -37,6 +37,7 @@ function initializeGroups(myData) {
     let currentGroupAvatar = null;
     let myChatBanned = false;   // админ запретил мне писать в этой группе
     let currentChannelId = null;
+    let _groupMetaSig = '';     // подпись структуры группы (каналы/lock/участники) для live-обновления
     let voiceState = _latestVoiceState;   // восстанавливаем при возврате на страницу групп
     let channelRosters = {};              // channelId -> [{userId,username,muted}] (кто в канале, с сервера)
     // Мост от глобального слушателя voice:state к рендеру этой инстанции страницы
@@ -193,6 +194,7 @@ function initializeGroups(myData) {
                 const hAv = document.getElementById('groupHeaderAvatar');
                 if (hAv) hAv.innerHTML = groupAvatarInner(group);
                 renderChannels(group.channels || []);
+                _groupMetaSig = groupMetaSignature(group);   // база для live-обновления
                 refreshRosters();   // сразу подтянуть, кто уже в голосовых каналах
                 renderMembers(currentMembers);
                 setupControls();
@@ -216,9 +218,57 @@ function initializeGroups(myData) {
         // Голос НЕ покидаем — он остаётся активным (плашка в body), уходим только по кнопке выхода.
         currentGroupId = null;
         currentChannelId = null;
+        _groupMetaSig = '';
         groupView.style.display = 'none';
         listView.style.display = 'block';
         loadGroups();
+    }
+
+    // Подпись структуры группы: меняется при добавлении/удалении/переименовании каналов,
+    // блокировке группы и любой модерации участников (бан чата, мьют, статус).
+    function groupMetaSignature(group) {
+        const ch = (group.channels || []).map(c => `${c.id}:${c.type || 'text'}:${c.name}`).join(',');
+        const mem = (group.members || []).map(m => `${m.id}:${m.role}:${m.chat_banned ? 1 : 0}:${m.mic_muted ? 1 : 0}:${m.user_status || ''}`).join(',');
+        return `L${group.locked ? 1 : 0}|${ch}|${mem}`;
+    }
+
+    // Живое обновление открытой группы без перезахода: подтягивает /api/groups/:id и, если
+    // структура изменилась, перерисовывает каналы/участников и права (добавленный канал,
+    // блокировка чата и т.п. видны сразу). Сообщения канала обновляет отдельный поллинг.
+    function refreshGroupMeta() {
+        if (!currentGroupId) return;
+        fetch(`/api/groups/${currentGroupId}`, { credentials: 'include' })
+            .then(res => res.ok ? res.json() : null)
+            .then(group => {
+                if (!group || group.id !== currentGroupId) return;
+                const sig = groupMetaSignature(group);
+                if (sig === _groupMetaSig) return;   // ничего не поменялось — не дёргаем DOM
+                _groupMetaSig = sig;
+
+                isGroupAdmin = group.is_admin;
+                groupOwnerId = group.owner_id;
+                currentGroupLocked = !!group.locked;
+                currentGroupAvatar = group.avatar || null;
+                currentMembers = group.members || [];
+
+                renderChannels(group.channels || []);
+                renderMembers(currentMembers);   // выставит myChatBanned + applyChatBanState
+                renderVoiceParticipants();
+
+                // Текущий текстовый канал удалён админом — переключаемся на первый доступный.
+                const textChannels = (group.channels || []).filter(c => c.type !== 'voice');
+                if (currentChannelId && !textChannels.some(c => String(c.id) === String(currentChannelId))) {
+                    if (textChannels[0]) selectChannel(textChannels[0].id, textChannels[0].name);
+                    else { currentChannelId = null; document.getElementById('groupMessages').style.display = 'none'; }
+                }
+
+                // Видимость поля ввода/уведомления о блокировке (renderMembers лишь прячет при бане).
+                const input = document.getElementById('groupInputSection');
+                const notice = document.getElementById('groupLockedNotice');
+                if (input && currentChannelId) input.style.display = (currentGroupLocked || myChatBanned) ? 'none' : 'flex';
+                if (notice) notice.style.display = currentGroupLocked ? 'block' : 'none';
+            })
+            .catch(() => {});
     }
 
     // ─────────────── каналы ───────────────
@@ -1007,7 +1057,9 @@ function initializeGroups(myData) {
     let _rosterTick = 0;
     _groupsInterval = setInterval(() => {
         if (currentChannelId) loadMessages(false);
-        if (_rosterTick++ % 2 === 0) refreshRosters();   // ~каждые 4с — бережём основной API
+        if (_rosterTick % 2 === 0) refreshRosters();      // ~каждые 4с — бережём основной API
+        if (currentGroupId && _rosterTick % 3 === 0) refreshGroupMeta();  // ~каждые 6с — структура группы
+        _rosterTick++;
     }, 2000);
 
     // Стартовое состояние: список или авто-открытие группы по ?group=

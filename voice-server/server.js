@@ -22,9 +22,17 @@ if (!VOICE_SECRET) {
     process.exit(1);
 }
 
-// Только аудио (Opus) на этапе MVP
+// Только аудио (Opus). useinbandfec — восстановление потерянных пакетов (устойчивость к
+// потерям), usedtx — не шлём пакеты в тишине (меньше фонового шума/трафика). Реальный битрейт
+// (до 128 кбит/с) задаёт клиент через codecOptions.opusMaxAverageBitrate при produce.
 const mediaCodecs = [
-    { kind: 'audio', mimeType: 'audio/opus', clockRate: 48000, channels: 2 }
+    {
+        kind: 'audio',
+        mimeType: 'audio/opus',
+        clockRate: 48000,
+        channels: 2,
+        parameters: { useinbandfec: 1, usedtx: 1 }
+    }
 ];
 
 // ─────────────────────────── mediasoup workers ───────────────────────────
@@ -61,7 +69,9 @@ async function getOrCreateRoom(roomId) {
     let room = rooms.get(roomId);
     if (room) return room;
     const router = await getWorker().createRouter({ mediaCodecs });
-    const audioLevelObserver = await router.createAudioLevelObserver({ maxEntries: 1, threshold: -70, interval: 800 });
+    // maxEntries:1 → «доминирующий» говорящий; клиент по нему приглушает остальных (ducking),
+    // чтобы одновременный галдёж не превращался в шум. interval поменьше — быстрее реакция.
+    const audioLevelObserver = await router.createAudioLevelObserver({ maxEntries: 1, threshold: -60, interval: 400 });
     room = { router, audioLevelObserver, peers: new Map() };
     audioLevelObserver.on('volumes', (volumes) => {
         const producer = volumes[0] && volumes[0].producer;
@@ -110,8 +120,9 @@ function handleInternalRequest(req, res) {
         res.end(JSON.stringify({ rosters: out }));
         return;
     }
-    // Немедленно заглушить участника (админ отключил микрофон): закрываем его продюсеры,
-    // помечаем muted и запрещаем повторный produce в текущей сессии.
+    // Немедленно заглушить участника (админ отключил микрофон): СТАВИМ его аудио-продюсеры
+    // на ПАУЗУ (не закрываем!), помечаем adminMuted и запрещаем говорить. Пауза обратима —
+    // при force-unmute продюсер возобновляется без реконнекта клиента.
     if (u.pathname === '/internal/force-mute') {
         const targetId = Number(u.searchParams.get('user'));
         const roomIds = (u.searchParams.get('rooms') || '').split(',').filter(Boolean);
@@ -120,11 +131,34 @@ function handleInternalRequest(req, res) {
             const room = rooms.get(rid);
             const peer = room && room.peers.get(targetId);
             if (!peer) return;
-            peer.producers.forEach(p => { try { p.close(); } catch (e) {} });
-            peer.producers.clear();
+            peer.producers.forEach(p => { if (p.kind === 'audio') { try { p.pause(); } catch (e) {} } });
+            peer.adminMuted = true;
             peer.muted = true;
-            if (peer.socket) peer.socket.data.canSpeak = false;
+            if (peer.socket) { peer.socket.data.canSpeak = false; try { peer.socket.emit('admin-mute', { muted: true }); } catch (e) {} }
             io.to(rid).emit('peer-mute', { userId: targetId, muted: true });
+            affected++;
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, affected }));
+        return;
+    }
+    // Вернуть участнику право говорить (админ включил микрофон обратно): снимаем adminMuted,
+    // разрешаем produce и ВОЗОБНОВЛЯЕМ аудио-продюсеры (если пользователь сам себя не замьютил).
+    if (u.pathname === '/internal/force-unmute') {
+        const targetId = Number(u.searchParams.get('user'));
+        const roomIds = (u.searchParams.get('rooms') || '').split(',').filter(Boolean);
+        let affected = 0;
+        roomIds.forEach((rid) => {
+            const room = rooms.get(rid);
+            const peer = room && room.peers.get(targetId);
+            if (!peer) return;
+            peer.adminMuted = false;
+            if (peer.socket) peer.socket.data.canSpeak = true;
+            // Возобновляем только если участник не держит собственный mute.
+            if (!peer.selfMuted) peer.producers.forEach(p => { if (p.kind === 'audio') { try { p.resume(); } catch (e) {} } });
+            peer.muted = !!peer.selfMuted;
+            if (peer.socket) { try { peer.socket.emit('admin-mute', { muted: false }); } catch (e) {} }
+            io.to(rid).emit('peer-mute', { userId: targetId, muted: peer.muted });
             affected++;
         });
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -249,7 +283,7 @@ io.on('connection', (socket) => {
                 old.producers.forEach(p => { try { p.close(); } catch (e) {} });
                 old.transports.forEach(t => { try { t.close(); } catch (e) {} });
             }
-            peer = { socket, username: socket.data.username, muted: false, transports: new Map(), producers: new Map(), consumers: new Map() };
+            peer = { socket, username: socket.data.username, muted: socket.data.canSpeak === false, selfMuted: false, adminMuted: socket.data.canSpeak === false, transports: new Map(), producers: new Map(), consumers: new Map() };
             room.peers.set(userId, peer);
             socket.join(roomId);
 
@@ -258,6 +292,8 @@ io.on('connection', (socket) => {
                 .map(([id, p]) => ({ userId: id, username: p.username, muted: p.muted, producers: [...p.producers.keys()] }));
 
             socket.to(roomId).emit('peer-joined', { userId, username: peer.username });
+            // Сообщаем присоединившемуся, что его микрофон отключён админом (переживает реконнект).
+            if (peer.adminMuted) { try { socket.emit('admin-mute', { muted: true }); } catch (e) {} }
             log(`join room=${roomId} user=${userId} peers-now=${room.peers.size}`);
             cb({ rtpCapabilities: room.router.rtpCapabilities, peers });
         } catch (e) {
@@ -287,11 +323,14 @@ io.on('connection', (socket) => {
 
     socket.on('produce', async ({ transportId, kind, rtpParameters }, cb) => {
         try {
-            // Микрофон отключён админом группы — не даём создавать аудио-продюсер.
-            if (kind === 'audio' && socket.data.canSpeak === false) return cb({ error: 'mic disabled by admin' });
             const producer = await peer.transports.get(transportId).produce({ kind, rtpParameters, appData: { userId } });
             peer.producers.set(producer.id, producer);
-            if (kind === 'audio') { try { room.audioLevelObserver.addProducer({ producerId: producer.id }); } catch (e) {} }
+            if (kind === 'audio') {
+                // Микрофон отключён админом (canSpeak=false): продюсер создаётся, но сразу на паузе,
+                // чтобы позже (force-unmute) возобновить его без переподключения клиента.
+                if (socket.data.canSpeak === false) { try { await producer.pause(); } catch (e) {} peer.adminMuted = true; }
+                try { room.audioLevelObserver.addProducer({ producerId: producer.id }); } catch (e) {}
+            }
             producer.on('transportclose', () => peer.producers.delete(producer.id));
             socket.to(roomId).emit('new-producer', { userId, producerId: producer.id });
             cb({ id: producer.id });
@@ -318,7 +357,16 @@ io.on('connection', (socket) => {
     });
 
     socket.on('mute', ({ muted }) => {
-        if (peer) { peer.muted = !!muted; socket.to(roomId).emit('peer-mute', { userId, muted: peer.muted }); }
+        if (!peer) return;
+        peer.selfMuted = !!muted;
+        // Сервер-сайд пауза как гарантия к клиентскому micTrack.enabled. Пока держится
+        // admin-mute — продюсер остаётся на паузе независимо от собственного mute участника.
+        peer.producers.forEach(p => {
+            if (p.kind !== 'audio') return;
+            try { if (peer.selfMuted || peer.adminMuted) p.pause(); else p.resume(); } catch (e) {}
+        });
+        peer.muted = peer.selfMuted || !!peer.adminMuted;
+        socket.to(roomId).emit('peer-mute', { userId, muted: peer.muted });
     });
 
     socket.on('leave-room', () => { log(`leave-room room=${roomId} user=${userId}`); cleanup(); });

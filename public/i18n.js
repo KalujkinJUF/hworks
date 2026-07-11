@@ -85,7 +85,9 @@
             "voice_connected": "In voice channel",
             "voice_unavailable": "Voice is unavailable",
             "voice_error": "Voice error",
+            "media_play": "Play",
             "voice_mic": "Microphone",
+            "voice_admin_muted": "Microphone disabled by admin",
             "voice_deafen": "Deafen",
             "voice_leave": "Leave voice",
             "voice_channel": "Voice",
@@ -360,7 +362,10 @@
             "error_invalid_captcha": "Invalid captcha token.",
             "profile_scale_label": "UI Scale:",
             "profile_auto_update_label": "Auto Updates:",
-            "profile_autostart_label": "Run at Windows Startup:"
+            "profile_autostart_label": "Run at Windows Startup:",
+            "profile_hwaccel_label": "Hardware acceleration (GPU):",
+            "profile_hwaccel_hint": "Applies after restarting the client",
+            "profile_hwaccel_restart": "Restart the client to apply the change"
         },
         ru: {
             // Navigation
@@ -447,7 +452,9 @@
             "voice_connected": "В голосовом канале",
             "voice_unavailable": "Голос недоступен",
             "voice_error": "Ошибка голоса",
+            "media_play": "Воспроизвести",
             "voice_mic": "Микрофон",
+            "voice_admin_muted": "Микрофон отключён администратором",
             "voice_deafen": "Оглушить",
             "voice_leave": "Выйти из голоса",
             "voice_channel": "Голос",
@@ -722,7 +729,10 @@
             "error_invalid_captcha": "Неверный токен капчи.",
             "profile_scale_label": "Масштаб интерфейса:",
             "profile_auto_update_label": "Автообновления:",
-            "profile_autostart_label": "Запускать при старте системы:"
+            "profile_autostart_label": "Запускать при старте системы:",
+            "profile_hwaccel_label": "Аппаратное ускорение (GPU):",
+            "profile_hwaccel_hint": "Применится после перезапуска клиента",
+            "profile_hwaccel_restart": "Перезапустите клиент, чтобы применить изменение"
         },
         uk: {
             // Navigation
@@ -809,7 +819,9 @@
             "voice_connected": "У голосовому каналі",
             "voice_unavailable": "Голос недоступний",
             "voice_error": "Помилка голосу",
+            "media_play": "Відтворити",
             "voice_mic": "Мікрофон",
+            "voice_admin_muted": "Мікрофон вимкнено адміністратором",
             "voice_deafen": "Оглушити",
             "voice_leave": "Вийти з голосу",
             "voice_channel": "Голос",
@@ -1084,7 +1096,10 @@
             "error_invalid_captcha": "Невірний токен капчі.",
             "profile_scale_label": "Масштаб інтерфейсу:",
             "profile_auto_update_label": "Автооновлення:",
-            "profile_autostart_label": "Запускати при старті системи:"
+            "profile_autostart_label": "Запускати при старті системи:",
+            "profile_hwaccel_label": "Апаратне прискорення (GPU):",
+            "profile_hwaccel_hint": "Застосується після перезапуску клієнта",
+            "profile_hwaccel_restart": "Перезапустіть клієнт, щоб застосувати зміну"
         }
     };
 
@@ -1134,10 +1149,17 @@
     };
 
     window.changeLanguage = function(lang) {
-        if (translations[lang]) {
-            localStorage.setItem('lang', lang);
-            currentLang = lang;
-            window.location.reload();
+        if (!translations[lang] || lang === currentLang) return;
+        localStorage.setItem('lang', lang);
+        currentLang = lang;
+        document.dispatchEvent(new CustomEvent('lang:changed', { detail: { lang } }));
+        // Бесшовная смена языка без полной перезагрузки: перерисовываем текущую страницу
+        // через SPA (голосовой канал/звонок живут на body и переживают SPA-навигацию, в
+        // отличие от location.reload). Статику покрывает applyTranslations внутри navigate.
+        if (window.SPA && typeof window.SPA.navigate === 'function') {
+            window.SPA.navigate(location.href, true);   // isPopState=true → без лишнего pushState
+        } else if (window.applyTranslations) {
+            window.applyTranslations();
         }
     };
 

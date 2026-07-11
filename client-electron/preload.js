@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('api', {
     autoConnect: () => ipcRenderer.invoke('auto-connect'),
     tryConnect: (url) => ipcRenderer.invoke('try-connect', url),
     getAppConfig: () => ipcRenderer.invoke('get-app-config'),
-    updateAppConfig: (autoUpdate, autostart, scale) => ipcRenderer.invoke('update-app-config', autoUpdate, autostart, scale),
+    updateAppConfig: (autoUpdate, autostart, scale, hardwareAccel) => ipcRenderer.invoke('update-app-config', autoUpdate, autostart, scale, hardwareAccel),
     checkForUpdatesApi: () => ipcRenderer.invoke('check-updates'),
     startUpdate: () => ipcRenderer.invoke('start-update'),
     closeWindow: () => ipcRenderer.invoke('close-window'),

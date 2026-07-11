@@ -481,12 +481,15 @@ router.post('/invites/:inviteId/reject', (req, res) => {
 // Немедленно оборвать голос участника после отключения микрофона (best-effort).
 // Иначе запрет применится при следующем (пере)подключении к каналу.
 const VOICE_INTERNAL_URL = process.env.VOICE_INTERNAL_URL || 'http://127.0.0.1:4000';
-function forceVoiceMute(groupId, targetId) {
+// action = 'force-mute' | 'force-unmute'. Немедленно применяет решение админа к голосу
+// участника во всех голосовых каналах группы (best-effort). Иначе применится при
+// следующем (пере)подключении к каналу.
+function forceVoiceMic(groupId, targetId, action) {
     db.query("SELECT id FROM group_channels WHERE group_id = ? AND type = 'voice'", [groupId], async (e, rows) => {
         if (e || !rows.length) return;
         const rooms = rows.map(r => 'voice:channel:' + r.id).join(',');
         try {
-            await fetch(VOICE_INTERNAL_URL + '/internal/force-mute?user=' + targetId + '&rooms=' + encodeURIComponent(rooms), {
+            await fetch(VOICE_INTERNAL_URL + '/internal/' + action + '?user=' + targetId + '&rooms=' + encodeURIComponent(rooms), {
                 method: 'POST',
                 headers: { 'x-internal-secret': process.env.VOICE_SECRET || '' },
                 signal: AbortSignal.timeout(2000)
@@ -516,7 +519,8 @@ router.patch('/:id/members/:userId', groupActionLimiter, (req, res) => {
             if (tr[0].role === 'admin') return res.status(403).json({ error: 'Нельзя модерировать админа' });
             db.query(`UPDATE group_members SET ${fields.join(', ')} WHERE group_id = ? AND user_id = ?`, [...vals, groupId, targetId], (e2) => {
                 if (e2) return res.status(500).json({ error: 'Ошибка БД' });
-                if (req.body.mic_muted === true) forceVoiceMute(groupId, targetId);
+                if (req.body.mic_muted === true) forceVoiceMic(groupId, targetId, 'force-mute');
+                else if (req.body.mic_muted === false) forceVoiceMic(groupId, targetId, 'force-unmute');
                 res.json({ message: 'Готово' });
             });
         });

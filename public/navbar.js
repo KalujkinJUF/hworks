@@ -240,6 +240,35 @@ document.addEventListener('error', (e) => {
     window.openLightbox = function (src) { if (src) openLightbox(src, [], 0); };
 })();
 
+// Кликабельный превью-«кадр» видео с кнопкой ▶. Само воспроизведение — в собственном
+// полноэкранном плеере (openVideoPlayer). Так видео не «пропадают»: даже если Chromium не
+// отрисовал кадр, поверх всегда лежит явная кнопка воспроизведения, и клик открывает плеер.
+// cover=true — заполнить контейнер (галерея), иначе вписаться по высоте.
+window.videoThumbHtml = function(escUrl, opts) {
+    opts = opts || {};
+    const mh = opts.maxHeight || 380;
+    const fit = opts.cover
+        ? 'width:100%;height:100%;object-fit:cover;'
+        : `max-width:100%;max-height:${mh}px;object-fit:contain;`;
+    const box = opts.cover ? 'width:100%;height:100%;' : `max-height:${mh}px;`;
+    return `<div class="vt-video-thumb" data-src="${escUrl}" title="${window.t ? window.t('media_play', 'Воспроизвести') : 'Воспроизвести'}" style="position:relative;cursor:pointer;background:#000;display:${opts.cover ? 'block' : 'inline-block'};line-height:0;${box}">
+        <video src="${escUrl}#t=0.1" muted preload="metadata" playsinline tabindex="-1" style="display:block;${fit}pointer-events:none;"></video>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+            <span style="width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,0.55);border:2px solid rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;padding-left:4px;box-shadow:0 2px 10px rgba(0,0,0,0.5);">▶</span>
+        </div>
+    </div>`;
+};
+
+// Собственный аудиоплеер (без нативного <audio controls>): тёмная плашка с play/seek/временем.
+// Логика воспроизведения — делегированием событий в IIFE ниже.
+window.audioPlayerHtml = function(escUrl) {
+    return `<div class="vt-audio" data-src="${escUrl}" style="display:flex;align-items:center;gap:10px;background:#111;border:1px solid #444;border-radius:8px;padding:8px 12px;width:100%;min-width:220px;box-sizing:border-box;">
+        <button type="button" class="vt-audio-play" style="flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid #666;background:#222;color:#fff;font-size:14px;cursor:pointer;padding-left:2px;">▶</button>
+        <input type="range" class="vt-audio-seek" min="0" max="1000" value="0" style="flex:1;height:4px;cursor:pointer;accent-color:#00b050;">
+        <span class="vt-audio-time" style="flex:0 0 auto;font-size:11px;color:#bbb;font-family:monospace;min-width:74px;text-align:right;">0:00 / 0:00</span>
+    </div>`;
+};
+
 // #16 Рендер медиа (img/video/audio) по расширению
 window.mediaTag = function(url, maxHeight) {
     if (!url) return '';
@@ -247,10 +276,10 @@ window.mediaTag = function(url, maxHeight) {
     const ext = (String(url).split('.').pop() || '').toLowerCase();
     const mh = maxHeight || 380;
     if (ext === 'mp4' || ext === 'webm') {
-        return `<video src="${esc}" controls preload="metadata" style="max-width:100%; max-height:${mh}px; display:block;"></video>`;
+        return window.videoThumbHtml(esc, { maxHeight: mh });
     }
     if (ext === 'mp3') {
-        return `<audio src="${esc}" controls preload="metadata" style="width:100%; min-width:220px;"></audio>`;
+        return window.audioPlayerHtml(esc);
     }
     return `<img src="${esc}" style="max-width:100%; max-height:${mh}px; display:block; object-fit:contain;">`;
 };
@@ -293,8 +322,8 @@ window.mediaListHtml = function(mediaField, imageUrl, maxHeight, boxClass) {
                 const isVideo = ext === 'mp4' || ext === 'webm';
                 html += `
                     <div class="${cls}" style="border:2px solid white; padding:2px; background:black; overflow:hidden; display:flex; justify-content:center; align-items:center; aspect-ratio: 4/3;">
-                        ${isVideo ? 
-                            `<video src="${esc}" controls preload="metadata" style="width:100%; height:100%; object-fit:cover; display:block;"></video>` : 
+                        ${isVideo ?
+                            window.videoThumbHtml(esc, { cover: true }) :
                             `<img src="${esc}" style="width:100%; height:100%; object-fit:cover; display:block;" />`
                         }
                     </div>
@@ -1211,3 +1240,121 @@ function checkRole(data) {
 }
 
 }
+
+// #20 Собственные плееры видео/аудио. Видео открывается в полноэкранном оверлее (надёжнее
+// множества инлайновых <video>, которые в клиенте иногда не отрисовывались). Аудио — своя
+// тёмная плашка с play/seek/временем. Всё на делегировании событий (работает и для медиа,
+// добавленных динамически в ленту/чат).
+(function () {
+    'use strict';
+
+    function openVideoPlayer(src) {
+        if (!src) return;
+        const overlay = document.createElement('div');
+        overlay.className = 'vt-video-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:100000;padding:20px;box-sizing:border-box;opacity:0;transition:opacity .2s ease-out;';
+
+        const video = document.createElement('video');
+        video.src = src;
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.preload = 'auto';
+        video.style.cssText = 'max-width:95vw;max-height:90vh;background:#000;box-shadow:0 0 30px rgba(0,0,0,0.8);outline:none;';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'position:absolute;top:16px;right:20px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.6);color:#fff;font-size:18px;cursor:pointer;z-index:100001;';
+
+        overlay.appendChild(video);
+        overlay.appendChild(closeBtn);
+
+        function close() {
+            document.removeEventListener('keydown', onKey);
+            try { video.pause(); } catch (e) {}
+            overlay.style.opacity = '0';
+            setTimeout(() => { try { overlay.remove(); } catch (e) {} }, 200);
+        }
+        function onKey(e) { if (e.key === 'Escape') close(); }
+
+        closeBtn.addEventListener('click', (e) => { e.stopPropagation(); close(); });
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+        video.play().catch(() => {});
+    }
+    window.openVideoPlayer = openVideoPlayer;
+
+    // Клик по превью видео → полноэкранный плеер
+    document.addEventListener('click', (e) => {
+        const thumb = e.target.closest('.vt-video-thumb');
+        if (thumb && thumb.dataset.src) {
+            e.preventDefault();
+            e.stopPropagation();
+            openVideoPlayer(thumb.dataset.src);
+        }
+    });
+
+    // ─────────────── собственный аудиоплеер ───────────────
+    const audioMap = new WeakMap();   // .vt-audio → HTMLAudioElement (ленивая инициализация)
+    let activeAudio = null;
+
+    function fmt(s) {
+        if (!isFinite(s) || s < 0) s = 0;
+        s = Math.floor(s);
+        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function getAudio(container) {
+        let a = audioMap.get(container);
+        if (a) return a;
+        a = new Audio();
+        a.preload = 'metadata';
+        a.src = container.dataset.src;
+        audioMap.set(container, a);
+        const playBtn = container.querySelector('.vt-audio-play');
+        const seek = container.querySelector('.vt-audio-seek');
+        const time = container.querySelector('.vt-audio-time');
+        a.addEventListener('loadedmetadata', () => { time.textContent = '0:00 / ' + fmt(a.duration); });
+        a.addEventListener('timeupdate', () => {
+            if (a.duration) seek.value = String(Math.round((a.currentTime / a.duration) * 1000));
+            time.textContent = fmt(a.currentTime) + ' / ' + fmt(a.duration || 0);
+        });
+        a.addEventListener('ended', () => { if (playBtn) playBtn.textContent = '▶'; if (seek) seek.value = '0'; });
+        a.addEventListener('play', () => { if (playBtn) playBtn.textContent = '⏸'; });
+        a.addEventListener('pause', () => { if (playBtn) playBtn.textContent = '▶'; });
+        return a;
+    }
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.vt-audio-play');
+        if (!btn) return;
+        const container = btn.closest('.vt-audio');
+        if (!container || !container.dataset.src) return;
+        const a = getAudio(container);
+        if (a.paused) {
+            if (activeAudio && activeAudio !== a) { try { activeAudio.pause(); } catch (_) {} }
+            activeAudio = a;
+            a.play().catch(() => {});
+        } else {
+            a.pause();
+        }
+    });
+
+    document.addEventListener('input', (e) => {
+        const seek = e.target.closest('.vt-audio-seek');
+        if (!seek) return;
+        const container = seek.closest('.vt-audio');
+        if (!container) return;
+        const a = getAudio(container);
+        if (a.duration) a.currentTime = (Number(seek.value) / 1000) * a.duration;
+    });
+
+    // При SPA-переходе останавливаем звук и закрываем оверлей видео.
+    document.addEventListener('spa:unload', () => {
+        if (activeAudio) { try { activeAudio.pause(); } catch (_) {} }
+        document.querySelectorAll('.vt-video-overlay').forEach(o => { try { o.remove(); } catch (_) {} });
+    });
+})();

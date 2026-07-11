@@ -13,6 +13,17 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 // Иконка трея/окна: PNG внутри renderer/ (упаковывается надёжно, в отличие от .ico).
 const iconPath = path.join(__dirname, 'renderer', 'tray.png');
 
+// Единое имя процесса «voidtree» (в диспетчере задач — без Electron/помощников).
+app.setName('voidtree');
+try { process.title = 'voidtree'; } catch (e) {}
+
+// Аппаратное ускорение (GPU/3D-графика) — по конфигу пользователя. disableHardwareAcceleration()
+// обязан вызываться ДО app.ready, поэтому читаем конфиг синхронно прямо здесь. По умолчанию — вкл.
+try {
+    const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    if (raw && raw.hardware_accel === false) app.disableHardwareAcceleration();
+} catch (e) { /* конфига нет — оставляем ускорение включённым */ }
+
 // ─────────────────────────── config (аналог read/write_config в lib.rs) ───────────────────────────
 function readConfig() {
     try {
@@ -36,6 +47,7 @@ function getAppConfig() {
         last_version: c.last_version || null,
         auto_update: c.auto_update !== false,
         autostart: c.autostart !== false,
+        hardware_accel: c.hardware_accel !== false,
         scale: c.scale || '1.0'
     };
 }
@@ -154,6 +166,18 @@ function createWindow() {
         }
     });
 
+    // Убираем меню Chromium (File/Edit/View…) полностью — оно всплывало по Alt/Ctrl+Shift.
+    mainWindow.removeMenu();
+
+    // Глушим devtools-хоткеи (F12, Ctrl/Cmd+Shift+I/J/C) — прод-клиент без панели разработчика.
+    // Остальные сочетания (выделение текста Ctrl+Shift+←/→ и т.п.) не трогаем.
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        const k = (input.key || '').toLowerCase();
+        const isDevtools = k === 'f12' ||
+            ((input.control || input.meta) && input.shift && (k === 'i' || k === 'j' || k === 'c'));
+        if (isDevtools) event.preventDefault();
+    });
+
     // применяем масштаб из конфига
     const scale = parseFloat(getAppConfig().scale) || 1;
     mainWindow.webContents.on('did-finish-load', () => {
@@ -232,11 +256,13 @@ function registerIpc() {
 
     ipcMain.handle('get-app-config', () => getAppConfig());
 
-    ipcMain.handle('update-app-config', (e, autoUpdate, autostart, scale) => {
+    ipcMain.handle('update-app-config', (e, autoUpdate, autostart, scale, hardwareAccel) => {
         const cfg = readConfig();
         cfg.auto_update = !!autoUpdate;
         cfg.autostart = !!autostart;
         cfg.scale = String(scale || '1.0');
+        // Аппаратное ускорение применяется только на следующем запуске (флаг ставится до app.ready).
+        if (hardwareAccel !== undefined) cfg.hardware_accel = hardwareAccel !== false;
         writeConfig(cfg);
         applyAutostart(autostart);
         if (mainWindow) { try { mainWindow.webContents.setZoomFactor(parseFloat(cfg.scale) || 1); } catch (_) {} }
@@ -332,6 +358,8 @@ if (!gotLock) {
         // Одноразовая чистка хвостов старого Tauri-клиента (ДО применения своего автозапуска,
         // чтобы успеть прочитать стейл-запись реестра с путём старого exe)
         cleanupOldTauri();
+        // Глобально убираем меню приложения (File/Edit/View…) — прод-клиент без него.
+        try { Menu.setApplicationMenu(null); } catch (e) {}
         // Синхронизируем автозапуск с конфигом при каждом старте (как фикс #2 в Tauri)
         applyAutostart(getAppConfig().autostart);
         setupMediaPermissions();

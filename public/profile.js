@@ -1086,8 +1086,19 @@ function initializeProfile(myData) {
 
         const autoUpdateCheckbox = document.getElementById("autoUpdateCheckbox");
         const autostartCheckbox = document.getElementById("autostartCheckbox");
+        const hwAccelCheckbox = document.getElementById("hwAccelCheckbox");
         if (autoUpdateCheckbox) autoUpdateCheckbox.addEventListener("change", saveTauriSettings);
         if (autostartCheckbox) autostartCheckbox.addEventListener("change", saveTauriSettings);
+        // Аппаратное ускорение — только Electron (в Tauri понятия нет). Меняется на след. запуске.
+        const hwAccelRow = hwAccelCheckbox ? hwAccelCheckbox.closest('div') : null;
+        if (!(window.api && window.api.updateAppConfig)) {
+            if (hwAccelRow) hwAccelRow.style.display = 'none';
+        } else if (hwAccelCheckbox) {
+            hwAccelCheckbox.addEventListener("change", async () => {
+                await saveTauriSettings();
+                if (window.showCustomAlert) window.showCustomAlert(window.t('profile_hwaccel_restart', 'Перезапустите клиент, чтобы применить изменение'));
+            });
+        }
     }
 
     async function loadTauriSettings() {
@@ -1106,6 +1117,10 @@ function initializeProfile(myData) {
                 if (autostartCheckbox) {
                     autostartCheckbox.checked = config.autostart !== false;
                 }
+                const hwAccelCheckbox = document.getElementById("hwAccelCheckbox");
+                if (hwAccelCheckbox) {
+                    hwAccelCheckbox.checked = config.hardware_accel !== false;
+                }
             } catch (e) {
                 console.error("Ошибка загрузки настроек клиента:", e);
             }
@@ -1119,16 +1134,18 @@ function initializeProfile(myData) {
                 const autoUpdate = document.getElementById("autoUpdateCheckbox").checked;
                 const autostart = document.getElementById("autostartCheckbox").checked;
                 const scale = document.getElementById("scaleSelector").value;
-                
+                const hwAccelEl = document.getElementById("hwAccelCheckbox");
+                const hardwareAccel = hwAccelEl ? hwAccelEl.checked : true;
+
                 if (hasTauri) {
-                    await window.__TAURI__.core.invoke('update_app_config', { 
-                        autoUpdate, 
-                        auto_update: autoUpdate, 
-                        autostart, 
-                        scale 
+                    await window.__TAURI__.core.invoke('update_app_config', {
+                        autoUpdate,
+                        auto_update: autoUpdate,
+                        autostart,
+                        scale
                     });
                 } else {
-                    await window.api.updateAppConfig(autoUpdate, autostart, scale);
+                    await window.api.updateAppConfig(autoUpdate, autostart, scale, hardwareAccel);
                 }
             } catch (e) {
                 console.error("Ошибка сохранения настроек клиента:", e);

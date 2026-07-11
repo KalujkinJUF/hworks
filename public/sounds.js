@@ -60,6 +60,18 @@
         tone(330, 0.10, 0.18, 'sine', 0.16); // E4 — нисходящий
     }
 
+    // Кто-то вошёл в голосовой канал/звонок — короткий восходящий «блип».
+    function userJoin() {
+        tone(587, 0, 0.07, 'sine', 0.13);    // D5
+        tone(880, 0.07, 0.10, 'sine', 0.13); // A5
+    }
+
+    // Кто-то вышел — короткий нисходящий «блип».
+    function userLeave() {
+        tone(587, 0, 0.07, 'sine', 0.13);    // D5
+        tone(392, 0.07, 0.12, 'sine', 0.13); // G4
+    }
+
     // Исходящий: длинный гудок ~1с, пауза ~2.4с (как телефонный ringback)
     function ringOutgoing() {
         stopRing();
@@ -89,5 +101,5 @@
         window.addEventListener(ev, unlock, { once: false, passive: true })
     );
 
-    window.sfx = { click, ringOutgoing, ringIncoming, stopRing, callConnect, callEnd };
+    window.sfx = { click, ringOutgoing, ringIncoming, stopRing, callConnect, callEnd, userJoin, userLeave };
 })();

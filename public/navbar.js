@@ -259,13 +259,17 @@ window.videoThumbHtml = function(escUrl, opts) {
     </div>`;
 };
 
-// Собственный аудиоплеер (без нативного <audio controls>): тёмная плашка с play/seek/временем.
-// Логика воспроизведения — делегированием событий в IIFE ниже.
+// Собственный аудиоплеер (без нативного <audio controls>): play / перемотка / время / громкость.
+// Оформление — в общем <style> (класс .vt-range стабилен во всех темах, включая Aero). Логика —
+// делегированием событий в IIFE ниже.
 window.audioPlayerHtml = function(escUrl) {
-    return `<div class="vt-audio" data-src="${escUrl}" style="display:flex;align-items:center;gap:10px;background:#111;border:1px solid #444;border-radius:8px;padding:8px 12px;width:100%;min-width:220px;box-sizing:border-box;">
-        <button type="button" class="vt-audio-play" style="flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid #666;background:#222;color:#fff;font-size:14px;cursor:pointer;padding-left:2px;">▶</button>
-        <input type="range" class="vt-audio-seek" min="0" max="1000" value="0" style="flex:1;height:4px;cursor:pointer;accent-color:#00b050;">
-        <span class="vt-audio-time" style="flex:0 0 auto;font-size:11px;color:#bbb;font-family:monospace;min-width:74px;text-align:right;">0:00 / 0:00</span>
+    const T = (k, d) => (window.t ? window.t(k, d) : d);
+    return `<div class="vt-audio" data-src="${escUrl}">
+        <button type="button" class="vt-mbtn vt-audio-play" title="${T('media_play', 'Воспроизвести')}">▶</button>
+        <input type="range" class="vt-range vt-audio-seek" min="0" max="1000" value="0" title="${T('media_seek', 'Перемотка')}">
+        <span class="vt-mtime vt-audio-time">0:00 / 0:00</span>
+        <button type="button" class="vt-mbtn vt-audio-vol-btn" title="${T('media_volume', 'Громкость')}">🔊</button>
+        <input type="range" class="vt-range vt-vol vt-audio-vol" min="0" max="100" value="100" title="${T('media_volume', 'Громкость')}">
     </div>`;
 };
 
@@ -1241,42 +1245,135 @@ function checkRole(data) {
 
 }
 
-// #20 Собственные плееры видео/аудио. Видео открывается в полноэкранном оверлее (надёжнее
-// множества инлайновых <video>, которые в клиенте иногда не отрисовывались). Аудио — своя
-// тёмная плашка с play/seek/временем. Всё на делегировании событий (работает и для медиа,
-// добавленных динамически в ленту/чат).
+// #20 Собственные плееры видео/аудио. Оба — с одинаковыми кастомными контролами
+// (play / перемотка / время / громкость), без нативного <video controls>. Видео открывается
+// в полноэкранном оверлее (надёжнее множества инлайновых <video>, которые в клиенте иногда не
+// отрисовывались). Всё на делегировании событий — работает и для медиа, добавленных динамически.
 (function () {
     'use strict';
 
+    let lastVolume = 1;   // общая громкость для всех плееров в рамках сессии
+
+    // Единое оформление контролов (класс .vt-range стабилен во всех темах, вкл. Aero — нативный
+    // ползунок раньше выглядел по-разному). Заливку прогресса рисуем градиентом через setFill().
+    const style = document.createElement('style');
+    style.textContent = `
+        .vt-audio{display:flex;align-items:center;gap:8px;background:#111;border:1px solid #444;border-radius:8px;padding:8px 10px;width:100%;max-width:100%;box-sizing:border-box;flex-wrap:nowrap;}
+        .vt-mbtn{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:1px solid #666;background:#222;color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+        .vt-mbtn:hover{background:#2d2d2d;}
+        .vt-mtime{flex:0 0 auto;font-size:11px;color:#d0d0d0;font-family:monospace;white-space:nowrap;}
+        .vt-audio-seek,.vt-v-seek{flex:1 1 auto;min-width:48px;}
+        .vt-vol{flex:0 0 auto;width:60px;}
+        .vt-range{-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:rgba(255,255,255,0.25);cursor:pointer;outline:none;margin:0;vertical-align:middle;}
+        .vt-range::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:transparent;}
+        .vt-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;margin-top:-4px;border-radius:50%;background:#00c060;border:1px solid #0a3;box-shadow:0 1px 3px rgba(0,0,0,0.5);}
+        .vt-range::-moz-range-track{height:6px;border-radius:3px;background:rgba(255,255,255,0.25);}
+        .vt-range::-moz-range-progress{height:6px;border-radius:3px;background:#00c060;}
+        .vt-range::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#00c060;border:1px solid #0a3;}
+        .vt-vplayer{position:relative;display:flex;flex-direction:column;max-width:95vw;max-height:92vh;background:#000;box-shadow:0 0 30px rgba(0,0,0,0.8);}
+        .vt-vplayer>video{display:block;max-width:95vw;max-height:86vh;background:#000;object-fit:contain;outline:none;cursor:pointer;margin:auto;}
+        .vt-vbar{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#111;border-top:1px solid #333;}
+        .vt-vplayer:fullscreen{width:100vw;height:100vh;max-width:100vw;max-height:100vh;justify-content:center;}
+        .vt-vplayer:fullscreen>video{max-height:calc(100vh - 48px);max-width:100vw;flex:1 1 auto;min-height:0;}
+    `;
+    document.head.appendChild(style);
+
+    function fmt(s) {
+        if (!isFinite(s) || s < 0) s = 0;
+        s = Math.floor(s);
+        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+    // Заливка прошедшей части ползунка (зелёный слева от бегунка, серый справа) — единообразно
+    // во всех темах и движках.
+    function setFill(range) {
+        if (!range) return;
+        const min = Number(range.min || 0), max = Number(range.max || 100);
+        const pct = max > min ? ((Number(range.value) - min) / (max - min)) * 100 : 0;
+        range.style.background = 'linear-gradient(to right,#00c060 0%,#00c060 ' + pct + '%,rgba(255,255,255,0.25) ' + pct + '%,rgba(255,255,255,0.25) 100%)';
+    }
+
+    // ─────────────── полноэкранный видеоплеер с кастомными контролами ───────────────
     function openVideoPlayer(src) {
         if (!src) return;
         const overlay = document.createElement('div');
         overlay.className = 'vt-video-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:100000;padding:20px;box-sizing:border-box;opacity:0;transition:opacity .2s ease-out;';
 
+        const stage = document.createElement('div');
+        stage.className = 'vt-vplayer';
+
         const video = document.createElement('video');
         video.src = src;
-        video.controls = true;
         video.autoplay = true;
         video.playsInline = true;
         video.preload = 'auto';
-        video.style.cssText = 'max-width:95vw;max-height:90vh;background:#000;box-shadow:0 0 30px rgba(0,0,0,0.8);outline:none;';
+        video.volume = lastVolume;
+
+        const bar = document.createElement('div');
+        bar.className = 'vt-vbar';
+        const T = (k, d) => (window.t ? window.t(k, d) : d);
+        bar.innerHTML = `
+            <button type="button" class="vt-mbtn vt-v-play" title="${T('media_play', 'Воспроизвести')}">⏸</button>
+            <input type="range" class="vt-range vt-v-seek" min="0" max="1000" value="0" title="${T('media_seek', 'Перемотка')}">
+            <span class="vt-mtime vt-v-time">0:00 / 0:00</span>
+            <button type="button" class="vt-mbtn vt-v-vol-btn" title="${T('media_volume', 'Громкость')}">🔊</button>
+            <input type="range" class="vt-range vt-vol vt-v-vol" min="0" max="100" value="${Math.round(lastVolume * 100)}" title="${T('media_volume', 'Громкость')}">
+            <button type="button" class="vt-mbtn vt-v-fs" title="${T('media_fullscreen', 'Во весь экран')}">⛶</button>`;
 
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.textContent = '✕';
         closeBtn.style.cssText = 'position:absolute;top:16px;right:20px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.6);color:#fff;font-size:18px;cursor:pointer;z-index:100001;';
 
-        overlay.appendChild(video);
+        stage.appendChild(video);
+        stage.appendChild(bar);
+        overlay.appendChild(stage);
         overlay.appendChild(closeBtn);
+
+        const playBtn = bar.querySelector('.vt-v-play');
+        const seek = bar.querySelector('.vt-v-seek');
+        const time = bar.querySelector('.vt-v-time');
+        const volBtn = bar.querySelector('.vt-v-vol-btn');
+        const vol = bar.querySelector('.vt-v-vol');
+        const fsBtn = bar.querySelector('.vt-v-fs');
+        setFill(seek); setFill(vol);
+
+        function togglePlay() { if (video.paused) video.play().catch(() => {}); else video.pause(); }
+
+        video.addEventListener('loadedmetadata', () => { time.textContent = '0:00 / ' + fmt(video.duration); });
+        video.addEventListener('timeupdate', () => {
+            if (video.duration) { seek.value = String(Math.round((video.currentTime / video.duration) * 1000)); setFill(seek); }
+            time.textContent = fmt(video.currentTime) + ' / ' + fmt(video.duration || 0);
+        });
+        video.addEventListener('play', () => { playBtn.textContent = '⏸'; });
+        video.addEventListener('pause', () => { playBtn.textContent = '▶'; });
+        playBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
+        video.addEventListener('click', togglePlay);
+        seek.addEventListener('input', () => { if (video.duration) { video.currentTime = (Number(seek.value) / 1000) * video.duration; setFill(seek); } });
+        vol.addEventListener('input', () => {
+            video.volume = Number(vol.value) / 100;
+            lastVolume = video.volume;
+            video.muted = video.volume === 0;
+            volBtn.textContent = video.muted ? '🔇' : '🔊';
+            setFill(vol);
+        });
+        volBtn.addEventListener('click', () => { video.muted = !video.muted; volBtn.textContent = video.muted ? '🔇' : '🔊'; });
+        fsBtn.addEventListener('click', () => {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else if (stage.requestFullscreen) stage.requestFullscreen().catch(() => {});
+        });
 
         function close() {
             document.removeEventListener('keydown', onKey);
+            if (document.fullscreenElement) { try { document.exitFullscreen(); } catch (e) {} }
             try { video.pause(); } catch (e) {}
             overlay.style.opacity = '0';
             setTimeout(() => { try { overlay.remove(); } catch (e) {} }, 200);
         }
-        function onKey(e) { if (e.key === 'Escape') close(); }
+        function onKey(e) {
+            if (e.key === 'Escape') { if (document.fullscreenElement) return; close(); }
+            else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+        }
 
         closeBtn.addEventListener('click', (e) => { e.stopPropagation(); close(); });
         overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
@@ -1297,15 +1394,9 @@ function checkRole(data) {
         }
     });
 
-    // ─────────────── собственный аудиоплеер ───────────────
+    // ─────────────── собственный аудиоплеер (делегирование) ───────────────
     const audioMap = new WeakMap();   // .vt-audio → HTMLAudioElement (ленивая инициализация)
     let activeAudio = null;
-
-    function fmt(s) {
-        if (!isFinite(s) || s < 0) s = 0;
-        s = Math.floor(s);
-        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-    }
 
     function getAudio(container) {
         let a = audioMap.get(container);
@@ -1313,43 +1404,74 @@ function checkRole(data) {
         a = new Audio();
         a.preload = 'metadata';
         a.src = container.dataset.src;
+        a.volume = lastVolume;
         audioMap.set(container, a);
         const playBtn = container.querySelector('.vt-audio-play');
         const seek = container.querySelector('.vt-audio-seek');
         const time = container.querySelector('.vt-audio-time');
+        const volBtn = container.querySelector('.vt-audio-vol-btn');
+        const vol = container.querySelector('.vt-audio-vol');
+        if (vol) { vol.value = String(Math.round(a.volume * 100)); setFill(vol); }
+        if (volBtn) volBtn.textContent = a.volume === 0 ? '🔇' : '🔊';
+        setFill(seek);
         a.addEventListener('loadedmetadata', () => { time.textContent = '0:00 / ' + fmt(a.duration); });
         a.addEventListener('timeupdate', () => {
-            if (a.duration) seek.value = String(Math.round((a.currentTime / a.duration) * 1000));
+            if (a.duration) { seek.value = String(Math.round((a.currentTime / a.duration) * 1000)); setFill(seek); }
             time.textContent = fmt(a.currentTime) + ' / ' + fmt(a.duration || 0);
         });
-        a.addEventListener('ended', () => { if (playBtn) playBtn.textContent = '▶'; if (seek) seek.value = '0'; });
+        a.addEventListener('ended', () => { if (playBtn) playBtn.textContent = '▶'; if (seek) { seek.value = '0'; setFill(seek); } });
         a.addEventListener('play', () => { if (playBtn) playBtn.textContent = '⏸'; });
         a.addEventListener('pause', () => { if (playBtn) playBtn.textContent = '▶'; });
         return a;
     }
 
     document.addEventListener('click', (e) => {
+        // play/pause
         const btn = e.target.closest('.vt-audio-play');
-        if (!btn) return;
-        const container = btn.closest('.vt-audio');
-        if (!container || !container.dataset.src) return;
-        const a = getAudio(container);
-        if (a.paused) {
-            if (activeAudio && activeAudio !== a) { try { activeAudio.pause(); } catch (_) {} }
-            activeAudio = a;
-            a.play().catch(() => {});
-        } else {
-            a.pause();
+        if (btn) {
+            const container = btn.closest('.vt-audio');
+            if (!container || !container.dataset.src) return;
+            const a = getAudio(container);
+            if (a.paused) {
+                if (activeAudio && activeAudio !== a) { try { activeAudio.pause(); } catch (_) {} }
+                activeAudio = a;
+                a.play().catch(() => {});
+            } else { a.pause(); }
+            return;
+        }
+        // mute-переключатель громкости
+        const vb = e.target.closest('.vt-audio-vol-btn');
+        if (vb) {
+            const container = vb.closest('.vt-audio');
+            if (!container) return;
+            const a = getAudio(container);
+            a.muted = !a.muted;
+            vb.textContent = a.muted ? '🔇' : '🔊';
         }
     });
 
     document.addEventListener('input', (e) => {
         const seek = e.target.closest('.vt-audio-seek');
-        if (!seek) return;
-        const container = seek.closest('.vt-audio');
-        if (!container) return;
-        const a = getAudio(container);
-        if (a.duration) a.currentTime = (Number(seek.value) / 1000) * a.duration;
+        if (seek) {
+            const container = seek.closest('.vt-audio');
+            if (!container) return;
+            const a = getAudio(container);
+            if (a.duration) a.currentTime = (Number(seek.value) / 1000) * a.duration;
+            setFill(seek);
+            return;
+        }
+        const vol = e.target.closest('.vt-audio-vol');
+        if (vol) {
+            const container = vol.closest('.vt-audio');
+            if (!container) return;
+            const a = getAudio(container);
+            a.volume = Number(vol.value) / 100;
+            lastVolume = a.volume;
+            a.muted = a.volume === 0;
+            const vb = container.querySelector('.vt-audio-vol-btn');
+            if (vb) vb.textContent = a.muted ? '🔇' : '🔊';
+            setFill(vol);
+        }
     });
 
     // При SPA-переходе останавливаем звук и закрываем оверлей видео.

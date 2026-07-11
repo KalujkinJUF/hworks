@@ -2641,3 +2641,52 @@ body {
 }
 ::selection { background: #b5860b; color: #fffdf5; }
 ::-moz-selection { background: #b5860b; color: #fffdf5; }
+
+/* ==========================================================================
+   DOS (Light) — правки читаемости (перекрывают инлайновые стили тёмной темы)
+   ========================================================================== */
+
+/* 1. Чат: окно сообщений — светлый непрозрачный «экран» вместо тёмной мути */
+.messages-container,
+.chat-page .messages-container {
+    background-color: #e7e1cd !important;
+}
+
+/* 2. Поля ввода (в т.ч. заданные инлайново background:black в HTML/JS) —
+   как бокс написания постов на главной: светлый фон, тёмный текст */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+    background: #ddd6c0 !important;
+    color: #2a2820 !important;
+    border-color: #33322a !important;
+}
+input::placeholder,
+textarea::placeholder { color: rgba(0, 0, 0, 0.5) !important; }
+
+/* 3. Комментарии (стена профиля и под постами): карточка светлая, текст тёмный */
+.comment-card {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.25) !important;
+}
+.comment-content,
+.bio-group p {
+    color: #2a2820 !important;
+}
+.wall-comment-date { color: #555555 !important; }
+
+/* 4. Кнопки/бордюры, захардкоженные white / #00ff00 в JS-шаблонах */
+.read-more-btn {
+    color: #33322a !important;
+    border-color: #33322a !important;
+}
+.comments-toggle-btn { color: #0a7a12 !important; }
+.comments-wrapper {
+    border-color: #33322a !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+}
+.post-footer { border-top-color: #33322a !important; }
+.loading-text { color: #444444 !important; }
+
+/* 5. Роль-бейдж premium (жёлтый плохо читался на бежевом) */
+.role-premium { color: #8a6d00 !important; border-color: #8a6d00 !important; }

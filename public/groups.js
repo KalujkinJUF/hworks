@@ -82,10 +82,7 @@ function initializeGroups(myData) {
         return escapeHtml(((g && g.name) || '?').charAt(0).toUpperCase());
     }
 
-    const roleColors = {
-        newbie: '#888888', user: '#2ecc71', premium: '#ffd700',
-        vip: '#9b59b6', moderator: '#3498db', admin: '#ff4444', banned: '#333333'
-    };
+    const roleColors = window.getRoleColors();
 
     // #13 Ответ на сообщение (вызывается из глобального контекстного меню navbar.js).
     // Работает для сообщений любого пользователя, не только своих.
@@ -345,7 +342,7 @@ function initializeGroups(myData) {
         list.innerHTML = '';
         myChatBanned = false;
         members.forEach(m => {
-            const color = roleColors[m.role === 'admin' ? 'admin' : (m.role || 'user')] || '#fff';
+            const color = roleColors[m.role === 'admin' ? 'admin' : (m.role || 'user')] || window.defaultNameColor();
             const isAdminMember = m.role === 'admin';
             const statusClass = `status-${m.user_status || 'offline'}`;
             if (m.id === myUserId) myChatBanned = !!m.chat_banned;

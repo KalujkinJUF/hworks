@@ -1114,6 +1114,20 @@
     // Тёмные темы: DOS (Dark) 'default' и Aero (Dark) 'aero-dark'
     window.isDarkTheme = function () { const t = window.getAppTheme(); return t === 'default' || t === 'aero-dark'; };
 
+    // Цвета ролей для инлайновой раскраски ников. На светлых темах — затемнённые,
+    // чтобы имена читались на бежевом фоне (белый дефолт был невидим).
+    window.getRoleColors = function () {
+        return window.isDarkTheme() ? {
+            admin: '#ff4444', moderator: '#3498db', user: '#2ecc71',
+            newbie: '#888888', premium: '#ffd700', vip: '#9b59b6', banned: '#333333'
+        } : {
+            admin: '#c0392b', moderator: '#2471a3', user: '#1e7d3a',
+            newbie: '#555555', premium: '#8a6d00', vip: '#7d3c98', banned: '#333333'
+        };
+    };
+    // Дефолтный цвет ника (обычный пользователь без роли).
+    window.defaultNameColor = function () { return window.isDarkTheme() ? '#ffffff' : '#33322a'; };
+
     // Функция применения темы
     window.applyTheme = function applyTheme() {
         const theme = localStorage.getItem('app_theme') || 'default';

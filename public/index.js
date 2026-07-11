@@ -57,10 +57,7 @@ document.addEventListener('spa:navigate', () => {
             });
 
     let currentFeed = 'global';
-    const roleColors = {
-        admin: '#ff4444', moderator: '#3498db', user: '#2ecc71',
-        newbie: '#888888', premium: '#ffd700', vip: '#9b59b6', banned: '#333333'
-    };
+    const roleColors = window.getRoleColors();
 
     // Кнопка "Мои подписки" управляется после проверки авторизации выше
 
@@ -165,10 +162,10 @@ document.addEventListener('spa:navigate', () => {
             const postId = String(post.id);
             let card = container.querySelector(`.post-card[data-post-id="${postId}"]`);
 
-            const color = roleColors[post.role] || '#ffffff';
+            const color = roleColors[post.role] || window.defaultNameColor();
             const avatar = post.avatar ? escapeHtml(post.avatar) : '';
             const likeText = post.is_liked ? `♥ ${window.t('liked_btn', 'Понравилось')}` : `♡ ${window.t('like_btn', 'Мне нравится')}`;
-            const likeColor = post.is_liked ? '#ff3333' : '#fff';
+            const likeColor = post.is_liked ? '#ff3333' : window.defaultNameColor();
             const dateStr = new Date(post.created_at).toLocaleString();
             const contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
 
@@ -377,7 +374,7 @@ document.addEventListener('spa:navigate', () => {
                         userEl.innerHTML = `
                             <div class="online-user">
                                 <span class="online-dot status-${u.user_status || 'online'}"></span>
-                                <span style="color: ${roleColors[u.role] || '#fff'};">${escapeHtml(u.username)}</span>
+                                <span style="color: ${roleColors[u.role] || window.defaultNameColor()};">${escapeHtml(u.username)}</span>
                             </div>
                         `;
 
@@ -390,7 +387,7 @@ document.addEventListener('spa:navigate', () => {
                     } else {
                         const nameSpan = userEl.querySelector(".online-user span:last-child");
                         if (nameSpan) {
-                            nameSpan.style.color = roleColors[u.role] || '#fff';
+                            nameSpan.style.color = roleColors[u.role] || window.defaultNameColor();
                         }
                         const dotSpan = userEl.querySelector(".online-dot");
                         if (dotSpan) {
@@ -433,7 +430,7 @@ document.addEventListener('spa:navigate', () => {
                 let count = m ? parseInt(m[1]) : 0;
                 count = Math.max(0, count + (liked ? 1 : -1));
                 const likeText = liked ? `♥ ${window.t('liked_btn', 'Понравилось')}` : `♡ ${window.t('like_btn', 'Мне нравится')}`;
-                btn.style.color = liked ? '#ff3333' : '#fff';
+                btn.style.color = liked ? '#ff3333' : window.defaultNameColor();
                 btn.textContent = `${likeText} (${count})`;
             })
             .catch(err => console.error(err));
@@ -545,7 +542,7 @@ document.addEventListener('spa:navigate', () => {
                     });
 
                     function renderCommentNode(comment, depth = 0) {
-                        const color = roleColors[comment.role] || '#ffffff';
+                        const color = roleColors[comment.role] || window.defaultNameColor();
                         const indent = depth * 15;
                         const borderLeft = depth > 0 ? '2px solid rgba(255,255,255,0.2)' : 'none';
                         const repliesHTML = comment.replies.map(r => renderCommentNode(r, depth + 1)).join('');

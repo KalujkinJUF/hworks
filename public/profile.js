@@ -51,10 +51,7 @@ function initializeProfile(myData) {
     let initialLoadDone = false;
     let isPollingStarted = false;
 
-    const roleColors = {
-        newbie: '#888888', user: '#2ecc71', premium: '#ffd700',
-        vip: '#9b59b6', moderator: '#3498db', admin: '#ff4444', banned: '#333333'
-    };
+    const roleColors = window.getRoleColors();
     const roleLabels = {
         newbie: 'NEWBIE', user: 'USER', premium: 'PREMIUM',
         vip: 'VIP', moderator: 'MOD', admin: 'ADMIN', banned: 'BANNED'
@@ -136,7 +133,7 @@ function initializeProfile(myData) {
         const roleBadge = document.getElementById("roleBadge");
         if (roleBadge) {
             const role = data.role;
-            const color = roleColors[role] || '#ffffff';
+            const color = roleColors[role] || window.defaultNameColor();
             const label = roleLabels[role] || `[${role.toUpperCase()}]`;
             roleBadge.textContent = label;
             roleBadge.className = `role-badge role-${role}`;
@@ -632,7 +629,7 @@ function initializeProfile(myData) {
             } else {
                 sect.style.display = 'block';
                 list.innerHTML = friends.map(f => {
-                    const color = roleColors[f.role] || '#ffffff';
+                    const color = roleColors[f.role] || window.defaultNameColor();
                     return `
                         <a href="profile.html?username=${encodeURIComponent(f.username)}" style="text-decoration: none; color: inherit;">
                             <div style="display: flex; flex-direction: column; align-items: center; width: 90px;">
@@ -762,7 +759,7 @@ function initializeProfile(myData) {
                 });
             } else {
                 list.innerHTML = comments.map(c => {
-                    const color = roleColors[c.role] || '#ffffff';
+                    const color = roleColors[c.role] || window.defaultNameColor();
                     const isCommentAuthor = currentUserId && parseInt(c.user_id) === parseInt(currentUserId);
                     const isCommentAdmin = currentUserRole === 'admin';
                     const isCommentModerator = currentUserRole === 'moderator' && c.role !== 'admin';

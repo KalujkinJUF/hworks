@@ -24,10 +24,7 @@ document.addEventListener('spa:navigate', () => {
         const resultsDiv = document.getElementById("searchResults");
         const messageDiv = document.getElementById("searchMessage");
 
-        const roleColors = {
-            admin: '#ff4444', moderator: '#3498db', user: '#2ecc71',
-            newbie: '#888888', premium: '#ffd700', vip: '#9b59b6', banned: '#333333'
-        };
+        const roleColors = window.getRoleColors();
 
         const roleLabels = {
             newbie: 'NEWBIE', user: 'USER', premium: 'PREMIUM',
@@ -125,7 +122,7 @@ document.addEventListener('spa:navigate', () => {
                 resultsDiv.innerHTML = `<p class="loading-text">${window.t('search_no_results', 'Пользователей не найдено')}</p>`;
             } else {
                 resultsDiv.innerHTML = users.map(u => {
-                    const color = roleColors[u.role] || '#ffffff';
+                    const color = roleColors[u.role] || window.defaultNameColor();
                     const roleLabel = roleLabels[u.role] || u.role.toUpperCase();
                     return `
                         <div class="search-result-card" style="display: flex; justify-content: space-between; align-items: flex-start; cursor: auto;">

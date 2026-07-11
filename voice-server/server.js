@@ -110,6 +110,27 @@ function handleInternalRequest(req, res) {
         res.end(JSON.stringify({ rosters: out }));
         return;
     }
+    // Немедленно заглушить участника (админ отключил микрофон): закрываем его продюсеры,
+    // помечаем muted и запрещаем повторный produce в текущей сессии.
+    if (u.pathname === '/internal/force-mute') {
+        const targetId = Number(u.searchParams.get('user'));
+        const roomIds = (u.searchParams.get('rooms') || '').split(',').filter(Boolean);
+        let affected = 0;
+        roomIds.forEach((rid) => {
+            const room = rooms.get(rid);
+            const peer = room && room.peers.get(targetId);
+            if (!peer) return;
+            peer.producers.forEach(p => { try { p.close(); } catch (e) {} });
+            peer.producers.clear();
+            peer.muted = true;
+            if (peer.socket) peer.socket.data.canSpeak = false;
+            io.to(rid).emit('peer-mute', { userId: targetId, muted: true });
+            affected++;
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, affected }));
+        return;
+    }
     res.writeHead(404); res.end();
 }
 
@@ -131,6 +152,9 @@ io.use((socket, next) => {
         socket.data.roomId = payload.roomId;
         socket.data.username = payload.username || '';
         socket.data.presence = !!payload.presence;   // presence-тикет (Фаза 3): без комнаты, для входящих звонков
+        // canSpeak отсутствует в ЛС/presence-тикетах → трактуем как разрешено. false только
+        // когда админ группы отключил микрофон участнику канала.
+        socket.data.canSpeak = payload.canSpeak !== false;
         next();
     } catch (e) {
         next(new Error('unauthorized'));
@@ -263,6 +287,8 @@ io.on('connection', (socket) => {
 
     socket.on('produce', async ({ transportId, kind, rtpParameters }, cb) => {
         try {
+            // Микрофон отключён админом группы — не даём создавать аудио-продюсер.
+            if (kind === 'audio' && socket.data.canSpeak === false) return cb({ error: 'mic disabled by admin' });
             const producer = await peer.transports.get(transportId).produce({ kind, rtpParameters, appData: { userId } });
             peer.producers.set(producer.id, producer);
             if (kind === 'audio') { try { room.audioLevelObserver.addProducer({ producerId: producer.id }); } catch (e) {} }

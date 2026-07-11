@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS group_members (
     group_id INT NOT NULL,
     user_id INT NOT NULL,
     role ENUM('admin', 'member') DEFAULT 'member',
+    chat_banned TINYINT(1) NOT NULL DEFAULT 0,
+    mic_muted TINYINT(1) NOT NULL DEFAULT 0,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

@@ -44,8 +44,8 @@ router.post('/token', tokenLimiter, (req, res) => {
 
     // Тикет подписывается на КАНОНИЧЕСКИЙ roomId (не на присланный клиентом as-is),
     // чтобы нельзя было оказаться в «другой» комнате из-за иного порядка id.
-    const issue = (rid) => getUsername(userId, (username) => {
-        const ticket = jwt.sign({ userId, roomId: rid, username }, SECRET, { expiresIn: '60s' });
+    const issue = (rid, extra) => getUsername(userId, (username) => {
+        const ticket = jwt.sign({ userId, roomId: rid, username, ...(extra || {}) }, SECRET, { expiresIn: '60s' });
         res.json({ ticket, roomId: rid });
     });
 
@@ -55,14 +55,16 @@ router.post('/token', tokenLimiter, (req, res) => {
         // Участник группы этого канала И канал именно голосовой (type='voice').
         db.query(
             `SELECT gc.id,
-                    (SELECT gm.role FROM group_members gm WHERE gm.group_id = gc.group_id AND gm.user_id = ?) AS role
+                    (SELECT gm.role FROM group_members gm WHERE gm.group_id = gc.group_id AND gm.user_id = ?) AS role,
+                    (SELECT gm.mic_muted FROM group_members gm WHERE gm.group_id = gc.group_id AND gm.user_id = ?) AS mic_muted
              FROM group_channels gc WHERE gc.id = ? AND gc.type = 'voice'`,
-            [userId, channelId],
+            [userId, userId, channelId],
             (e, rows) => {
                 if (e) { logger.error('voice token: ошибка БД (channel)'); return res.status(500).json({ error: 'Ошибка БД' }); }
                 if (!rows.length) return res.status(404).json({ error: 'Канал не найден' });
                 if (!rows[0].role) return res.status(403).json({ error: 'Нет доступа к этому каналу' });
-                issue(roomId);
+                // canSpeak=false, если админ отключил микрофон → voice-сервер запретит produce.
+                issue(roomId, { canSpeak: !rows[0].mic_muted });
             }
         );
     } else if (roomId.startsWith('dm:')) {

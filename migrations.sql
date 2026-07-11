@@ -174,6 +174,8 @@ CREATE TABLE IF NOT EXISTS group_members (
     group_id INT NOT NULL,
     user_id INT NOT NULL,
     role ENUM('admin', 'member') DEFAULT 'member',
+    chat_banned TINYINT(1) NOT NULL DEFAULT 0,   -- админ запретил писать в чат группы
+    mic_muted TINYINT(1) NOT NULL DEFAULT 0,     -- админ отключил микрофон в голосе
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -181,6 +183,11 @@ CREATE TABLE IF NOT EXISTS group_members (
     INDEX idx_group (group_id),
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Для уже существующих БД (идемпотентно):
+ALTER TABLE group_members
+    ADD COLUMN IF NOT EXISTS chat_banned TINYINT(1) NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS mic_muted TINYINT(1) NOT NULL DEFAULT 0;
 
 -- Текстовые каналы группы (макс. 5, проверяется в коде)
 CREATE TABLE IF NOT EXISTS group_channels (

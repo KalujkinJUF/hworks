@@ -701,6 +701,36 @@ window.showCustomConfirm = function(message) {
     });
 };
 
+// Модальный ввод строки (для переименования каналов и т.п.). resolve(строка) или resolve(null).
+window.showCustomPrompt = function(message, initial, maxLength) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "custom-modal-overlay";
+        overlay.innerHTML = `
+            <div class="custom-modal-box">
+                <div class="custom-modal-header">${window.t('modal_input_title', 'ВВОД')}</div>
+                <div class="custom-modal-content">${escapeHtmlModal(message)}</div>
+                <input type="text" id="customPromptInput" maxlength="${maxLength || 200}" style="width:100%; box-sizing:border-box; margin:10px 0 4px; background:black; color:white; border:2px solid white; padding:8px; font-family:inherit; font-size:12px; outline:none;">
+                <div class="custom-modal-buttons">
+                    <button class="custom-modal-btn btn-yes" id="customPromptOkBtn">${window.t('modal_ok', 'ОК')}</button>
+                    <button class="custom-modal-btn btn-no" id="customPromptCancelBtn">${window.t('cancel', 'Отмена')}</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector("#customPromptInput");
+        input.value = initial || '';
+        input.focus();
+        input.select();
+        const done = (val) => { setTimeout(() => overlay.remove(), 50); resolve(val); };
+        overlay.querySelector("#customPromptOkBtn").addEventListener("click", (e) => { e.stopPropagation(); const v = input.value.trim(); done(v || null); });
+        overlay.querySelector("#customPromptCancelBtn").addEventListener("click", (e) => { e.stopPropagation(); done(null); });
+        input.addEventListener("keydown", (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); const v = input.value.trim(); done(v || null); }
+            else if (e.key === 'Escape') { e.preventDefault(); done(null); }
+        });
+    });
+};
+
 
 if (!window._navbarInitialized) {
 window._navbarInitialized = true;

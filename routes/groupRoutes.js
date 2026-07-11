@@ -197,7 +197,7 @@ router.get('/:id', (req, res) => {
             db.query('SELECT id, name, position, type FROM group_channels WHERE group_id = ? ORDER BY position ASC, id ASC', [groupId], (e2, channels) => {
                 if (e2) return res.status(500).json({ error: 'Ошибка БД' });
                 db.query(
-                    `SELECT u.id, u.username, u.avatar, gm.role,
+                    `SELECT u.id, u.username, u.avatar, gm.role, gm.chat_banned, gm.mic_muted,
                             IF(u.last_active >= NOW() - INTERVAL 5 MINUTE, u.user_status, 'offline') AS user_status
                      FROM group_members gm JOIN users u ON u.id = gm.user_id
                      WHERE gm.group_id = ?
@@ -301,6 +301,24 @@ router.post('/:id/channels', groupActionLimiter, (req, res) => {
                 if (e2) return res.status(500).json({ error: 'Ошибка БД' });
                 res.status(201).json({ id: r.insertId, name, type });
             });
+        });
+    });
+});
+
+// Переименовать канал (админ)
+router.patch('/:id/channels/:channelId', groupActionLimiter, (req, res) => {
+    const userId = req.user.id;
+    const groupId = parseInt(req.params.id);
+    const channelId = parseInt(req.params.channelId);
+    const name = sanitize((req.body.name || '').trim()).slice(0, 40);
+    if (!name) return res.status(400).json({ error: 'Введите корректное название канала' });
+    getMembership(groupId, userId, (err, mem) => {
+        if (err) return res.status(500).json({ error: 'Ошибка БД' });
+        if (!mem || mem.role !== 'admin') return res.status(403).json({ error: 'Только админ может переименовывать каналы' });
+        db.query('UPDATE group_channels SET name = ? WHERE id = ? AND group_id = ?', [name, channelId, groupId], (e, r) => {
+            if (e) return res.status(500).json({ error: 'Ошибка БД' });
+            if (!r.affectedRows) return res.status(404).json({ error: 'Канал не найден' });
+            res.json({ message: 'Канал переименован', name });
         });
     });
 });
@@ -460,6 +478,51 @@ router.post('/invites/:inviteId/reject', (req, res) => {
 
 // ─────────────────────────── участники ───────────────────────────
 
+// Немедленно оборвать голос участника после отключения микрофона (best-effort).
+// Иначе запрет применится при следующем (пере)подключении к каналу.
+const VOICE_INTERNAL_URL = process.env.VOICE_INTERNAL_URL || 'http://127.0.0.1:4000';
+function forceVoiceMute(groupId, targetId) {
+    db.query("SELECT id FROM group_channels WHERE group_id = ? AND type = 'voice'", [groupId], async (e, rows) => {
+        if (e || !rows.length) return;
+        const rooms = rows.map(r => 'voice:channel:' + r.id).join(',');
+        try {
+            await fetch(VOICE_INTERNAL_URL + '/internal/force-mute?user=' + targetId + '&rooms=' + encodeURIComponent(rooms), {
+                method: 'POST',
+                headers: { 'x-internal-secret': process.env.VOICE_SECRET || '' },
+                signal: AbortSignal.timeout(2000)
+            });
+        } catch (err) { /* voice-сервер недоступен — не критично */ }
+    });
+}
+
+// Модерация участника (админ): запрет писать в чат и/или отключение микрофона.
+// Body: { chat_banned?: bool, mic_muted?: bool } — допускается любое подмножество.
+router.patch('/:id/members/:userId', groupActionLimiter, (req, res) => {
+    const requesterId = req.user.id;
+    const groupId = parseInt(req.params.id);
+    const targetId = parseInt(req.params.userId);
+    const fields = [], vals = [];
+    if (typeof req.body.chat_banned === 'boolean') { fields.push('chat_banned = ?'); vals.push(req.body.chat_banned ? 1 : 0); }
+    if (typeof req.body.mic_muted === 'boolean') { fields.push('mic_muted = ?'); vals.push(req.body.mic_muted ? 1 : 0); }
+    if (!fields.length) return res.status(400).json({ error: 'Нет изменений' });
+
+    getMembership(groupId, requesterId, (err, mem) => {
+        if (err) return res.status(500).json({ error: 'Ошибка БД' });
+        if (!mem || mem.role !== 'admin') return res.status(403).json({ error: 'Только админ может модерировать участников' });
+        if (targetId === requesterId) return res.status(400).json({ error: 'Нельзя применить к себе' });
+        db.query('SELECT role FROM group_members WHERE group_id = ? AND user_id = ?', [groupId, targetId], (e0, tr) => {
+            if (e0) return res.status(500).json({ error: 'Ошибка БД' });
+            if (!tr.length) return res.status(404).json({ error: 'Участник не найден' });
+            if (tr[0].role === 'admin') return res.status(403).json({ error: 'Нельзя модерировать админа' });
+            db.query(`UPDATE group_members SET ${fields.join(', ')} WHERE group_id = ? AND user_id = ?`, [...vals, groupId, targetId], (e2) => {
+                if (e2) return res.status(500).json({ error: 'Ошибка БД' });
+                if (req.body.mic_muted === true) forceVoiceMute(groupId, targetId);
+                res.json({ message: 'Готово' });
+            });
+        });
+    });
+});
+
 // Кик участника (админ) или выход из группы (сам себя).
 // Уход админа НЕ удаляет группу — она блокируется (общение закрыто), пока в ней
 // остаются участники. Группа удаляется автоматически, когда уходит последний участник.
@@ -567,6 +630,11 @@ router.post('/channels/:channelId/messages', groupMessageLimiter, (req, res) => 
         if (!groupId) return res.status(404).json({ error: 'Канал не найден' });
         if (!role) return res.status(403).json({ error: 'Вы не участник этой группы' });
 
+        // Админ группы мог запретить участнику писать в чат
+        db.query('SELECT chat_banned FROM group_members WHERE group_id = ? AND user_id = ?', [groupId, userId], (eb, br) => {
+            if (eb) return res.status(500).json({ error: 'Ошибка БД' });
+            if (br.length && br[0].chat_banned) return res.status(403).json({ error: 'Админ ограничил вам доступ к чату этой группы' });
+
         // В закрытой группе (админ ушёл) общение недоступно
         groupHasAdmin(groupId, (eh, hasAdmin) => {
             if (eh) return res.status(500).json({ error: 'Ошибка БД' });
@@ -581,6 +649,7 @@ router.post('/channels/:channelId/messages', groupMessageLimiter, (req, res) => 
                     res.status(201).json({ message: 'Сообщение отправлено', id: r.insertId });
                 }
             );
+        });
         });
     });
 });

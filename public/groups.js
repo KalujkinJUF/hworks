@@ -35,6 +35,7 @@ function initializeGroups(myData) {
 
     let currentGroupId = null;
     let currentGroupAvatar = null;
+    let myChatBanned = false;   // админ запретил мне писать в этой группе
     let currentChannelId = null;
     let voiceState = _latestVoiceState;   // восстанавливаем при возврате на страницу групп
     let channelRosters = {};              // channelId -> [{userId,username,muted}] (кто в канале, с сервера)
@@ -235,11 +236,10 @@ function initializeGroups(myData) {
             item.dataset.id = c.id;
             item.dataset.name = c.name;
             item.dataset.type = c.type || 'text';
-            const delBtn = (isGroupAdmin && channels.length > 1)
-                ? `<span class="channel-del" data-id="${c.id}" title="${window.t('delete', 'Удалить')}">✕</span>` : '';
+            item.dataset.canDelete = (isGroupAdmin && channels.length > 1) ? '1' : '0';
+            // Действия канала (удалить/мьют/переименовать) — в контекстном меню (ПКМ / долгий тап).
             if (isVoice) {
-                // Голосовой канал: иконка 🔊, клик = вход в голос (без уведомлений-мьюта)
-                item.innerHTML = `<span class="channel-hash">🔊</span><span class="channel-name">${escapeHtml(c.name)}</span>${delBtn}`;
+                item.innerHTML = `<span class="channel-hash">🔊</span><span class="channel-name">${escapeHtml(c.name)}</span>`;
                 list.appendChild(item);
                 // Живой список участников голоса под каналом
                 const parts = document.createElement('div');
@@ -249,8 +249,8 @@ function initializeGroups(myData) {
                 list.appendChild(parts);
             } else {
                 const muted = localStorage.getItem('gMute_' + c.id) === '1';
-                const muteBtn = `<span class="channel-mute" data-id="${c.id}" title="${muted ? window.t('group_unmute', 'Включить уведомления') : window.t('group_mute', 'Отключить уведомления')}">${muted ? '🔕' : '🔔'}</span>`;
-                item.innerHTML = `<span class="channel-hash">#</span><span class="channel-name">${escapeHtml(c.name)}</span>${muteBtn}${delBtn}`;
+                const mutedInd = muted ? ` <span class="channel-muted-ind" title="${window.t('group_muted', 'Уведомления отключены')}">🔕</span>` : '';
+                item.innerHTML = `<span class="channel-hash">#</span><span class="channel-name">${escapeHtml(c.name)}</span>${mutedInd}`;
                 list.appendChild(item);
             }
         });
@@ -331,9 +331,10 @@ function initializeGroups(myData) {
             el.classList.toggle('active', String(el.dataset.id) === String(channelId));
         });
         document.getElementById('groupMessages').style.display = 'flex';
-        // В закрытой группе (админ ушёл) — общение недоступно
-        document.getElementById('groupInputSection').style.display = currentGroupLocked ? 'none' : 'flex';
+        // В закрытой группе (админ ушёл) или при запрете чата — поле ввода скрыто
+        document.getElementById('groupInputSection').style.display = (currentGroupLocked || myChatBanned) ? 'none' : 'flex';
         document.getElementById('groupLockedNotice').style.display = currentGroupLocked ? 'block' : 'none';
+        applyChatBanState();
         loadMessages(true);
     }
 
@@ -342,14 +343,21 @@ function initializeGroups(myData) {
     function renderMembers(members) {
         const list = document.getElementById('membersList');
         list.innerHTML = '';
+        myChatBanned = false;
         members.forEach(m => {
             const color = roleColors[m.role === 'admin' ? 'admin' : (m.role || 'user')] || '#fff';
             const isAdminMember = m.role === 'admin';
             const statusClass = `status-${m.user_status || 'offline'}`;
-            const kickBtn = (isGroupAdmin && !isAdminMember && m.id !== myUserId)
-                ? `<span class="member-kick" data-id="${m.id}" title="${window.t('group_kick', 'Удалить')}">✕</span>` : '';
+            if (m.id === myUserId) myChatBanned = !!m.chat_banned;
+            // Ненавязчивые индикаторы модерации (не кнопки) — все действия в контекстном меню.
+            const flags = `${m.chat_banned ? `<span title="${window.t('group_chat_banned', 'Доступ к чату запрещён')}">🚫</span>` : ''}${m.mic_muted ? `<span title="${window.t('group_mic_off', 'Микрофон отключён')}">🔇</span>` : ''}`;
             const row = document.createElement('div');
             row.className = 'member-item';
+            row.dataset.id = m.id;
+            row.dataset.username = m.username;
+            row.dataset.role = m.role || 'member';
+            row.dataset.chatBanned = m.chat_banned ? '1' : '0';
+            row.dataset.micMuted = m.mic_muted ? '1' : '0';
             row.innerHTML = `
                 ${m.avatar ? `<img src="${escapeHtml(m.avatar)}" class="member-avatar"><div class="friend-avatar-placeholder" style="display:none;"></div>` : '<div class="friend-avatar-placeholder"></div>'}
                 <div class="member-info">
@@ -357,18 +365,68 @@ function initializeGroups(myData) {
                     <span class="member-role-line">
                         <span class="friend-status-icon ${statusClass}"></span>
                         ${isAdminMember ? `<span class="member-admin-tag" data-i18n="group_admin_badge">АДМИН</span>` : ''}
+                        ${flags}
                     </span>
                 </div>
-                ${kickBtn}
             `;
             list.appendChild(row);
         });
+        applyChatBanState();
+    }
+
+    // Если админ запретил мне писать — прячем поле ввода и показываем уведомление.
+    function applyChatBanState() {
+        const banNotice = document.getElementById('groupChatBanNotice');
+        if (banNotice) banNotice.style.display = myChatBanned ? 'block' : 'none';
+        if (myChatBanned) {
+            const input = document.getElementById('groupInputSection');
+            if (input) input.style.display = 'none';
+        }
+    }
+
+    // Контекстное меню участника (только админ, только по обычному участнику)
+    function openMemberMenu(row, x, y) {
+        if (!isGroupAdmin) return;
+        const id = parseInt(row.dataset.id);
+        if (row.dataset.role === 'admin' || id === myUserId) return;
+        const chatBanned = row.dataset.chatBanned === '1';
+        const micMuted = row.dataset.micMuted === '1';
+        const items = [
+            { label: chatBanned ? window.t('group_allow_chat', 'Разрешить чат') : window.t('group_ban_chat', 'Запретить чат'),
+              action: () => moderateMember(id, { chat_banned: !chatBanned }) },
+            { label: micMuted ? window.t('group_enable_mic', 'Включить микрофон') : window.t('group_disable_mic', 'Отключить микрофон'),
+              action: () => moderateMember(id, { mic_muted: !micMuted }) },
+            { label: window.t('group_kick', 'Удалить из группы'), danger: true, action: () => kickMember(id) }
+        ];
+        if (window.showContextMenu) window.showContextMenu(x, y, items);
+    }
+
+    async function moderateMember(memberId, patch) {
+        const res = await fetch(`/api/groups/${currentGroupId}/members/${memberId}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify(patch)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) { window.showCustomAlert(data.error || window.t('error_network', 'Ошибка')); return; }
+        openGroup(currentGroupId, currentChannelId);   // обновить индикаторы участников
+    }
+
+    async function kickMember(memberId) {
+        if (!await window.showCustomConfirm(window.t('group_kick_confirm', 'Удалить участника из группы?'))) return;
+        const res = await fetch(`/api/groups/${currentGroupId}/members/${memberId}`, { method: 'DELETE', credentials: 'include' });
+        const data = await res.json().catch(() => ({}));
+        if (data.message) openGroup(currentGroupId, currentChannelId);
+        else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
     }
 
     function setupControls() {
-        // Все действия группы теперь в меню (☰ / ПКМ по названию). Здесь только сброс формы.
+        // Все действия группы теперь в меню (☰ / ПКМ по названию). Здесь только сброс форм.
         const renameForm = document.getElementById('renameForm');
         if (renameForm) renameForm.style.display = 'none';
+        const ccf = document.getElementById('createChannelForm');
+        if (ccf) ccf.style.display = 'none';
+        const acb = document.getElementById('addChannelBtn');
+        if (acb) acb.style.display = '';
     }
 
     // #16/#17 Контекстное меню действий группы (☰ и ПКМ по названию)
@@ -386,6 +444,63 @@ function initializeGroups(myData) {
         }
         items.push({ label: window.t('group_leave', 'Покинуть группу'), danger: true, action: leaveGroup });
         if (items.length && window.showContextMenu) window.showContextMenu(x, y, items);
+    }
+
+    // Контекстное меню канала
+    function openChannelMenu(item, x, y) {
+        const id = item.dataset.id;
+        const name = item.dataset.name;
+        const isVoice = item.dataset.type === 'voice';
+        const canDelete = item.dataset.canDelete === '1';
+        const items = [];
+        if (!isVoice) {
+            const muted = localStorage.getItem('gMute_' + id) === '1';
+            items.push({ label: muted ? window.t('group_unmute', 'Включить уведомления') : window.t('group_mute', 'Отключить уведомления'), action: () => toggleChannelMute(id) });
+        }
+        if (isGroupAdmin) {
+            items.push({ label: window.t('group_channel_rename', 'Переименовать канал'), action: () => renameChannel(id, name) });
+            if (canDelete) items.push({ label: window.t('group_channel_delete', 'Удалить канал'), danger: true, action: () => deleteChannel(id) });
+        }
+        if (items.length && window.showContextMenu) window.showContextMenu(x, y, items);
+    }
+
+    function toggleChannelMute(id) {
+        const key = 'gMute_' + id;
+        const nowMuted = localStorage.getItem(key) !== '1';
+        if (nowMuted) localStorage.setItem(key, '1'); else localStorage.removeItem(key);
+        const item = document.querySelector(`.channel-item[data-id="${id}"]`);
+        if (!item) return;
+        let ind = item.querySelector('.channel-muted-ind');
+        if (nowMuted && !ind) {
+            item.appendChild(document.createTextNode(' '));
+            ind = document.createElement('span');
+            ind.className = 'channel-muted-ind';
+            ind.title = window.t('group_muted', 'Уведомления отключены');
+            ind.textContent = '🔕';
+            item.appendChild(ind);
+        } else if (!nowMuted && ind) {
+            ind.remove();
+        }
+    }
+
+    async function renameChannel(id, currentName) {
+        const name = await window.showCustomPrompt(window.t('group_channel_rename_prompt', 'Новое название канала:'), currentName, 40);
+        if (!name || name === currentName) return;
+        const res = await fetch(`/api/groups/${currentGroupId}/channels/${id}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ name })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) { window.showCustomAlert(data.error || window.t('error_network', 'Ошибка')); return; }
+        openGroup(currentGroupId, currentChannelId);
+    }
+
+    async function deleteChannel(id) {
+        if (!await window.showCustomConfirm(window.t('group_channel_delete_confirm', 'Удалить этот канал?'))) return;
+        const res = await fetch(`/api/groups/${currentGroupId}/channels/${id}`, { method: 'DELETE', credentials: 'include' });
+        const data = await res.json().catch(() => ({}));
+        if (data.message) openGroup(currentGroupId);
+        else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
     }
 
     // Список друзей, которых можно пригласить (не участники) — для модалки
@@ -732,35 +847,19 @@ function initializeGroups(myData) {
     document.getElementById('voiceLeaveBtn').addEventListener('click', () => { leaveVoice(); });
 
     // Клики по каналам (выбор / мьют / удаление)
-    document.getElementById('channelsList').addEventListener('click', async (e) => {
-        const mute = e.target.closest('.channel-mute');
-        if (mute) {
-            e.stopPropagation();
-            const id = mute.dataset.id;
-            const isMuted = localStorage.getItem('gMute_' + id) === '1';
-            if (isMuted) localStorage.removeItem('gMute_' + id);
-            else localStorage.setItem('gMute_' + id, '1');
-            mute.textContent = isMuted ? '🔔' : '🔕';
-            mute.title = isMuted ? window.t('group_mute', 'Отключить уведомления') : window.t('group_unmute', 'Включить уведомления');
-            return;
-        }
-        const del = e.target.closest('.channel-del');
-        if (del) {
-            e.stopPropagation();
-            if (!await window.showCustomConfirm(window.t('group_channel_delete_confirm', 'Удалить этот канал?'))) return;
-            fetch(`/api/groups/${currentGroupId}/channels/${del.dataset.id}`, { method: 'DELETE', credentials: 'include' })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.message) openGroup(currentGroupId);
-                    else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
-                });
-            return;
-        }
+    document.getElementById('channelsList').addEventListener('click', (e) => {
         const item = e.target.closest('.channel-item');
         if (item) {
             if (item.dataset.type === 'voice') joinVoiceChannel(item.dataset.id, item.dataset.name);
             else selectChannel(item.dataset.id, item.dataset.name);
         }
+    });
+    // Контекстное меню канала (ПКМ): мьют уведомлений (всем), переименование/удаление (админ)
+    document.getElementById('channelsList').addEventListener('contextmenu', (e) => {
+        const item = e.target.closest('.channel-item');
+        if (!item) return;
+        e.preventDefault();
+        openChannelMenu(item, e.clientX, e.clientY);
     });
 
     // Создание канала
@@ -768,11 +867,14 @@ function initializeGroups(myData) {
     const createChannelForm = document.getElementById('createChannelForm');
     if (addChannelBtn) {
         addChannelBtn.addEventListener('click', () => {
-            createChannelForm.style.display = createChannelForm.style.display === 'flex' ? 'none' : 'flex';
-            if (createChannelForm.style.display === 'flex') document.getElementById('newChannelName').focus();
+            // Форма открыта → прячем саму кнопку «+ Канал» (у формы есть «Отмена»).
+            createChannelForm.style.display = 'flex';
+            addChannelBtn.style.display = 'none';
+            document.getElementById('newChannelName').focus();
         });
         document.getElementById('cancelChannelBtn').addEventListener('click', () => {
             createChannelForm.style.display = 'none';
+            addChannelBtn.style.display = '';
             document.getElementById('newChannelName').value = '';
         });
         document.getElementById('submitChannelBtn').addEventListener('click', () => {
@@ -789,6 +891,7 @@ function initializeGroups(myData) {
                         document.getElementById('newChannelName').value = '';
                         document.getElementById('newChannelType').value = 'text';
                         createChannelForm.style.display = 'none';
+                        addChannelBtn.style.display = '';
                         openGroup(currentGroupId, data.id);
                     } else {
                         window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
@@ -831,16 +934,13 @@ function initializeGroups(myData) {
     });
 
     // Кик участника
-    document.getElementById('membersList').addEventListener('click', async (e) => {
-        const kick = e.target.closest('.member-kick');
-        if (!kick) return;
-        if (!await window.showCustomConfirm(window.t('group_kick_confirm', 'Удалить этого участника?'))) return;
-        fetch(`/api/groups/${currentGroupId}/members/${kick.dataset.id}`, { method: 'DELETE', credentials: 'include' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.message) openGroup(currentGroupId);
-                else window.showCustomAlert(data.error || window.t('error_network', 'Ошибка'));
-            });
+    // Действия над участником (запрет чата / микрофон / удаление) — в контекстном меню (ПКМ).
+    document.getElementById('membersList').addEventListener('contextmenu', (e) => {
+        const row = e.target.closest('.member-item');
+        if (!row || !isGroupAdmin) return;
+        // Не мешаем открыть профиль по ссылке правым кликом? ПКМ по имени тоже даёт меню админа.
+        e.preventDefault();
+        openMemberMenu(row, e.clientX, e.clientY);
     });
 
     // Переименование — форма открывается из меню действий (showRenameForm)

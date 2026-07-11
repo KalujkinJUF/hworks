@@ -240,6 +240,33 @@ router.patch('/:id', groupActionLimiter, (req, res) => {
     });
 });
 
+// Установить/сменить аватар группы (только админ). Принимает уже загруженный через
+// /api/users/upload-media путь /uploads/<file>.<img-ext>; пустое значение сбрасывает аватар.
+const isGroupAvatarUrl = (u) => /^\/uploads\/[A-Za-z0-9._-]+\.(jpe?g|png|gif|webp)$/i.test(String(u));
+router.post('/:id/avatar', groupActionLimiter, (req, res) => {
+    const userId = req.user.id;
+    const groupId = parseInt(req.params.id);
+    const raw = req.body.avatar;
+    let avatar = null;
+    if (raw) {
+        if (!isGroupAvatarUrl(raw)) return res.status(400).json({ error: 'Некорректный файл аватара' });
+        avatar = raw;
+    }
+    getMembership(groupId, userId, (err, mem) => {
+        if (err) return res.status(500).json({ error: 'Ошибка БД' });
+        if (!mem || mem.role !== 'admin') return res.status(403).json({ error: 'Только админ группы может менять аватар' });
+        db.query('SELECT avatar FROM chat_groups WHERE id = ?', [groupId], (e0, rows) => {
+            if (e0) return res.status(500).json({ error: 'Ошибка БД' });
+            const old = rows.length ? rows[0].avatar : null;
+            db.query('UPDATE chat_groups SET avatar = ? WHERE id = ?', [avatar, groupId], (e) => {
+                if (e) return res.status(500).json({ error: 'Ошибка БД' });
+                if (old && old !== avatar) deleteMediaFiles(old, null);   // подчистить старый файл
+                res.json({ message: 'Аватар обновлён', avatar });
+            });
+        });
+    });
+});
+
 // Удалить группу (админ). Уход админа = удаление группы.
 router.delete('/:id', (req, res) => {
     const userId = req.user.id;

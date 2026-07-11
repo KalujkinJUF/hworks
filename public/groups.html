@@ -52,9 +52,11 @@
                 <div class="group-channels-column">
                 <div class="chat-section">
                         <button id="backToGroupsBtn" class="user-btn" style="width: 100%; padding: 5px; font-size: 10px; margin: 0 0 8px 0; cursor: pointer;" data-i18n="groups_back">← К группам</button>
-                        <div class="chat-header" style="justify-content: center;">
+                        <div class="chat-header" style="justify-content: center; flex-direction: column; gap: 8px;">
+                            <div id="groupHeaderAvatar" class="group-card-avatar" style="width: 56px; height: 56px; font-size: 22px;"></div>
                             <h2 id="groupNameTitle" style="margin: 0; padding: 0; border: none; font-size: 14px; color: white; text-transform: uppercase; text-align: center; word-break: break-word;"></h2>
                         </div>
+                        <input type="file" id="groupAvatarInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
                         <div id="channelsList" class="channels-list" style="margin-top: 12px;"></div>
                         <div id="channelAdminBox" style="display: none; margin-top: 10px;">
                             <div id="createChannelForm" style="display: none; flex-direction: column; gap: 6px; margin-bottom: 8px;">

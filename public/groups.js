@@ -34,6 +34,7 @@ function initializeGroups(myData) {
     const myUsername = myData.username || '';
 
     let currentGroupId = null;
+    let currentGroupAvatar = null;
     let currentChannelId = null;
     let voiceState = _latestVoiceState;   // восстанавливаем при возврате на страницу групп
     let channelRosters = {};              // channelId -> [{userId,username,muted}] (кто в канале, с сервера)
@@ -70,6 +71,14 @@ function initializeGroups(myData) {
             .replace(/>/g, a + 'gt;')
             .replace(/"/g, a + 'quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    // Внутреннее содержимое кружка аватара группы: картинка, если задана, иначе первая буква.
+    function groupAvatarInner(g) {
+        if (g && g.avatar) {
+            return `<img src="${escapeHtml(g.avatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;">`;
+        }
+        return escapeHtml(((g && g.name) || '?').charAt(0).toUpperCase());
     }
 
     const roleColors = {
@@ -150,7 +159,7 @@ function initializeGroups(myData) {
                         ? `<span class="group-admin-badge" data-i18n="group_admin_badge">АДМИН</span>` : '';
                     const pin = pinned ? '📌 ' : '';
                     card.innerHTML = `
-                        <div class="group-card-avatar">${escapeHtml(g.name.charAt(0).toUpperCase())}</div>
+                        <div class="group-card-avatar">${groupAvatarInner(g)}</div>
                         <div class="group-card-info">
                             <div class="group-card-name">${pin}${escapeHtml(g.name)} ${adminBadge}</div>
                             <div class="group-card-meta">${window.t('group_members', 'Участники')}: ${g.member_count}/10</div>
@@ -182,6 +191,9 @@ function initializeGroups(myData) {
                 groupView.style.display = 'flex';
 
                 document.getElementById('groupNameTitle').textContent = group.name;
+                currentGroupAvatar = group.avatar || null;
+                const hAv = document.getElementById('groupHeaderAvatar');
+                if (hAv) hAv.innerHTML = groupAvatarInner(group);
                 renderChannels(group.channels || []);
                 refreshRosters();   // сразу подтянуть, кто уже в голосовых каналах
                 renderMembers(currentMembers);
@@ -368,6 +380,8 @@ function initializeGroups(myData) {
         }
         if (isGroupAdmin) {
             items.push({ label: window.t('group_rename', 'Переименовать группу'), action: showRenameForm });
+            items.push({ label: window.t('group_change_avatar', 'Сменить аватар группы'), action: () => { const inp = document.getElementById('groupAvatarInput'); if (inp) inp.click(); } });
+            if (currentGroupAvatar) items.push({ label: window.t('group_remove_avatar', 'Убрать аватар'), action: () => setGroupAvatar(null) });
             items.push({ label: window.t('group_delete', 'Удалить группу'), danger: true, action: deleteGroup });
         }
         items.push({ label: window.t('group_leave', 'Покинуть группу'), danger: true, action: leaveGroup });
@@ -401,6 +415,40 @@ function initializeGroups(myData) {
     }
     function closeInviteModal() {
         document.getElementById('groupInviteModal').style.display = 'none';
+    }
+
+    // Установить (url) или убрать (null) аватар группы — только админ (проверка на сервере).
+    async function setGroupAvatar(url) {
+        if (!currentGroupId) return;
+        try {
+            const res = await fetch(`/api/groups/${currentGroupId}/avatar`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                body: JSON.stringify({ avatar: url || null })
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) { window.showCustomAlert(data.error || window.t('error_network', 'Ошибка')); return; }
+            currentGroupAvatar = data.avatar || null;
+            const hAv = document.getElementById('groupHeaderAvatar');
+            if (hAv) hAv.innerHTML = groupAvatarInner({ avatar: currentGroupAvatar, name: document.getElementById('groupNameTitle').textContent });
+            loadGroups();   // обновить карточку в списке групп
+        } catch (e) {
+            window.showCustomAlert(window.t('error_network', 'Ошибка сети'));
+        }
+    }
+
+    // Выбор файла аватара → загрузка на сервер → установка
+    async function onGroupAvatarPicked(file) {
+        if (!file || !currentGroupId) return;
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const upRes = await fetch('/api/users/upload-media', { method: 'POST', credentials: 'include', body: fd });
+            const upData = await upRes.json().catch(() => ({}));
+            if (!upRes.ok || upData.error || !upData.url) { window.showCustomAlert(upData.error || window.t('error_network', 'Ошибка загрузки')); return; }
+            await setGroupAvatar(upData.url);
+        } catch (e) {
+            window.showCustomAlert(window.t('error_network', 'Ошибка сети'));
+        }
     }
 
     function showRenameForm() {
@@ -844,6 +892,16 @@ function initializeGroups(myData) {
             groupFileInput.value = '';
             groupAttachedFileName.textContent = '';
             groupClearAttachBtn.style.display = 'none';
+        });
+    }
+
+    // Загрузка аватара группы (админ выбирает файл из меню действий)
+    const groupAvatarInput = document.getElementById('groupAvatarInput');
+    if (groupAvatarInput) {
+        groupAvatarInput.addEventListener('change', () => {
+            const file = groupAvatarInput.files && groupAvatarInput.files[0];
+            groupAvatarInput.value = '';
+            if (file) onGroupAvatarPicked(file);
         });
     }
 

@@ -72,7 +72,7 @@
     // ─────────────── presence ───────────────
     async function initPresence(user) {
         if (presenceSocket || !user || !user.id) return;
-        me = { id: user.id, username: user.username || '' };
+        me = { id: user.id, username: user.username || '', status: user.custom_status || user.user_status || 'online' };
         try {
             await loadScript('vendor/socket.io.min.js');
             presenceSocket = window.io(voiceOrigin(), {
@@ -135,7 +135,8 @@
         }
         activeCall = { roomId, peerId: Number(fromUserId), peerName: fromUsername || '', direction: 'in', state: 'ringing', startedAt: 0 };
         renderUI();
-        sfx('ringIncoming');
+        // «Не беспокоить»: звонок приходит (плашка показывается), но без звука рингтона.
+        if (!me || me.status !== 'dnd') sfx('ringIncoming');
     }
 
     async function acceptCall() {
@@ -274,5 +275,8 @@
         bind('vcHangup', hangup);
     }
 
-    window.voiceCall = { initPresence, startCall, isBusy, hangup };
+    // Обновить свой статус (напр. при смене в профиле) — влияет на подавление рингтона в DND.
+    function setStatus(s) { if (me && s) me.status = s; }
+
+    window.voiceCall = { initPresence, startCall, isBusy, hangup, setStatus };
 })();

@@ -594,6 +594,8 @@ function initializeProfile(myData) {
             .then(res => res.json())
             .then(data => {
                 if (data.message) {
+                    // Синхронизируем статус с модулем звонков (для подавления рингтона в DND)
+                    if (window.voiceCall && window.voiceCall.setStatus) window.voiceCall.setStatus(status);
                     const statusText = document.getElementById("userStatusText");
                     const statusMap = {
                         online: 'Online',

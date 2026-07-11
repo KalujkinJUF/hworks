@@ -54,13 +54,15 @@
     <script>
         // Применяем тему из localStorage
         try {
-            const savedTheme = localStorage.getItem('theme');
+            const savedTheme = localStorage.getItem('app_theme') || localStorage.getItem('theme');
             const themeLink = document.getElementById('theme-link');
-            if (savedTheme === 'aero') {
-                themeLink.href = 'aero.css';
-            } else {
-                themeLink.href = 'default.css';
-            }
+            const themeFiles = {
+                'default': 'default.css',
+                'dos-light': 'dos-light.css',
+                'aero': 'aero.css',
+                'aero-dark': 'aero-dark.css'
+            };
+            themeLink.href = themeFiles[savedTheme] || 'default.css';
         } catch (e) {
             console.error(e);
         }

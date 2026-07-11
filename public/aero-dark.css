@@ -1,0 +1,3910 @@
+/* ==========================================================================
+   1. ШРИФТЫ И БАЗОВЫЕ НАСТРОЙКИ
+   ========================================================================== */
+@font-face {
+    font-family: 'PublicPixel-rv0pA';
+    src: url('fonts/PublicPixel-rv0pA.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Отключение видимости полос прокрутки для всех элементов */
+* {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE / Edge */
+}
+
+*::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera, Electron */
+}
+
+body {
+    background-color: black;
+    color: yellow;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    justify-content: space-between;
+    overflow-x: hidden;
+    /* Предотвращаем горизонтальную прокрутку на всем сайте */
+}
+
+button, input, select, textarea {
+    font-family: inherit;
+}
+
+/* Общая рамка для всех страниц */
+.container {
+    border: 2px solid white;
+    padding: 5px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: auto;
+}
+
+/* ==========================================================================
+   2. ШАПКА, НАВИГАЦИЯ И ПОДВАЛ (ОБЩИЕ ДЛЯ ВСЕХ)
+   ========================================================================== */
+header {
+    background-color: black;
+    border: 2px solid white;
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    /* Разрешаем ссылкам переноситься при нехватке ширины */
+}
+
+/* Базовый стиль для всех стандартных кнопок навбара — ЖЁЛТЫЙ */
+nav a {
+    text-decoration: none;
+    color: yellow;
+    background-color: black;
+    border: 2px solid yellow;
+    padding: 10px 20px;
+    margin: 5px;
+    display: inline-block;
+    text-align: center;
+    font-size: 18px;
+    width: 200px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+nav a:hover {
+    background-color: rgba(255, 255, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+    transform: translateY(-3px);
+}
+
+/* --- ЦВЕТОВОЕ ВЫДЕЛЕНИЕ ДЛЯ СПЕЦИАЛЬНЫХ КНОПОК --- */
+
+/* Профиль — делаем сочным ЗЕЛЁНЫМ */
+nav a#nav-profile {
+    color: #00ff00;
+    border-color: #00ff00;
+}
+
+nav a#nav-profile:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    transform: translateY(-3px);
+}
+
+/* Выйти — оставляем строгим КРАСНЫМ, как на макете */
+nav a#nav-logout {
+    color: #ff9e9e;
+    border-color: #ff9e9e;
+}
+
+nav a#nav-logout:hover {
+    background-color: rgba(255, 158, 158, 0.1);
+    box-shadow: 0 0 15px rgba(255, 158, 158, 0.4);
+    transform: translateY(-3px);
+}
+
+/* Сбрасываем старые клайновские оверрайды, чтобы они не перебивали жёлтый цвет */
+nav a#nav-home,
+nav a#nav-search,
+nav a#nav-friends,
+nav a#nav-chat,
+nav a#nav-register,
+nav a#nav-login {
+    color: inherit;
+    border-color: inherit;
+}
+
+nav a#nav-home:hover,
+nav a#nav-search:hover,
+nav a#nav-friends:hover,
+nav a#nav-chat:hover,
+nav a#nav-register:hover,
+nav a#nav-login:hover {
+    background-color: rgba(255, 255, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+}
+
+@keyframes rainbowGlow {
+    0% { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+    14% { border-color: #ff7f00; color: #ff7f00; box-shadow: 0 0 10px rgba(255, 127, 0, 0.5); }
+    28% { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 10px rgba(255, 255, 0, 0.5); }
+    42% { border-color: #00ff00; color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+    57% { border-color: #0000ff; color: #0000ff; box-shadow: 0 0 10px rgba(0, 0, 255, 0.5); }
+    71% { border-color: #4b0082; color: #4b0082; box-shadow: 0 0 10px rgba(75, 0, 130, 0.5); }
+    85% { border-color: #9400d3; color: #9400d3; box-shadow: 0 0 10px rgba(148, 0, 211, 0.5); }
+    100% { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+}
+
+nav a#nav-admin {
+    animation: rainbowGlow 5s linear infinite !important;
+}
+
+/* --- ОСНОВНОЙ КОНТЕНТ И ПОДВАЛ --- */
+main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    background-color: black;
+    border: 2px solid white;
+    margin: 0 10px;
+    padding: 20px;
+}
+
+main section {
+    text-align: center;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: black;
+    color: rgb(0, 255, 0);
+    border-top: none;
+}
+
+/* ==========================================================================
+   3. ФОРМЫ АВТОРИЗАЦИИ (ЛОГИН / РЕГИСТРАЦИЯ / ОБНОВЛЕНИЕ)
+   ========================================================================== */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.auth-form h2 {
+    color: white;
+    font-size: 20px;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+}
+
+.input-group {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    width: 100%;
+    background-color: black;
+    color: white;
+    border: 2px solid white;
+    padding: 15px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+.input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+}
+
+.auth-btn {
+    width: 100%;
+    background-color: black;
+    color: rgb(0, 255, 0);
+    border: 2px solid rgb(0, 255, 0);
+    padding: 15px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.2s;
+}
+
+.auth-btn:hover {
+    background-color: rgba(0, 255, 0, 0.2);
+}
+
+.auth-switch {
+    margin-top: 25px;
+    font-size: 11px;
+    color: white;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.auth-switch a {
+    color: rgb(0, 255, 0);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    padding-bottom: 2px;
+}
+
+.auth-switch a:hover {
+    border-bottom-color: rgb(0, 255, 0);
+}
+
+/* Системные уведомления об ошибках / успехе */
+#message {
+    margin-top: 20px;
+    font-size: 11px;
+    text-transform: uppercase;
+    text-align: center;
+    min-height: 15px;
+    letter-spacing: 1px;
+}
+
+/* ==========================================================================
+   4. СТРАНИЦА ПРОФИЛЯ — аватар слева, данные справа
+   ========================================================================== */
+.profile-main {
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+}
+
+.profile-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.profile-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.profile-avatar-section {
+    flex-shrink: 0;
+    width: 180px;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 3px solid white;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.avatar-upload {
+    margin-top: 5px;
+}
+
+.profile-data-section {
+    flex-grow: 1;
+}
+
+.profile-section h2 {
+    color: white;
+    text-transform: uppercase;
+    font-size: 18px;
+    border-bottom: 2px dashed white;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.profile-section h3 {
+    color: white;
+    text-transform: uppercase;
+    font-size: 18px;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: inline-block;
+    border-bottom: 2px dashed white;
+}
+
+.profile-info-block {
+    margin-bottom: 25px;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.profile-info-block span {
+    color: white;
+}
+
+.bio-group {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+}
+
+.bio-group label {
+    display: block;
+    margin-bottom: 15px;
+    margin-top: 15px;
+    color: yellow;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+textarea#aboutMe {
+    background-color: black;
+    color: white;
+    border: 2px solid white;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 11px;
+    padding: 12px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 90px;
+    resize: none;
+    outline: none;
+    margin-bottom: 25px;
+}
+
+textarea#aboutMe:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+.update-box {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 10px auto 0;
+    max-width: 400px;
+    text-align: left;
+}
+
+/* ==========================================================================
+   5. СТИЛИ ДЛЯ БЕЙДЖА РОЛИ
+   ========================================================================== */
+.role-badge {
+    padding: 3px 10px;
+    font-size: 12px;
+    margin-left: 10px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border: 2px solid;
+}
+
+/* ==========================================================================
+   6. ПОДТВЕРЖДЕНИЕ EMAIL
+   ========================================================================== */
+.verify-section {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 20px;
+    margin: 20px auto;
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.verify-section h3 {
+    color: white;
+    text-transform: uppercase;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.verify-hint {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    margin-bottom: 15px;
+}
+
+.verify-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.verify-group input {
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 10px 15px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 16px;
+    width: 180px;
+    text-align: center;
+    letter-spacing: 6px;
+    outline: none;
+}
+
+.verify-group input:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+.verify-message {
+    margin-top: 15px;
+    font-size: 11px;
+    text-transform: uppercase;
+    min-height: 15px;
+}
+
+/* ==========================================================================
+   7. АДМИН-ПАНЕЛЬ — радужная рамка, заголовок, карточки
+   ========================================================================== */
+
+/* Контейнер для админки на всю высоту */
+.admin-container {
+    height: 100%;
+}
+
+.admin-main {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* Анимированная радужная рамка */
+.rainbow-border {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    padding: 6px;
+    box-sizing: border-box;
+    background: linear-gradient(90deg, #ff0000, #ff7700, #ffff00, #00ff00, #0077ff, #8b00ff, #ff0000);
+    background-size: 400% 100%;
+    animation: rainbowMove 4s linear infinite;
+    border-radius: 4px;
+}
+
+@keyframes rainbowMove {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 400% 50%;
+    }
+}
+
+/* Внутренняя панель админки (чёрная, поверх рамки) */
+.admin-panel {
+    background-color: #000;
+    padding: 30px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 2px;
+}
+
+/* Анимированный переливающийся заголовок */
+.admin-title {
+    font-size: 18px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-align: center;
+    background: linear-gradient(90deg, #ff0000, #ff7700, #ffff00, #00ff00, #0077ff, #8b00ff, #ff0000);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbowMove 3s linear infinite;
+}
+
+/* Кнопка показать/скрыть */
+.admin-toggle-btn {
+    background: #000;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    padding: 12px 30px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    transition: background 0.2s;
+}
+
+.admin-toggle-btn:hover {
+    background: rgba(0, 255, 0, 0.15);
+}
+
+/* Контейнер со списком пользователей */
+.users-container {
+    width: 100%;
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 15px;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
+
+/* Карточка пользователя */
+.user-card {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 15px;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.user-card:last-child {
+    margin-bottom: 0;
+}
+
+/* Заголовок карточки: логин + бейдж */
+.user-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+    padding-bottom: 10px;
+}
+
+.user-card-login {
+    font-size: 18px;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.user-card-role {
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 2px solid;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.role-admin {
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+.role-user {
+    color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+/* Поля внутри карточки */
+.user-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    flex-wrap: wrap;
+}
+
+.user-field label {
+    color: yellow;
+    min-width: 90px;
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.user-field input,
+.user-field select,
+.user-field textarea {
+    background: #000;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 5px 8px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 11px;
+    flex: 1;
+    min-width: 120px;
+    outline: none;
+}
+
+.user-field input:focus,
+.user-field select:focus,
+.user-field textarea:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+.user-field textarea {
+    resize: vertical;
+    min-height: 30px;
+}
+
+.user-field-value {
+    color: white;
+    font-size: 11px;
+}
+
+/* Кнопки действий */
+.user-btn {
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 4px 10px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.user-btn:hover {
+    border-color: yellow;
+    color: yellow;
+}
+
+.btn-delete {
+    border-color: #ff4444;
+    color: #ff4444;
+    padding: 6px 16px;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.btn-delete:hover {
+    background: rgba(255, 68, 68, 0.15);
+}
+
+.user-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 5px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    padding-top: 8px;
+}
+
+/* Сообщение админки */
+.admin-message {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-height: 15px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* ==========================================================================
+   8. ГЛАВНАЯ СТРАНИЦА — ЛЕНТА, ОНЛАЙН, ПОИСК
+   ========================================================================== */
+
+/* Двухколоночный layout */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    width: calc(100% - 20px);
+    align-items: flex-start;
+    border: 2px solid white;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: black;
+    height: auto;
+    flex-grow: 1;
+}
+
+.feed-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.feed-wrapper {
+    width: 100%;
+    max-width: 800px;
+}
+
+.sidebar-column {
+    width: 330px;
+    flex-shrink: 0;
+}
+
+/* Форма создания поста */
+.post-form-section {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 15px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.post-form-section textarea {
+    width: 100%;
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 10px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 12px;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.post-form-section textarea:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+.post-form-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+/* Карточка поста */
+.news-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.post-card {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.post-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+}
+
+.post-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: #000;
+}
+
+.post-author {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.post-date {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    margin-left: auto;
+}
+
+.post-content {
+    color: white;
+    font-size: 13px;
+    line-height: 1.6;
+    word-break: break-word;
+    text-align: left;
+}
+
+/* Разделитель */
+.section-divider {
+    border: none;
+    border-top: 2px dashed white;
+    margin: 30px 0;
+}
+
+/* Онлайн бокс */
+.online-box {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 18px 15px;
+    position: sticky;
+    top: 10px;
+    background-color: black;
+    box-sizing: border-box;
+}
+
+/* Закреп от админа */
+.admin-pin-column {
+    width: 330px;
+    flex-shrink: 0;
+}
+
+.admin-pin-box {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 18px 15px;
+    position: sticky;
+    top: 10px;
+    background-color: black;
+    box-sizing: border-box;
+}
+
+.admin-pin-box h3 {
+    color: #ff4444; /* Сочный красный для привлечения внимания */
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.admin-pin-content {
+    font-size: 15px;
+    line-height: 1.4;
+    word-break: break-word;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.admin-pin-box textarea {
+    width: 100%;
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 8px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 10px;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.admin-pin-box textarea:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+.online-box h3 {
+    color: #00ff00;
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.online-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00ff00;
+    box-shadow: 0 0 6px #00ff00;
+    flex-shrink: 0;
+}
+
+/* Поиск */
+.search-section {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.search-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.search-input {
+    flex: 1;
+    max-width: 300px;
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 10px 15px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 14px;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+.search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+.search-result-card {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.result-username {
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+.result-role {
+    font-size: 11px;
+    border: 2px solid;
+    padding: 2px 6px;
+    text-transform: uppercase;
+}
+
+.result-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.result-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+}
+
+.result-about {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+.loading-text {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    text-align: center;
+}
+
+/* ==========================================================================
+   9. АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ ЭКРАНОВ (МЕНЬШЕ 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .container {
+        height: auto;
+        min-height: calc(100vh - 20px);
+    }
+
+    header {
+        padding: 5px;
+    }
+
+    /* Навигация в один ряд */
+    nav {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        margin-top: 5px;
+        padding: 0 5px;
+        box-sizing: border-box;
+    }
+
+    nav a {
+        flex: 1;
+        width: auto;
+        max-width: none;
+        font-size: 11px;
+        padding: 10px 5px;
+        margin: 0 3px;
+        font-weight: bold;
+    }
+
+    /* Главный блок: на мобилках контент должен идти СВЕРХУ ВНИЗ */
+    main {
+        margin: 10px 0;
+        padding: 15px;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        overflow-y: auto;
+        min-height: 400px;
+    }
+
+    .admin-pin-column,
+    .sidebar-column {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin-bottom: 20px;
+    }
+
+    /* Текст на главной странице */
+    main section.main-content-wrapper {
+        text-align: center;
+        margin-top: auto;
+        margin-bottom: auto;
+    }
+
+    main section h2 {
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+
+    main section p {
+        font-size: 10px;
+        line-height: 1.8;
+        word-break: break-word;
+    }
+
+    /* Красивое сужение для профиля и форм авторизации */
+    .profile-section,
+    .auth-form {
+        width: 100% !important;
+        max-width: 320px !important;
+        margin: 0 auto !important;
+        box-sizing: border-box;
+        flex: none !important;
+    }
+
+    /* Центрируем текстовые блоки внутри профиля на мобилке */
+    .profile-section h2,
+    .profile-section h3,
+    .profile-info-block {
+        text-align: center;
+    }
+
+    .profile-section h2,
+    .profile-section h3 {
+        font-size: 13px;
+    }
+
+    .profile-info-block {
+        font-size: 11px;
+    }
+
+    .bio-group {
+        margin: 15px auto;
+        max-width: 100%;
+    }
+
+    .bio-group label {
+        font-size: 11px;
+    }
+
+    textarea#aboutMe {
+        font-size: 10px;
+        padding: 10px;
+        height: 75px;
+    }
+
+    .update-box {
+        padding: 15px 10px;
+    }
+
+    .input-group input {
+        padding: 12px;
+        font-size: 11px;
+    }
+
+    .auth-btn {
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    /* Мобильный вид для чата */
+    .chat-layout {
+        width: 100% !important;
+        align-items: stretch !important;
+        padding: 10px !important;
+    }
+
+    .chat-friends-column {
+        width: 100% !important;
+        margin-bottom: 20px;
+    }
+
+    .chat-main-column {
+        width: 100% !important;
+    }
+}
+
+/* ==========================================================================
+   10. СТРАНИЦА ДРУЗЕЙ И ЧАТ
+   ========================================================================== */
+
+/* Табы на странице друзей */
+.friends-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.tab-btn {
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 10px 20px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    border-color: yellow;
+    color: yellow;
+}
+
+.tab-btn.active {
+    background: rgba(255, 255, 0, 0.1);
+    border-color: yellow;
+    color: yellow;
+}
+
+.tab-content {
+    display: none;
+    width: 100%;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Список друзей */
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.friend-card {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    background-color: rgba(255, 255, 255, 0.01);
+}
+
+.friend-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
+}
+
+.friend-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.friend-avatar-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: #000;
+    flex-shrink: 0;
+}
+
+.friend-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    flex: 1;
+}
+
+.friend-name {
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    color: yellow;
+    word-break: break-word;
+}
+
+.friend-name:hover {
+    text-decoration: none;
+}
+
+.friend-role {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.friend-status-icon {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+    box-shadow: 0 0 4px;
+}
+
+.status-online {
+    background: #00ff00;
+    box-shadow: 0 0 6px #00ff00;
+}
+
+.status-offline {
+    background: #888888;
+    box-shadow: 0 0 4px #888888;
+}
+
+.status-away {
+    background: #ff8c00;
+    box-shadow: 0 0 6px #ff8c00;
+}
+
+.status-dnd {
+    background: #ff4444;
+    box-shadow: 0 0 6px #ff4444;
+}
+
+.friend-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.chat-btn {
+    border: 2px solid #00ff00;
+    color: #00ff00;
+}
+
+.chat-btn:hover {
+    background: rgba(0, 255, 0, 0.2);
+}
+
+.delete-btn {
+    border: 2px solid #ff4444;
+    color: #ff4444;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 68, 68, 0.2);
+}
+
+.pending-status {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* --- ЧАТ ЛАЙАУТ --- */
+.chat-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    box-sizing: border-box;
+    padding: 10px;
+    /* Добавляем внутренний паддинг, чтобы правая колонка не прилипала к внешней белой стене */
+}
+
+.chat-friends-column {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-main-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.chat-friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.chat-friend-item:hover {
+    background: rgba(255, 255, 0, 0.1);
+    border-color: yellow;
+}
+
+.chat-friend-item.has-unread {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 6px rgba(255, 68, 68, 0.4);
+}
+
+.friend-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.friend-item-name {
+    font-size: 12px;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+.friend-item-status {
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.friends-sidebar h2 {
+    text-align: center;
+    color: white;
+    text-transform: uppercase;
+    font-size: 16px;
+    margin-bottom: 15px;
+    border-bottom: 2px dashed white;
+    padding-bottom: 10px;
+}
+
+.chat-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    border: none;
+    padding: 10px 0;
+    background-color: transparent;
+    box-sizing: border-box;
+    /* Защита от вылетов за границы */
+}
+
+.chat-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 2px dashed white;
+    padding-bottom: 10px;
+    min-height: 50px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.chat-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
+}
+
+.friend-chat-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.friend-chat-info {
+    display: flex;
+    flex-direction: column;
+    /* Изменили на column, чтобы имя и статус не слипались горизонтально */
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+}
+
+.friend-chat-info h2 {
+    font-size: 16px;
+    color: white;
+    margin: 0;
+    text-transform: none;
+    border: none;
+    padding: 0;
+    word-break: break-word;
+}
+
+.friend-chat-info h2 a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.friend-chat-status {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Окно вывода сообщений */
+.messages-container {
+    border: 2px solid white;
+    padding: 15px;
+    height: 500px;
+    /* Увеличили с 380px до 500px, чтобы чат стал заметно выше и просторнее */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Скрываем горизонтальный скролл и предотвращаем вылезание сообщений */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: rgba(0, 0, 0, 0.7);
+    box-sizing: border-box;
+    width: 100%;
+    /* Заставляем коробку держать структуру */
+}
+
+.date-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 15px 0;
+    color: #888888;
+    font-size: 8px;
+    font-family: 'PublicPixel', monospace;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.date-divider::before,
+.date-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px double #555555;
+}
+
+.date-divider::before {
+    margin-right: 15px;
+}
+
+.date-divider::after {
+    margin-left: 15px;
+}
+
+.date-divider-text {
+    padding: 0 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #aaaaaa;
+}
+
+.message {
+    padding: 12px 15px;
+    border-radius: 4px;
+    max-width: 75%;
+    display: block;
+    /* Изменили с flex на block для более надежного расчета ширины и переноса строк */
+    box-sizing: border-box;
+    /* Полная защита от разрыва рамок длинными текстами и ссылками */
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+    /* Разрешаем сжатие в flex-контейнере */
+}
+
+.my-message {
+    align-self: flex-end;
+    color: yellow;
+    padding: 0;
+}
+
+.my-message .chat-bubble {
+    background: rgba(255, 255, 0, 0.08);
+    border: 2px solid yellow;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.friend-message {
+    align-self: flex-start;
+    color: cyan;
+    padding: 0;
+}
+
+.friend-message .chat-bubble {
+    background: rgba(0, 255, 255, 0.08);
+    border: 2px solid cyan;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.message-content {
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.message-time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 6px;
+    display: block;
+    text-align: right;
+    /* Время сообщения прижимается к правому углу внутри облачка */
+}
+
+/* Поле ввода сообщений */
+.chat-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.chat-input-section .input-group {
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    /* Выстраиваем текстареа и кнопку отправки в ровный стек */
+    gap: 10px;
+    width: 100%;
+}
+
+.chat-input-section textarea {
+    width: 100%;
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 12px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 12px;
+    resize: none;
+    /* Убираем ручной ресайз, чтобы юзер не ломал форму */
+    outline: none;
+    box-sizing: border-box;
+    min-height: 60px;
+}
+
+.chat-input-section textarea:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+#sendBtn {
+    width: 100%;
+    padding: 14px;
+    font-size: 14px;
+}
+
+.main-content-wrapper {
+    text-align: left;
+    width: 100%;
+}
+
+.main-content-wrapper h2 {
+    text-align: center;
+}
+
+/* Специальные стили для полноэкранного чата на десктопе (без прокрутки всей страницы) */
+@media (min-width: 769px) {
+    .chat-page {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .chat-page .container {
+        height: 100%;
+        max-height: 100%;
+        overflow: hidden;
+    }
+
+    .chat-page main.chat-layout {
+        flex: 1;
+        min-height: 0;
+        height: 0;
+        /* Предотвращает раздувание flex-элемента в некоторых браузерах */
+    }
+
+    .chat-page .chat-friends-column {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .chat-page .chat-main-column {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .chat-page .chat-section {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .chat-page .messages-container {
+        flex: 1;
+        height: auto;
+        /* Убираем жесткую высоту 500px, контейнер подстроится под свободное место */
+        min-height: 0;
+    }
+}
+
+/* ==========================================================================
+   11. АНИМАЦИИ И ЭФФЕКТЫ (ПЛАВНЫЕ ПЕРЕХОДЫ И МИКРО-АНИМАЦИИ)
+   ========================================================================== */
+
+/* Анимация плавного появления снизу */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация проявления с масштабированием */
+@keyframes fadeInScaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.98) translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Анимации выезда сообщений в чате */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Пульсация индикатора онлайна */
+@keyframes pulseGreen {
+    0% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 12px #00ff00;
+        transform: scale(1.1);
+    }
+
+    100% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+}
+
+/* Пульсация рамки непрочитанного чата */
+@keyframes pulseUnreadBorder {
+    0% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+
+    50% {
+        border-color: #ff6666;
+        box-shadow: 0 0 12px rgba(255, 102, 102, 0.6);
+    }
+
+    100% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+}
+
+/* Эффект металлического блеска для админских бейджей */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Применение анимации появления ко всем основным боксам и карточкам */
+.post-card,
+.post-form-section,
+.profile-layout,
+.bio-group,
+#mutualFriendsSection,
+#profileCommentsSection,
+.update-box,
+.verify-section,
+.friend-card,
+.chat-friend-item,
+.search-result-card,
+.admin-panel,
+.chat-section,
+.animate-fade-in {
+    animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Отдельные анимации выезда для новых сообщений в переписке */
+.message.friend-message.new-message-anim {
+    animation: slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+.message.my-message.new-message-anim {
+    animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+/* Применение пульсации индикатора онлайна */
+.online-dot,
+.friend-status-icon.status-online {
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+/* Применение пульсации непрочитанных чатов */
+.chat-friend-item.has-unread {
+    animation: pulseUnreadBorder 2s infinite ease-in-out !important;
+}
+
+/* Эффект сияния для бейджа администратора */
+.role-badge.role-admin,
+.user-card-role.role-admin {
+    background: linear-gradient(120deg, transparent 30%, rgba(255, 68, 68, 0.15) 40%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 68, 68, 0.15) 60%);
+    background-size: 200% 100%;
+    animation: shimmer 4s infinite linear;
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+.post-card,
+.friend-card,
+.search-result-card,
+.chat-friend-item,
+.auth-btn,
+.tab-btn,
+.user-btn,
+.chat-btn,
+.delete-btn,
+input,
+textarea,
+select,
+nav a {
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Эффект приподнимания и свечения рамок при наведении */
+.post-card:hover,
+.friend-card:hover,
+.search-result-card:hover,
+.chat-friend-item:hover:not(.has-unread) {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.12);
+}
+
+/* Подсветка кнопок свечением при наведении */
+.auth-btn:hover,
+.user-btn:hover,
+.chat-btn:hover,
+.delete-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 12px currentColor;
+}
+
+.tab-btn:hover:not(.active) {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Тактильный клик (сжатие кнопок) */
+button:active,
+.auth-btn:active,
+.user-btn:active,
+.tab-btn:active,
+.chat-btn:active,
+.delete-btn:active,
+nav a:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.05s ease !important;
+}
+
+/* Мягкое неоновое свечение фокуса для полей ввода */
+input:focus,
+textarea:focus,
+select:focus {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    border-color: yellow !important;
+}
+
+/* Анимация плавного появления ТОЛЬКО для свежеприбывших постов */
+.just-created-post {
+    animation: fadeInNewPost 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes fadeInNewPost {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        border-color: yellow;
+        /* Вспыхивает жёлтым при появлении */
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        border-color: white;
+    }
+}
+
+/* Пульсация индикаторов DND и Away */
+@keyframes pulseYellow {
+    0% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ffcc00;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulseRed {
+    0% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ff3333;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+}
+
+.online-dot.status-online {
+    background: #00ff00;
+    box-shadow: 0 0 6px #00ff00;
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+.online-dot.status-away,
+.friend-status-icon.status-away {
+    background: #ffcc00;
+    box-shadow: 0 0 6px #ffcc00;
+    animation: pulseYellow 2s infinite ease-in-out;
+}
+
+.online-dot.status-dnd,
+.friend-status-icon.status-dnd {
+    background: #ff3333;
+    box-shadow: 0 0 6px #ff3333;
+    animation: pulseRed 2s infinite ease-in-out;
+}
+
+/* Анимация раскрытия комментариев */
+@keyframes expandComments {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+}
+
+/* Анимация скрытия комментариев */
+@keyframes collapseComments {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+}
+
+.comments-wrapper {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    border-width: 0 !important;
+    transition: max-height 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, padding 0.35s ease, margin 0.35s ease, border-width 0.35s ease;
+}
+
+.comments-wrapper.open {
+    max-height: 2000px;
+    opacity: 1;
+    padding-top: 15px !important;
+    padding-bottom: 15px !important;
+    margin-top: 15px !important;
+    border-width: 2px !important;
+}
+
+/* Smooth theme transition */
+body, .post-card, .container, main, header, footer, button, input, textarea, select, .chat-message, .custom-modal-box, .app-header, .panel, .user-btn, .auth-btn, .admin-panel-box, .card, .profile-card {
+    transition: background 0.35s ease, background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease;
+}
+
+/* Анимация появления формы нового поста */
+.post-form-section {
+    animation: fadeInDown 0.4s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимации для админ-панели */
+@keyframes adminPanelOpen {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) rotate(-1deg);
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 204, 255, 0.3);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.admin-panel {
+    animation: adminPanelOpen 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+@keyframes slideDownContainer {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 2000px;
+        overflow: visible;
+    }
+}
+
+.users-container.open {
+    display: block !important;
+    animation: slideDownContainer 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* ==========================================================================
+   8. CUSTOM DOS MODAL OVERLAYS & DELETE BUTTONS
+   ========================================================================== */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 15, 30, 0.4);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: modalFadeIn 0.25s ease;
+}
+
+.custom-modal-box {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(220, 240, 255, 0.6) 100%);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 25px;
+    width: 90%;
+    max-width: 400px;
+    box-sizing: border-box;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 50, 100, 0.2), inset 0 1px 0 rgba(255, 255, 255, 1);
+    color: #1a5682;
+    font-family: inherit;
+    animation: modalPopIn 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* keyframes для модалок в теме Aero (в этой теме грузится только aero.css) */
+@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalPopIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.custom-modal-header {
+    font-size: 18px;
+    color: #cc0000;
+    border-bottom: 1px solid rgba(0, 100, 200, 0.2);
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.custom-modal-content {
+    font-size: 14px;
+    color: #000000;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    word-break: break-word;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.custom-modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.custom-modal-btn {
+    min-width: 100px;
+}
+
+.custom-modal-btn.btn-yes {
+    background: linear-gradient(180deg, #ffffff 0%, #ffdbdb 45%, #ffb3b3 50%, #ffcccc 100%) !important;
+    border: 1px solid #ff6666 !important;
+    color: #cc0000 !important;
+}
+
+.custom-modal-btn.btn-yes:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #ffe6e6 45%, #ffcccc 50%, #ffe0e0 100%) !important;
+    box-shadow: 0 4px 10px rgba(255, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+    border-color: #ff3333 !important;
+}
+
+.custom-modal-btn.btn-no,
+.custom-modal-btn.btn-ok {
+    background: linear-gradient(180deg, #ffffff 0%, #d0e8ff 45%, #a8d4ff 50%, #cce4ff 100%) !important;
+    border: 1px solid #4a90d9 !important;
+    color: #004488 !important;
+}
+
+.custom-modal-btn.btn-no:hover,
+.custom-modal-btn.btn-ok:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #e6f2ff 45%, #cce4ff 50%, #e0efff 100%) !important;
+    box-shadow: 0 4px 10px rgba(0, 100, 200, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+    border-color: #2f80ed !important;
+}
+
+.delete-btn {
+    border: 2px solid #ff4444;
+    color: #ff4444;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 68, 68, 0.2);
+}
+
+.pending-status {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* --- ЧАТ ЛАЙАУТ --- */
+.chat-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    box-sizing: border-box;
+    padding: 10px;
+    /* Добавляем внутренний паддинг, чтобы правая колонка не прилипала к внешней белой стене */
+}
+
+.chat-friends-column {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-main-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.chat-friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.chat-friend-item:hover {
+    background: rgba(255, 255, 0, 0.1);
+    border-color: yellow;
+}
+
+.chat-friend-item.has-unread {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 6px rgba(255, 68, 68, 0.4);
+}
+
+.friend-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.friend-item-name {
+    font-size: 12px;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+.friend-item-status {
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.friends-sidebar h2 {
+    text-align: center;
+    color: white;
+    text-transform: uppercase;
+    font-size: 16px;
+    margin-bottom: 15px;
+    border-bottom: 2px dashed white;
+    padding-bottom: 10px;
+}
+
+.chat-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    border: none;
+    padding: 10px 0;
+    background-color: transparent;
+    box-sizing: border-box;
+    /* Защита от вылетов за границы */
+}
+
+.chat-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 2px dashed white;
+    padding-bottom: 10px;
+    min-height: 50px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.chat-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
+}
+
+.friend-chat-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.friend-chat-info {
+    display: flex;
+    flex-direction: column;
+    /* Изменили на column, чтобы имя и статус не слипались горизонтально */
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+}
+
+.friend-chat-info h2 {
+    font-size: 16px;
+    color: white;
+    margin: 0;
+    text-transform: none;
+    border: none;
+    padding: 0;
+    word-break: break-word;
+}
+
+.friend-chat-info h2 a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.friend-chat-status {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Окно вывода сообщений */
+.messages-container {
+    border: 2px solid white;
+    padding: 15px;
+    height: 500px;
+    /* Увеличили с 380px до 500px, чтобы чат стал заметно выше и просторнее */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Скрываем горизонтальный скролл и предотвращаем вылезание сообщений */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: rgba(0, 0, 0, 0.7);
+    box-sizing: border-box;
+    width: 100%;
+    /* Заставляем коробку держать структуру */
+}
+
+.date-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 15px 0;
+    color: #888888;
+    font-size: 8px;
+    font-family: 'PublicPixel', monospace;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.date-divider::before,
+.date-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px double #555555;
+}
+
+.date-divider::before {
+    margin-right: 15px;
+}
+
+.date-divider::after {
+    margin-left: 15px;
+}
+
+.date-divider-text {
+    padding: 0 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #aaaaaa;
+}
+
+.message {
+    padding: 12px 15px;
+    border-radius: 4px;
+    max-width: 75%;
+    display: block;
+    /* Изменили с flex на block для более надежного расчета ширины и переноса строк */
+    box-sizing: border-box;
+    /* Полная защита от разрыва рамок длинными текстами и ссылками */
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+    /* Разрешаем сжатие в flex-контейнере */
+}
+
+.my-message {
+    align-self: flex-end;
+    color: yellow;
+    padding: 0;
+}
+
+.my-message .chat-bubble {
+    background: rgba(255, 255, 0, 0.08);
+    border: 2px solid yellow;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.friend-message {
+    align-self: flex-start;
+    color: cyan;
+    padding: 0;
+}
+
+.friend-message .chat-bubble {
+    background: rgba(0, 255, 255, 0.08);
+    border: 2px solid cyan;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.message-content {
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.message-time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 6px;
+    display: block;
+    text-align: right;
+    /* Время сообщения прижимается к правому углу внутри облачка */
+}
+
+/* Поле ввода сообщений */
+.chat-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.chat-input-section .input-group {
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    /* Выстраиваем текстареа и кнопку отправки в ровный стек */
+    gap: 10px;
+    width: 100%;
+}
+
+.chat-input-section textarea {
+    width: 100%;
+    background: #000;
+    color: white;
+    border: 2px solid white;
+    padding: 12px;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 12px;
+    resize: none;
+    /* Убираем ручной ресайз, чтобы юзер не ломал форму */
+    outline: none;
+    box-sizing: border-box;
+    min-height: 60px;
+}
+
+.chat-input-section textarea:focus {
+    border-color: yellow;
+    color: yellow;
+}
+
+#sendBtn {
+    width: 100%;
+    padding: 14px;
+    font-size: 14px;
+}
+
+.main-content-wrapper {
+    text-align: left;
+    width: 100%;
+}
+
+.main-content-wrapper h2 {
+    text-align: center;
+}
+
+/* Специальные стили для полноэкранного чата на десктопе (без прокрутки всей страницы) */
+@media (min-width: 769px) {
+    .chat-page {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .chat-page .container {
+        height: 100%;
+        max-height: 100%;
+        overflow: hidden;
+    }
+
+    .chat-page main.chat-layout {
+        flex: 1;
+        min-height: 0;
+        height: 0;
+        /* Предотвращает раздувание flex-элемента в некоторых браузерах */
+    }
+
+    .chat-page .chat-friends-column {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .chat-page .chat-main-column {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .chat-page .chat-section {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .chat-page .messages-container {
+        flex: 1;
+        height: auto;
+        /* Убираем жесткую высоту 500px, контейнер подстроится под свободное место */
+        min-height: 0;
+    }
+}
+
+/* ==========================================================================
+   11. АНИМАЦИИ И ЭФФЕКТЫ (ПЛАВНЫЕ ПЕРЕХОДЫ И МИКРО-АНИМАЦИИ)
+   ========================================================================== */
+
+/* Анимация плавного появления снизу */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация проявления с масштабированием */
+@keyframes fadeInScaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.98) translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Анимации выезда сообщений в чате */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Пульсация индикатора онлайна */
+@keyframes pulseGreen {
+    0% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 12px #00ff00;
+        transform: scale(1.1);
+    }
+
+    100% {
+        box-shadow: 0 0 4px #00ff00;
+        transform: scale(1);
+    }
+}
+
+/* Пульсация рамки непрочитанного чата */
+@keyframes pulseUnreadBorder {
+    0% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+
+    50% {
+        border-color: #ff6666;
+        box-shadow: 0 0 12px rgba(255, 102, 102, 0.6);
+    }
+
+    100% {
+        border-color: #ff4444;
+        box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+    }
+}
+
+/* Эффект металлического блеска для админских бейджей */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Применение анимации появления ко всем основным боксам и карточкам */
+.post-card,
+.post-form-section,
+.profile-layout,
+.bio-group,
+#mutualFriendsSection,
+#profileCommentsSection,
+.update-box,
+.verify-section,
+.friend-card,
+.chat-friend-item,
+.search-result-card,
+.admin-panel,
+.chat-section,
+.animate-fade-in {
+    animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Отдельные анимации выезда для новых сообщений в переписке */
+.message.friend-message.new-message-anim {
+    animation: slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+.message.my-message.new-message-anim {
+    animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+}
+
+/* Применение пульсации индикатора онлайна */
+.online-dot,
+.friend-status-icon.status-online {
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+/* Применение пульсации непрочитанных чатов */
+.chat-friend-item.has-unread {
+    animation: pulseUnreadBorder 2s infinite ease-in-out !important;
+}
+
+/* Эффект сияния для бейджа администратора */
+.role-badge.role-admin,
+.user-card-role.role-admin {
+    background: linear-gradient(120deg, transparent 30%, rgba(255, 68, 68, 0.15) 40%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 68, 68, 0.15) 60%);
+    background-size: 200% 100%;
+    animation: shimmer 4s infinite linear;
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+.post-card,
+.friend-card,
+.search-result-card,
+.chat-friend-item,
+.auth-btn,
+.tab-btn,
+.user-btn,
+.chat-btn,
+.delete-btn,
+input,
+textarea,
+select,
+nav a {
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Эффект приподнимания и свечения рамок при наведении */
+.post-card:hover,
+.friend-card:hover,
+.search-result-card:hover,
+.chat-friend-item:hover:not(.has-unread) {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.12);
+}
+
+/* Подсветка кнопок свечением при наведении */
+.auth-btn:hover,
+.user-btn:hover,
+.chat-btn:hover,
+.delete-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 12px currentColor;
+}
+
+.tab-btn:hover:not(.active) {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Тактильный клик (сжатие кнопок) */
+button:active,
+.auth-btn:active,
+.user-btn:active,
+.tab-btn:active,
+.chat-btn:active,
+.delete-btn:active,
+nav a:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.05s ease !important;
+}
+
+/* Мягкое неоновое свечение фокуса для полей ввода */
+input:focus,
+textarea:focus,
+select:focus {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    border-color: yellow !important;
+}
+
+/* Анимация плавного появления ТОЛЬКО для свежеприбывших постов */
+.just-created-post {
+    animation: fadeInNewPost 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes fadeInNewPost {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        border-color: yellow;
+        /* Вспыхивает жёлтым при появлении */
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        border-color: white;
+    }
+}
+
+/* Пульсация индикаторов DND и Away */
+@keyframes pulseYellow {
+    0% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ffcc00;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ffcc00;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulseRed {
+    0% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px #ff3333;
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 4px #ff3333;
+        transform: scale(1);
+    }
+}
+
+.online-dot.status-online {
+    background: #00ff00;
+    box-shadow: 0 0 6px #00ff00;
+    animation: pulseGreen 2s infinite ease-in-out;
+}
+
+.online-dot.status-away,
+.friend-status-icon.status-away {
+    background: #ffcc00;
+    box-shadow: 0 0 6px #ffcc00;
+    animation: pulseYellow 2s infinite ease-in-out;
+}
+
+.online-dot.status-dnd,
+.friend-status-icon.status-dnd {
+    background: #ff3333;
+    box-shadow: 0 0 6px #ff3333;
+    animation: pulseRed 2s infinite ease-in-out;
+}
+
+/* Анимация раскрытия комментариев */
+@keyframes expandComments {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+}
+
+/* Анимация скрытия комментариев */
+@keyframes collapseComments {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 1000px;
+        overflow: visible;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+}
+
+.comments-wrapper {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    border-width: 0 !important;
+    transition: max-height 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, padding 0.35s ease, margin 0.35s ease, border-width 0.35s ease;
+}
+
+.comments-wrapper.open {
+    max-height: 2000px;
+    opacity: 1;
+    padding-top: 15px !important;
+    padding-bottom: 15px !important;
+    margin-top: 15px !important;
+    border-width: 2px !important;
+}
+
+/* Анимация появления формы нового поста */
+.post-form-section {
+    animation: fadeInDown 0.4s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимации для админ-панели */
+@keyframes adminPanelOpen {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) rotate(-1deg);
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 204, 255, 0.3);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.admin-panel {
+    animation: adminPanelOpen 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+@keyframes slideDownContainer {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 2000px;
+        overflow: visible;
+    }
+}
+
+.users-container.open {
+    display: block !important;
+    animation: slideDownContainer 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.delete-btn {
+    background: transparent;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    font-family: 'PublicPixel-rv0pA', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+    transition: all 0.2s ease-in-out;
+}
+
+.delete-btn:hover {
+    background-color: rgba(255, 68, 68, 0.15);
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+}
+
+.chat-friend-item .friend-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+}
+
+.like-btn, .comments-toggle-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    line-height: inherit;
+}
+
+/* Пагинация */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.pagination-btn {
+    background: black;
+    border: 2px solid white;
+    color: white;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: white;
+    color: black;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-btn.active {
+    background: white;
+    color: black;
+}
+
+.footer-link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.4);
+    transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+    color: #ffff00;
+}
+
+/* Переключатель языков */
+.lang-selector {
+    display: inline-flex;
+    gap: 5px;
+    margin-left: auto;
+    align-items: center;
+    padding-left: 15px;
+    border-left: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.lang-btn {
+    background: black;
+    color: white;
+    border: 2px solid white;
+    padding: 3px 8px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.lang-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-btn.active {
+    background: white;
+    color: black;
+}
+
+
+.username, .friend-name {
+    text-decoration: none !important;
+}
+
+a.post-author, a.username-link, a[href^="profile.html"] {
+    text-decoration: none !important;
+}
+
+.about-section {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: left;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.01);
+    box-sizing: border-box;
+}
+
+.search-result-card {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.01);
+    margin-bottom: 15px;
+}
+
+/* === AERO STANDALONE OVERRIDES === */
+
+/* ==========================================================================
+   FRUTIGER AERO THEME (VISTA STYLE OVERHAUL)
+   ========================================================================== */
+
+/* 1. ГЛОБАЛЬНЫЕ СТИЛИ */
+body {
+    background: radial-gradient(circle at 50% 0%, #dcf0ff 0%, #87cefa 50%, #4682b4 100%);
+    background-attachment: fixed;
+    color: #2b4561;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    min-height: 100vh;
+}
+
+* {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+}
+
+h1, 
+h2, 
+h3 {
+    color: #1a5682 !important;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+    border-bottom: none !important;
+    letter-spacing: normal !important;
+}
+
+/* Красивые скроллбары */
+::-webkit-scrollbar {
+    width: 12px;
+    display: block !important;
+}
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #b0d4ff, #87cefa);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.8);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.9);
+}
+
+/* 2. LAYOUT, HEADER, FOOTER */
+.container, 
+header, 
+main,
+footer {
+    background: transparent !important;
+    border: none !important;
+}
+
+footer {
+    color: #1a5682 !important;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.8) !important;
+}
+
+/* 3. СТЕКЛЯННЫЕ КОНТЕЙНЕРЫ (GLASSMORPHISM) */
+.post-card,
+.post-form-section,
+.profile-layout,
+.bio-group,
+.page-container,
+.sidebar,
+#profileCommentsSection,
+#updateSection,
+#verifySection,
+#appearanceSection,
+#deleteAccountSection,
+.admin-panel,
+.user-card,
+.chat-layout,
+.friends-container,
+.friend-card,
+.sidebar-section,
+.profile-layout,
+.bio-group,
+#profileCommentsSection,
+.users-container,
+.admin-pin-box,
+.online-box,
+.comments-wrapper,
+.auth-form,
+.about-section,
+.search-result-card,
+#mutualFriendsSection,
+.chat-friend-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(200, 230, 255, 0.35) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 50, 100, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(16px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+    padding: 20px !important; /* Унифицируем паддинги */
+}
+
+/* 4. НАВИГАЦИЯ (ШАПКА) */
+nav {
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 12px;
+    border-radius: 20px;
+    box-shadow: inset 0 1px 3px rgba(255,255,255,0.7), 0 4px 15px rgba(0,0,0,0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+nav a {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(220,240,255,0.9) 100%) !important;
+    border: 1px solid rgba(255,255,255,1) !important;
+    border-radius: 20px !important;
+    color: #1a5682 !important;
+    padding: 8px 24px !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1), inset 0 2px 3px rgba(255,255,255,1) !important;
+    transition: all 0.2s ease !important;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.9) !important;
+    width: auto !important;
+    margin: 0 !important;
+    animation: none !important; /* Убираем rainbowGlow у админки */
+}
+
+nav a:hover {
+    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(230,245,255,1) 100%) !important;
+    box-shadow: 0 4px 12px rgba(0,120,215,0.3), inset 0 2px 3px rgba(255,255,255,1) !important;
+    transform: translateY(-2px) !important;
+    color: #004488 !important;
+}
+
+/* 5. КНОПКИ (GLOSSY VISTA STYLE) */
+button,
+.user-btn,
+.auth-btn,
+.comments-toggle-btn,
+.like-btn,
+.pagination-btn {
+    background: linear-gradient(180deg, #ffffff 0%, #d4eaff 45%, #aed4ff 50%, #cbe4ff 100%) !important;
+    border: 1px solid #7cb9e8 !important;
+    border-radius: 18px !important;
+    color: #1a5682 !important;
+    padding: 8px 18px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 4px rgba(0, 50, 100, 0.2), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    text-transform: none !important;
+    cursor: pointer !important;
+}
+
+button:hover,
+.user-btn:hover,
+.auth-btn:hover,
+.comments-toggle-btn:hover,
+.like-btn:hover,
+.pagination-btn:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #e6f3ff 45%, #c2e0ff 50%, #dbf0ff 100%) !important;
+    border-color: #5ea8e5 !important;
+    box-shadow: 0 4px 10px rgba(0, 120, 215, 0.4), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+    transform: translateY(-1px) !important;
+}
+
+.pagination-btn:disabled {
+    background: #e8e8e8 !important;
+    color: #999 !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.btn-delete, 
+#nav-logout {
+    background: linear-gradient(180deg, #ffffff 0%, #ffdbdb 45%, #ffb3b3 50%, #ffcccc 100%) !important;
+    border: 1px solid #ff6666 !important;
+    color: #cc0000 !important;
+}
+
+.btn-delete:hover, 
+#nav-logout:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #ffe6e6 45%, #ffcccc 50%, #ffe0e0 100%) !important;
+    box-shadow: 0 4px 10px rgba(255, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+    border-color: #ff3333 !important;
+}
+
+/* 6. ФОРМЫ И ВВОД */
+input,
+textarea,
+select,
+.input-group input {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border: 1px solid #9cbdd4 !important;
+    border-radius: 8px !important;
+    color: #333 !important;
+    padding: 10px 14px !important;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08) !important;
+    transition: border-color 0.3s, box-shadow 0.3s !important;
+    font-size: 13px !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.input-group input:focus {
+    border-color: #4da6ff !important;
+    background: rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 0 10px rgba(77, 166, 255, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    outline: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #777 !important;
+}
+
+/* 7. ТЕКСТЫ И ЦВЕТА КОНТЕНТА */
+.post-content,
+.comment-content,
+.messages-container,
+.messages-container *,
+.admin-pin-content,
+.online-box,
+.online-box *,
+.profile-info-block *,
+.bio-group *,
+.user-field label,
+.user-field-value,
+.news-feed *,
+.chat-friends-column *,
+.auth-switch,
+.search-result-card *,
+.about-section *,
+.friends-list *,
+.loading-text,
+.friends-tabs *,
+#mutualFriendsSection *,
+.auth-form *,
+#appearanceSection *,
+#updateSection *,
+#deleteAccountSection *,
+.comment-date {
+    color: #333 !important;
+}
+
+a {
+    color: #0066cc !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+}
+
+a:hover {
+    text-decoration: none !important;
+}
+
+/* 8. АВАТАРЫ И ИЗОБРАЖЕНИЯ */
+.profile-avatar,
+.post-avatar,
+.chat-avatar {
+    border: 3px solid rgba(255,255,255,0.9) !important;
+    border-radius: 50% !important; /* Круглые аватары Vista style */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+    object-fit: cover !important;
+}
+
+/* 9. СПЕЦИФИКА ЧАТА И КАРТОЧЕК ПОЛЬЗОВАТЕЛЕЙ */
+.chat-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255,255,255,0.6) !important;
+}
+
+.chat-header h2 {
+    color: #1a5682 !important;
+}
+
+.chat-input-section {
+    background: transparent !important;
+    border-top: 1px solid rgba(255,255,255,0.6) !important;
+}
+
+.messages-container,
+.chat-friends-column,
+.chat-section {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.profile-tabs {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.my-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+.my-message .chat-bubble {
+    background: linear-gradient(135deg, rgba(220, 240, 255, 0.9), rgba(180, 220, 255, 0.7)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    color: #1a5682 !important;
+    border-radius: 12px 12px 0 12px !important;
+    box-shadow: 0 4px 10px rgba(0, 50, 100, 0.1) !important;
+    padding: 10px 15px !important;
+}
+.friend-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+.friend-message .chat-bubble {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 240, 240, 0.7)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    color: #333 !important;
+    border-radius: 12px 12px 12px 0 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+    padding: 10px 15px !important;
+}
+
+/* 10. УБИРАЕМ РЕТРО АТРИБУТЫ И РАДУГУ В АДМИНКЕ */
+.rainbow-border {
+    background: none !important;
+    animation: none !important;
+    padding: 0 !important;
+}
+
+.admin-title {
+    background: none !important;
+    -webkit-text-fill-color: #1a5682 !important;
+    color: #1a5682 !important;
+    animation: none !important;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.9) !important;
+}
+
+.comment-card {
+    background: rgba(255,255,255,0.6) !important;
+    border: 1px solid rgba(255,255,255,0.9) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+    margin-bottom: 10px !important;
+}
+
+/* #9 Вертикальная полоса вложенных (ответных) комментариев — чёрная в Aero.
+   Инлайновый border-left задаёт только цвет через шорткат; переопределяем цвет. */
+[data-ctx="comment"] {
+    border-left-color: rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Фикс текста в карточках */
+.user-card-login,
+.username,
+.friend-name {
+    color: #1a5682 !important;
+    font-weight: 700 !important;
+}
+
+/* Цвета ролей */
+.role-moderator { color: #3498db !important; border-color: #3498db !important; }
+.role-admin { color: #e74c3c !important; border-color: #e74c3c !important; }
+.role-vip { color: #9b59b6 !important; border-color: #9b59b6 !important; }
+.role-premium { color: #ffd700 !important; border-color: #ffd700 !important; }
+.role-user { color: #2ecc71 !important; border-color: #2ecc71 !important; }
+.role-newbie { color: #888888 !important; border-color: #888888 !important; }
+.role-banned { color: #333333 !important; border-color: #333333 !important; }
+
+/* Убираем пунктирные линии */
+.profile-section h2,
+.profile-section h3,
+.profile-section .profile-section-title,
+.user-card-header,
+.user-card-actions {
+    border: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.6) !important;
+}
+
+/* Формы авторизации - фикс отступов */
+.auth-form {
+    max-width: 500px !important;
+    margin: 50px auto !important;
+}
+
+
+/* SPA Transitions */
+main { transition: opacity 0.2s ease, transform 0.2s ease; }
+.page-exit { opacity: 0 !important; transform: translateY(10px) !important; }
+.page-enter { opacity: 0 !important; transform: translateY(-10px) !important; }
+
+/* #2 FIX: список чатов прокручивается внутри себя, а не тянет всю страницу */
+.chat-page #chatFriendsList {
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+}
+
+/* Увеличение шрифтов для темы Aero */
+body, p, span, div, input, textarea, button, select, a {
+    font-size: 15px;
+}
+h2 {
+    font-size: 20px !important;
+}
+h3 {
+    font-size: 18px !important;
+}
+.post-content, .comment-content, .message-text, .message-content, .chat-bubble,
+.about-section p, #aboutMe, .bio-group textarea, .profile-info-block p,
+#messageInput, #groupMessageInput, #commentContent {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+}
+.post-date, .comment-date, .friend-role, .pending-status, .post-category {
+    font-size: 12px !important;
+}
+
+/* Специфические кнопки для комментариев в теме Aero */
+.reply-comment-btn,
+.delete-comment-btn {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    padding: 0 !important;
+    margin-left: 8px !important;
+    cursor: pointer !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+}
+.reply-comment-btn {
+    color: #0066cc !important;
+}
+.reply-comment-btn:hover {
+    text-decoration: underline !important;
+}
+.delete-comment-btn {
+    color: #ff4444 !important;
+}
+.delete-comment-btn:hover {
+    text-decoration: underline !important;
+}
+.wall-comment-date {
+    font-size: 11px !important;
+    color: #000000 !important; /* Чёрный цвет даты сообщений на стене */
+    font-weight: 500 !important;
+}
+
+/* Отключение фона для табов профиля */
+.profile-tabs {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+}
+
+/* Ограничение ширины вкладок друзей до 600px, как в поиске */
+.friends-tabs,
+#friends-tab,
+#requests-tab,
+#outgoing-tab {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ============================================================
+   ГРУППОВЫЕ ЧАТЫ («Группы») — тема Aero
+   ============================================================ */
+.groups-layout { display: block; box-sizing: border-box; padding: 10px; }
+.groups-list-view { max-width: 800px; margin: 0 auto; }
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+}
+.group-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(200,230,255,0.4) 100%) !important;
+    border: 1px solid rgba(255,255,255,0.8) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0,50,100,0.1), inset 0 1px 2px rgba(255,255,255,0.9) !important;
+    color: #1a5682 !important;
+}
+.group-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,50,100,0.18) !important; }
+.group-card-avatar {
+    width: 48px; height: 48px; flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: bold;
+    color: #1a5682;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.9);
+}
+.group-card-info { min-width: 0; }
+.group-card-name { font-weight: bold; color: #1a5682; word-break: break-word; }
+.group-card-meta { font-size: 11px; color: #5a7a95; margin-top: 4px; }
+.group-admin-badge,
+.member-admin-tag {
+    display: inline-block;
+    font-size: 9px; color: #e74c3c;
+    border: 1px solid #e74c3c; border-radius: 3px;
+    padding: 0 4px; text-transform: uppercase; vertical-align: middle;
+}
+
+.group-view { display: flex; gap: 20px; align-items: flex-start; box-sizing: border-box; }
+.group-channels-column,
+.group-members-column { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; }
+.groups-layout .chat-main-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.channels-list { display: flex; flex-direction: column; gap: 6px; }
+.channel-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; cursor: pointer; transition: all 0.2s;
+    color: #1a5682;
+    border: 1px solid rgba(255,255,255,0.7) !important;
+    border-radius: 10px !important;
+    background: rgba(255,255,255,0.35) !important;
+}
+.channel-item:hover { background: rgba(255,255,255,0.6) !important; }
+.channel-item.active { border-color: #1a5682 !important; background: rgba(180,220,255,0.6) !important; color: #0d3a5c; }
+.channel-hash { color: #4a90d9; font-weight: bold; }
+.channel-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.channel-del, .member-kick { color: #e74c3c; cursor: pointer; font-size: 12px; padding: 0 4px; opacity: 0.7; }
+.channel-del:hover, .member-kick:hover { opacity: 1; }
+.channel-mute { cursor: pointer; font-size: 11px; padding: 0 2px; opacity: 0.7; }
+.channel-mute:hover { opacity: 1; }
+
+.members-list { display: flex; flex-direction: column; gap: 8px; }
+.member-item { display: flex; align-items: center; gap: 10px; padding: 6px; }
+.member-avatar {
+    width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.9); flex-shrink: 0;
+}
+.member-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.member-name { font-weight: bold; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.member-role-line { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+
+.message-author { font-size: 11px; font-weight: bold; margin-bottom: 3px; }
+
+.group-system-msg {
+    text-align: center; font-size: 11px; color: #5a7a95; font-style: italic;
+    margin: 6px auto; padding: 4px 10px; align-self: center;
+}
+
+.group-invite-card {
+    border: 1px solid #4a90d9 !important;
+    background: linear-gradient(135deg, rgba(220,240,255,0.9), rgba(180,220,255,0.7)) !important;
+    color: #1a5682 !important;
+}
+.group-invite-title { font-size: 11px; color: #1a5682; text-transform: uppercase; font-weight: bold; }
+.group-invite-name { font-size: 14px; font-weight: bold; margin-top: 4px; word-break: break-word; color: #0d3a5c; }
+
+@media (max-width: 768px) {
+    .group-view { flex-direction: column; }
+    .group-channels-column,
+    .group-members-column { width: 100%; }
+}
+
+/* Модальные окна (#17 приглашение и т.п.) — тема Aero */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 50, 100, 0.35);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: modalFadeIn 0.2s ease;
+}
+.modal-box {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(220,235,255,0.82)) !important;
+    border: 1px solid rgba(255,255,255,0.9) !important;
+    border-radius: 14px !important;
+    padding: 20px;
+    width: 90%;
+    max-width: 360px;
+    box-sizing: border-box;
+    color: #1a5682 !important;
+    box-shadow: 0 12px 40px rgba(0, 50, 100, 0.3) !important;
+    animation: modalPopIn 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.modal-box h3 { color: #1a5682 !important; }
+
+/* #18 Закреплённые диалоги/группы */
+.chat-friend-item.pinned, .group-card.pinned { border-left: 3px solid #ffb300 !important; }
+
+/* #2 Тумблеры настроек клиента — тема Aero */
+.toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.8); border-radius: 24px; transition: 0.25s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15); }
+.toggle-slider::before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.35); }
+.toggle-switch input:checked + .toggle-slider { background: linear-gradient(180deg, #6db3f2 0%, #2f80ed 100%); border-color: rgba(255,255,255,0.9); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+/* #5 Ответы — стиль Aero: «бабл» (вложенный пузырь) */
+.reply-quote {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 6px;
+    padding: 6px 12px;
+    border-radius: 14px 14px 14px 4px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.78) 0%, rgba(215,232,255,0.65) 100%) !important;
+    border: 1px solid rgba(255,255,255,0.85) !important;
+    box-shadow: 0 2px 6px rgba(0,50,100,0.1);
+    max-width: 280px;
+}
+.reply-quote::before { content: none; }
+.reply-quote-author { display: block; color: #2f80ed !important; font-weight: bold; font-size: 11px; margin-bottom: 1px; }
+.reply-quote-text { display: block; color: #5a7a95 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ==========================================================================
+   ============  AERO (DARK) — «Tornado» тёмно-синее глянцевое стекло  ========
+   Дописан последним: перекрывает светлые Aero-переопределения выше.
+   Референс: тёмный синий Aero (глянцевые панели, cyan-свечение).
+   ========================================================================== */
+
+/* 1. ГЛОБАЛЬНЫЙ ФОН — ночное сине-чёрное «небо» с лёгким свечением сверху */
+body {
+    background:
+        radial-gradient(circle at 50% -10%, rgba(40, 110, 190, 0.45) 0%, rgba(40, 110, 190, 0) 55%),
+        radial-gradient(circle at 50% 0%, #123049 0%, #0a1c31 45%, #04101d 100%) !important;
+    background-attachment: fixed !important;
+    color: #cfe3fb !important;
+}
+
+h1, h2, h3 {
+    color: #9fd4ff !important;
+    text-shadow: 0 0 10px rgba(90, 170, 255, 0.55), 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Скроллбары — тёмно-синие */
+::-webkit-scrollbar-track { background: rgba(10, 30, 55, 0.5) !important; }
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #3f7fbf, #1c3f66) !important;
+    border: 1px solid rgba(120, 190, 255, 0.4) !important;
+    box-shadow: inset 0 1px 2px rgba(150, 200, 255, 0.35) !important;
+}
+
+/* 3. СТЕКЛЯННЫЕ КОНТЕЙНЕРЫ — тёмная полупрозрачная синева с cyan-кромкой */
+.post-card, .post-form-section, .profile-layout, .bio-group, .page-container,
+.sidebar, #profileCommentsSection, #updateSection, #verifySection, #appearanceSection,
+#deleteAccountSection, .admin-panel, .user-card, .chat-layout, .friends-container,
+.friend-card, .sidebar-section, .users-container, .admin-pin-box, .online-box,
+.comments-wrapper, .auth-form, .about-section, .search-result-card,
+#mutualFriendsSection, .chat-friend-item {
+    background: linear-gradient(135deg, rgba(34, 78, 130, 0.38) 0%, rgba(12, 32, 58, 0.52) 100%) !important;
+    border: 1px solid rgba(120, 190, 255, 0.35) !important;
+    box-shadow: 0 8px 32px rgba(0, 8, 22, 0.55), inset 0 1px 2px rgba(150, 205, 255, 0.22) !important;
+}
+
+/* 4. НАВИГАЦИЯ */
+nav {
+    background: rgba(10, 30, 55, 0.42) !important;
+    box-shadow: inset 0 1px 3px rgba(120, 190, 255, 0.25), 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(120, 190, 255, 0.3) !important;
+}
+nav a {
+    background: linear-gradient(180deg, rgba(70, 130, 200, 0.55) 0%, rgba(20, 55, 95, 0.7) 100%) !important;
+    border: 1px solid rgba(130, 195, 255, 0.5) !important;
+    color: #e2f1ff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(160, 210, 255, 0.35) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+nav a:hover {
+    background: linear-gradient(180deg, rgba(95, 160, 230, 0.7) 0%, rgba(30, 75, 125, 0.85) 100%) !important;
+    box-shadow: 0 4px 14px rgba(70, 150, 255, 0.5), inset 0 1px 2px rgba(180, 220, 255, 0.5) !important;
+    color: #ffffff !important;
+}
+/* Спец-кнопки навбара сохраняют свой смысловой цвет поверх тёмного стекла */
+nav a#nav-profile { color: #7CFF9E !important; border-color: rgba(120, 255, 160, 0.6) !important; }
+nav a#nav-logout { color: #ffb3b3 !important; border-color: rgba(255, 150, 150, 0.6) !important; }
+
+/* 5. КНОПКИ — тёмное глянцевое синее «стекло» */
+button, .user-btn, .auth-btn, .comments-toggle-btn, .like-btn, .pagination-btn {
+    background: linear-gradient(180deg, #4a7fb5 0%, #2a5688 45%, #1c3f66 50%, #234f7c 100%) !important;
+    border: 1px solid #5fa0dd !important;
+    color: #eaf5ff !important;
+    box-shadow: 0 2px 5px rgba(0, 8, 22, 0.5), inset 0 1px 1px rgba(170, 215, 255, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+button:hover, .user-btn:hover, .auth-btn:hover, .comments-toggle-btn:hover,
+.like-btn:hover, .pagination-btn:hover {
+    background: linear-gradient(180deg, #5c95cd 0%, #356699 45%, #244f7e 50%, #2c5d90 100%) !important;
+    border-color: #8ac0f5 !important;
+    box-shadow: 0 4px 12px rgba(70, 150, 255, 0.55), inset 0 1px 2px rgba(190, 225, 255, 0.6) !important;
+}
+.pagination-btn:disabled {
+    background: #1a2a3a !important; color: #5a7088 !important;
+    border-color: #33465a !important; box-shadow: none !important;
+}
+.btn-delete, #nav-logout, .custom-modal-btn.btn-yes {
+    background: linear-gradient(180deg, #b34a4a 0%, #7e2626 45%, #611c1c 50%, #7a2323 100%) !important;
+    border: 1px solid #e07a7a !important;
+    color: #ffe1e1 !important;
+}
+.btn-delete:hover, #nav-logout:hover, .custom-modal-btn.btn-yes:hover {
+    background: linear-gradient(180deg, #c85c5c 0%, #953232 50%, #8a2c2c 100%) !important;
+    box-shadow: 0 4px 12px rgba(255, 70, 70, 0.45), inset 0 1px 2px rgba(255, 200, 200, 0.5) !important;
+    border-color: #ff9a9a !important;
+}
+
+/* 6. ФОРМЫ */
+input, textarea, select, .input-group input {
+    background: rgba(8, 22, 40, 0.7) !important;
+    border: 1px solid rgba(120, 180, 240, 0.4) !important;
+    color: #dceaff !important;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+}
+input:focus, textarea:focus, select:focus, .input-group input:focus {
+    border-color: #5fb0ff !important;
+    background: rgba(12, 30, 52, 0.85) !important;
+    box-shadow: 0 0 12px rgba(70, 160, 255, 0.6), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+input::placeholder, textarea::placeholder { color: #7f9ab5 !important; }
+
+/* 7. ТЕКСТЫ И ССЫЛКИ */
+.post-content, .comment-content, .messages-container, .messages-container *,
+.admin-pin-content, .online-box, .online-box *, .profile-info-block *, .bio-group *,
+.user-field label, .user-field-value, .news-feed *, .chat-friends-column *,
+.auth-switch, .search-result-card *, .about-section *, .friends-list *, .loading-text,
+.friends-tabs *, #mutualFriendsSection *, .auth-form *, #appearanceSection *,
+#updateSection *, #deleteAccountSection *, .comment-date,
+.custom-modal-content, .custom-modal-box {
+    color: #cfe3fb !important;
+}
+footer, footer * {
+    color: #9fc4ee !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+a, .reply-comment-btn, .reply-quote-author { color: #62b6ff !important; }
+
+/* 8. АВАТАРЫ */
+.profile-avatar, .post-avatar, .chat-avatar {
+    border: 3px solid rgba(120, 190, 255, 0.6) !important;
+    box-shadow: 0 4px 12px rgba(0, 10, 30, 0.6), 0 0 10px rgba(70, 150, 255, 0.3) !important;
+}
+
+/* 9. ЧАТ / КОММЕНТАРИИ */
+.chat-header { border-bottom: 1px solid rgba(120, 190, 255, 0.3) !important; }
+.chat-header h2, .username, .friend-name, .user-card-login,
+.group-card-name, .modal-box h3, .admin-title { color: #9fd4ff !important; }
+.custom-modal-header { color: #ff9a9a !important; }
+.chat-input-section { border-top: 1px solid rgba(120, 190, 255, 0.3) !important; }
+.my-message .chat-bubble {
+    background: linear-gradient(135deg, rgba(50, 105, 165, 0.6), rgba(28, 62, 105, 0.7)) !important;
+    border: 1px solid rgba(130, 195, 255, 0.45) !important;
+    color: #eaf5ff !important;
+    box-shadow: 0 4px 10px rgba(0, 10, 30, 0.45) !important;
+}
+.friend-message .chat-bubble {
+    background: linear-gradient(135deg, rgba(30, 45, 65, 0.75), rgba(18, 30, 48, 0.8)) !important;
+    border: 1px solid rgba(120, 170, 220, 0.3) !important;
+    color: #d5e4f7 !important;
+    box-shadow: 0 4px 10px rgba(0, 5, 18, 0.5) !important;
+}
+.comment-card {
+    background: rgba(16, 36, 62, 0.55) !important;
+    border: 1px solid rgba(120, 190, 255, 0.28) !important;
+    box-shadow: 0 2px 6px rgba(0, 5, 18, 0.45) !important;
+}
+[data-ctx="comment"] { border-left-color: rgba(130, 195, 255, 0.55) !important; }
+.wall-comment-date { color: #9fc4ee !important; }
+.reply-quote {
+    background: linear-gradient(135deg, rgba(40, 80, 130, 0.55) 0%, rgba(20, 45, 78, 0.6) 100%) !important;
+    border: 1px solid rgba(130, 195, 255, 0.4) !important;
+}
+.reply-quote-text { color: #a9c4e2 !important; }
+.profile-section h2, .profile-section h3, .profile-section .profile-section-title,
+.user-card-header, .user-card-actions { border-bottom: 1px solid rgba(120, 190, 255, 0.28) !important; }
+
+/* 10. МОДАЛКИ / СТЕКЛО */
+.modal-overlay, .custom-modal-overlay { background: rgba(2, 10, 22, 0.55) !important; }
+.modal-box, .custom-modal-box {
+    background: linear-gradient(135deg, rgba(28, 60, 100, 0.92), rgba(12, 30, 55, 0.9)) !important;
+    border: 1px solid rgba(130, 195, 255, 0.4) !important;
+    box-shadow: 0 12px 40px rgba(0, 8, 24, 0.7) !important;
+}
+
+/* 11. ГРУППЫ / КАНАЛЫ */
+.group-card {
+    background: linear-gradient(135deg, rgba(34, 78, 130, 0.4) 0%, rgba(12, 32, 58, 0.55) 100%) !important;
+    border: 1px solid rgba(120, 190, 255, 0.35) !important;
+    box-shadow: 0 4px 15px rgba(0, 8, 22, 0.5), inset 0 1px 2px rgba(150, 205, 255, 0.2) !important;
+    color: #dceaff !important;
+}
+.group-card-avatar {
+    color: #9fd4ff; background: rgba(20, 45, 78, 0.7);
+    border: 1px solid rgba(130, 195, 255, 0.45);
+}
+.group-card-name { color: #cfe3fb; }
+.group-card-meta, .group-card-meta *, .group-system-msg, .member-role-line { color: #8fb0d4 !important; }
+.channel-item {
+    color: #cfe3fb;
+    border: 1px solid rgba(120, 190, 255, 0.28) !important;
+    background: rgba(16, 36, 62, 0.45) !important;
+}
+.channel-item:hover { background: rgba(30, 65, 110, 0.6) !important; }
+.channel-item.active { border-color: #5fb0ff !important; background: rgba(40, 90, 150, 0.65) !important; color: #eaf5ff; }
+.channel-hash { color: #5fb0ff; }
+.group-invite-card {
+    border: 1px solid #4a90d9 !important;
+    background: linear-gradient(135deg, rgba(30, 70, 120, 0.6), rgba(16, 38, 66, 0.7)) !important;
+    color: #cfe3fb !important;
+}
+.group-invite-title, .group-invite-name { color: #9fd4ff; }
+.member-avatar { border: 1px solid rgba(130, 195, 255, 0.45); }
+.toggle-slider { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(120, 190, 255, 0.4); }
+
+/* Закреплённые */
+.chat-friend-item.pinned, .group-card.pinned { border-left: 3px solid #5fb0ff !important; }

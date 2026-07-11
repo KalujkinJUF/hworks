@@ -100,7 +100,7 @@
         return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
     }
     const sfxClick = () => { if (window.sfx && window.sfx.click) { try { window.sfx.click(); } catch (e) {} } };
-    const dockIsAero = () => (localStorage.getItem('app_theme') === 'aero');
+    const dockIsAero = () => window.isAeroTheme();
 
     function renderDock(s) {
         const isChannel = s.roomId && /^voice:channel:/.test(s.roomId);
@@ -111,8 +111,16 @@
             return;
         }
         const aero = dockIsAero();
-        // Оформление плашки/строк/кнопок под текущую тему (DOS / Aero).
-        const th = aero ? {
+        const aeroDark = aero && window.isDarkTheme(); // Aero (Dark)
+        // Оформление плашки/строк/кнопок под текущую тему (DOS / Aero Light / Aero Dark).
+        const th = aeroDark ? {
+            box: 'position:fixed;left:16px;bottom:16px;z-index:99998;min-width:200px;max-width:280px;padding:12px;border-radius:14px;font-family:inherit;color:#cfe3fb;background:linear-gradient(135deg,rgba(30,64,108,0.75) 0%,rgba(12,30,55,0.8) 100%);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid rgba(120,190,255,0.4);box-shadow:0 12px 34px rgba(0,10,30,0.6);',
+            label: 'font-size:10px;color:#7cc0ff;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:bold;',
+            timer: 'color:#8fb0d4;',
+            speak: 'color:#7cff9e;font-weight:bold;', idle: 'color:#a9c4e2;',
+            btn: 'flex:1;padding:6px;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid #5fa0dd;color:#eaf5ff;background:linear-gradient(180deg,#3a6ea5 0%,#24507e 50%,#1c3f66 100%);',
+            btnLeave: 'flex:1;padding:6px;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid #e07a7a;color:#ffe1e1;background:linear-gradient(180deg,#b34a4a 0%,#7e2626 50%,#611c1c 100%);'
+        } : aero ? {
             box: 'position:fixed;left:16px;bottom:16px;z-index:99998;min-width:200px;max-width:280px;padding:12px;border-radius:14px;font-family:inherit;color:#003366;background:linear-gradient(135deg,rgba(255,255,255,0.85) 0%,rgba(220,240,255,0.7) 100%);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,0.8);box-shadow:0 12px 34px rgba(0,100,200,0.28);',
             label: 'font-size:10px;color:#0a66c2;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:bold;',
             timer: 'color:#4a6a8a;',

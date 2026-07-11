@@ -65,7 +65,8 @@
     let timerInterval = null;
     const T = (k, d) => (window.t ? window.t(k, d) : d);
     const sfx = (fn) => { if (window.sfx && typeof window.sfx[fn] === 'function') { try { window.sfx[fn](); } catch (e) {} } };
-    const isAero = () => (localStorage.getItem('app_theme') === 'aero');
+    const isAero = () => window.isAeroTheme();
+    const isAeroDark = () => isAero() && window.isDarkTheme();
 
     function isBusy() { return !!activeCall; }
 
@@ -218,6 +219,16 @@
     // Стиль плашки и кнопок для двух тем (DOS / Aero) — плашка живёт вне CSS темы,
     // поэтому оформляем инлайном по текущему app_theme (как контекстные меню в navbar.js).
     function themeStyles() {
+        if (isAeroDark()) {
+            return {
+                box: 'position:fixed;right:16px;bottom:16px;z-index:99999;min-width:220px;padding:14px;border-radius:14px;font-family:inherit;color:#cfe3fb;background:linear-gradient(135deg,rgba(30,64,108,0.8) 0%,rgba(12,30,55,0.85) 100%);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid rgba(120,190,255,0.4);box-shadow:0 12px 34px rgba(0,10,30,0.6);',
+                label: 'font-size:10px;color:#7cc0ff;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:bold;',
+                name: 'font-size:14px;margin-bottom:4px;word-break:break-word;color:#eaf5ff;',
+                sub: 'font-size:12px;color:#8fb0d4;margin-bottom:10px;',
+                btn: 'flex:1;padding:7px;font-size:14px;margin:0;cursor:pointer;border-radius:8px;border:1px solid #5fa0dd;color:#eaf5ff;background:linear-gradient(180deg,#3a6ea5 0%,#24507e 50%,#1c3f66 100%);',
+                btnDanger: 'flex:1;padding:7px;font-size:14px;margin:0;cursor:pointer;border-radius:8px;border:1px solid #e07a7a;color:#ffe1e1;background:linear-gradient(180deg,#b34a4a 0%,#7e2626 50%,#611c1c 100%);'
+            };
+        }
         if (isAero()) {
             return {
                 box: 'position:fixed;right:16px;bottom:16px;z-index:99999;min-width:220px;padding:14px;border-radius:14px;font-family:inherit;color:#003366;background:linear-gradient(135deg,rgba(255,255,255,0.85) 0%,rgba(220,240,255,0.7) 100%);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,0.8);box-shadow:0 12px 34px rgba(0,100,200,0.28);',

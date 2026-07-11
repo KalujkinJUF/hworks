@@ -317,8 +317,11 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
     const menu = document.createElement('div');
     menu.className = 'attach-menu';
     
-    const isAero = (localStorage.getItem('app_theme') === 'aero');
-    if (isAero) {
+    const isAero = window.isAeroTheme();
+    const aeroDark = isAero && window.isDarkTheme(); // Aero (Dark)
+    if (aeroDark) {
+        menu.style.cssText = 'position:absolute; z-index:100001; background: linear-gradient(135deg, rgba(30,64,108,0.72) 0%, rgba(14,32,56,0.78) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(120,190,255,0.4); border-radius: 12px; padding: 6px; display:flex; flex-direction:column; min-width:150px; box-shadow: 0 10px 30px rgba(0,10,30,0.6); gap: 4px;';
+    } else if (isAero) {
         menu.style.cssText = 'position:absolute; z-index:100001; background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(220, 240, 255, 0.5) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.7); border-radius: 12px; padding: 6px; display:flex; flex-direction:column; min-width:150px; box-shadow: 0 10px 30px rgba(0, 100, 200, 0.15); gap: 4px;';
     } else {
         menu.style.cssText = 'position:absolute; z-index:100001; background:#141414; border:1px solid #888; border-radius:6px; padding:4px; display:flex; flex-direction:column; min-width:150px; box-shadow:0 6px 18px rgba(0,0,0,0.6);';
@@ -333,7 +336,11 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
         const b = document.createElement('button');
         b.type = 'button';
         b.textContent = o.label;
-        if (isAero) {
+        if (aeroDark) {
+            b.style.cssText = 'background: linear-gradient(180deg, #3a6ea5 0%, #24507e 50%, #1c3f66 100%) !important; border: 1px solid #5fa0dd !important; color:#eaf5ff !important; text-align:left; padding:8px 12px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:8px; white-space:nowrap; box-shadow: 0 2px 4px rgba(0,8,22,0.4), inset 0 1px 1px rgba(170,215,255,0.4) !important; text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;';
+            b.addEventListener('mouseenter', () => { b.style.background = 'linear-gradient(180deg, #4a80bb 0%, #2c5d90 50%, #244f7e 100%)'; });
+            b.addEventListener('mouseleave', () => { b.style.background = 'linear-gradient(180deg, #3a6ea5 0%, #24507e 50%, #1c3f66 100%)'; });
+        } else if (isAero) {
             b.style.cssText = 'background: linear-gradient(180deg, #ffffff 0%, #d0e8ff 45%, #a8d4ff 50%, #cce4ff 100%) !important; border: 1px solid #4a90d9 !important; color:#004488 !important; text-align:left; padding:8px 12px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:8px; white-space:nowrap; box-shadow: 0 2px 4px rgba(0, 50, 100, 0.1), inset 0 1px 1px rgba(255, 255, 255, 1) !important; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) !important;';
             b.addEventListener('mouseenter', () => { b.style.background = 'linear-gradient(180deg, #ffffff 0%, #e6f3ff 45%, #c2e0ff 50%, #dbf0ff 100%)'; });
             b.addEventListener('mouseleave', () => { b.style.background = 'linear-gradient(180deg, #ffffff 0%, #d0e8ff 45%, #a8d4ff 50%, #cce4ff 100%)'; });
@@ -369,8 +376,11 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
         menuEl = document.createElement('div');
         menuEl.className = 'ctx-menu';
         
-        const isAero = (localStorage.getItem('app_theme') === 'aero');
-        if (isAero) {
+        const isAero = window.isAeroTheme();
+        const aeroDark = isAero && window.isDarkTheme(); // Aero (Dark)
+        if (aeroDark) {
+            menuEl.style.cssText = 'position:fixed; z-index:100002; background: linear-gradient(135deg, rgba(30,64,108,0.72) 0%, rgba(14,32,56,0.78) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(120,190,255,0.4); border-radius: 12px; padding: 6px; display:flex; flex-direction:column; min-width:180px; box-shadow: 0 10px 30px rgba(0,10,30,0.6); gap: 4px;';
+        } else if (isAero) {
             menuEl.style.cssText = 'position:fixed; z-index:100002; background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(220, 240, 255, 0.5) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.7); border-radius: 12px; padding: 6px; display:flex; flex-direction:column; min-width:180px; box-shadow: 0 10px 30px rgba(0, 100, 200, 0.15); gap: 4px;';
         } else {
             menuEl.style.cssText = 'position:fixed; z-index:100002; background:black; border:3px double white; border-radius:0px; padding:4px; display:flex; flex-direction:column; min-width:170px; box-shadow:0 6px 20px rgba(0,0,0,0.6);';
@@ -381,7 +391,17 @@ window.attachMediaMenu = function(anchorBtn, fileInput) {
             b.type = 'button';
             b.textContent = it.label;
             
-            if (isAero) {
+            if (aeroDark) {
+                b.style.cssText = 'background: rgba(120,190,255,0.06); border: 1px solid rgba(120,190,255,0.28); color:' + (it.danger ? '#ff9a9a' : '#dbeaff') + '; text-align:left; padding:8px 12px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:8px; white-space:nowrap;';
+                b.addEventListener('mouseenter', () => {
+                    b.style.background = it.danger ? 'rgba(200,60,60,0.35)' : 'rgba(70,140,220,0.4)';
+                    b.style.borderColor = it.danger ? '#ff8080' : '#7cc0ff';
+                });
+                b.addEventListener('mouseleave', () => {
+                    b.style.background = 'rgba(120,190,255,0.06)';
+                    b.style.borderColor = 'rgba(120,190,255,0.28)';
+                });
+            } else if (isAero) {
                 b.style.cssText = 'background: linear-gradient(180deg, #ffffff 0%, #d0e8ff 45%, #a8d4ff 50%, #cce4ff 100%); border: 1px solid #4a90d9; color:' + (it.danger ? '#cc0000' : '#004488') + '; text-align:left; padding:8px 12px; cursor:pointer; font-family:inherit; font-size:13px; border-radius:8px; white-space:nowrap;';
                 if (it.danger) {
                     b.style.background = 'linear-gradient(180deg, #ffffff 0%, #ffdbdb 45%, #ffb3b3 50%, #ffcccc 100%)';

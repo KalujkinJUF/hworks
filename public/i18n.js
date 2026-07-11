@@ -33,8 +33,10 @@
             "profile_theme_label": "Theme:",
             "profile_lang_label": "Language:",
             "profile_saved_success": "Changes saved",
-            "theme_aero": "Aero",
-            "theme_default": "DOS",
+            "theme_aero": "Aero (Light)",
+            "theme_aero_dark": "Aero (Dark)",
+            "theme_default": "DOS (Dark)",
+            "theme_dos_light": "DOS (Light)",
             "chat_delete_confirm": "Are you sure you want to delete this message?",
             "confirm_are_you_sure": "Are you sure?",
             "error_forbidden": "Access denied!",
@@ -362,8 +364,10 @@
             "profile_theme_label": "Тема:",
             "profile_lang_label": "Язык:",
             "profile_saved_success": "Изменения сохранены",
-            "theme_aero": "Aero",
-            "theme_default": "DOS",
+            "theme_aero": "Aero (Light)",
+            "theme_aero_dark": "Aero (Dark)",
+            "theme_default": "DOS (Dark)",
+            "theme_dos_light": "DOS (Light)",
             "chat_delete_confirm": "Вы уверены, что хотите удалить это сообщение?",
             "confirm_are_you_sure": "Вы уверены?",
             "error_forbidden": "Доступ запрещён!",
@@ -691,8 +695,10 @@
             "profile_theme_label": "Тема:",
             "profile_lang_label": "Мова:",
             "profile_saved_success": "Зміни збережено",
-            "theme_aero": "Aero",
-            "theme_default": "DOS",
+            "theme_aero": "Aero (Light)",
+            "theme_aero_dark": "Aero (Dark)",
+            "theme_default": "DOS (Dark)",
+            "theme_dos_light": "DOS (Light)",
             "chat_delete_confirm": "Ви впевнені, що хочете видалити це повідомлення?",
             "confirm_are_you_sure": "Ви впевнені?",
             "error_forbidden": "Доступ заборонено!",
@@ -1101,10 +1107,23 @@
         });
     }
 
+    // Хелперы темы (для инлайн-оформления плашек вне CSS-тем: меню, доки звонков и т.п.)
+    window.getAppTheme = function () { return localStorage.getItem('app_theme') || 'default'; };
+    // Семейство Aero (светлая 'aero' и тёмная 'aero-dark')
+    window.isAeroTheme = function () { return window.getAppTheme().indexOf('aero') === 0; };
+    // Тёмные темы: DOS (Dark) 'default' и Aero (Dark) 'aero-dark'
+    window.isDarkTheme = function () { const t = window.getAppTheme(); return t === 'default' || t === 'aero-dark'; };
+
     // Функция применения темы
     window.applyTheme = function applyTheme() {
         const theme = localStorage.getItem('app_theme') || 'default';
-        const themeFile = theme === 'aero' ? 'aero.css' : 'default.css';
+        const themeFiles = {
+            'default': 'default.css',    // DOS (Dark)
+            'dos-light': 'dos-light.css', // DOS (Light)
+            'aero': 'aero.css',          // Aero (Light)
+            'aero-dark': 'aero-dark.css' // Aero (Dark)
+        };
+        const themeFile = themeFiles[theme] || 'default.css';
         
         let themeLink = document.getElementById('theme-stylesheet');
         

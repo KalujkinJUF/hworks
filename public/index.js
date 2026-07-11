@@ -766,10 +766,9 @@ document.addEventListener('spa:navigate', () => {
         const content = document.getElementById("postContent").value.trim();
         const hasFile = postFileInput && postFileInput.files && postFileInput.files[0];
         if (!content && !hasFile) {
-            const isAero = (localStorage.getItem('app_theme') === 'aero');
             const postMsg = document.getElementById("postMessage");
             postMsg.textContent = window.t('write_post_placeholder', 'Напишите пост...');
-            postMsg.style.color = isAero ? "black" : "#ff4444";
+            postMsg.style.color = window.isDarkTheme() ? "#ff6b6b" : "#c0392b";
             return;
         }
 
@@ -826,10 +825,9 @@ document.addEventListener('spa:navigate', () => {
             .then(data => {
                 if (newsBtn) newsBtn.disabled = false;
                 if (patchBtn) patchBtn.disabled = false;
-                const isAero = (localStorage.getItem('app_theme') === 'aero');
                 if (data.message) {
                     msg.textContent = window.t('post_created_success', 'Пост создан');
-                    msg.style.color = isAero ? "black" : "#00ff00";
+                    msg.style.color = window.isDarkTheme() ? "#5fe36a" : "#1a7d1a";
                     document.getElementById("postContent").value = "";
                     if (postFileInput) postFileInput.value = "";
                     if (postAttachedFileName) postAttachedFileName.textContent = "";
@@ -837,7 +835,7 @@ document.addEventListener('spa:navigate', () => {
                     loadPosts();
                 } else {
                     msg.textContent = data.error;
-                    msg.style.color = isAero ? "#cc0000" : "#ff4444";
+                    msg.style.color = window.isDarkTheme() ? "#ff6b6b" : "#c0392b";
                 }
             })
             .catch(() => {

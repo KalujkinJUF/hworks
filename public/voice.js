@@ -471,20 +471,32 @@
         if (wasInRoom) emitState();
     }
 
-    function setMuted(m) {
-        state.muted = !!m;
+    // Применяет текущее состояние mute к дорожке микрофона и оповещает пиров.
+    function applyMic() {
         if (micTrack) micTrack.enabled = !state.muted;
         if (socket) { try { socket.emit('mute', { muted: state.muted }); } catch (e) {} }
+    }
+
+    function setMuted(m) {
+        state.muted = !!m;
+        // Ручное включение микрофона снимает и оглушение (нельзя говорить «вглухую»).
+        if (!state.muted && state.deafened) {
+            state.deafened = false;
+            consumers.forEach(c => { if (c.audioEl) c.audioEl.muted = false; });
+        }
+        applyMic();
         emitState();
     }
     function toggleMute() { setMuted(!state.muted); }
 
+    // Наушники (deafen) ведут за собой микрофон в ОБЕ стороны: оглушился — выключаются
+    // и звук, и микрофон; снял оглушение — включаются оба. Так кнопка наушников всегда
+    // возвращает состояние симметрично, без раздельного «доподключения» микрофона.
     function setDeafened(d) {
         state.deafened = !!d;
-        // Глушим весь входящий звук
         consumers.forEach(c => { if (c.audioEl) c.audioEl.muted = state.deafened; });
-        // Оглушение подразумевает и выключенный микрофон
-        if (state.deafened && !state.muted) setMuted(true);
+        state.muted = state.deafened;
+        applyMic();
         emitState();
     }
     function toggleDeafen() { setDeafened(!state.deafened); }

@@ -2491,7 +2491,7 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     border: 2px solid rgba(0, 0, 0, 0.15);
     cursor: pointer;
     transition: all 0.2s;
-    color: #ccc;
+    color: #33322a;
 }
 .channel-item:hover { background: rgba(150, 110, 0, 0.08); border-color: rgba(150, 110, 0,0.5); }
 .channel-item.active { border-color: #0077aa; color: #33322a; background: rgba(0, 110, 160, 0.08); }

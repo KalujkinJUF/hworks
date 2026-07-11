@@ -156,12 +156,7 @@ function initializeProfile(myData) {
             away: 'Away',
             dnd: 'DND'
         };
-        const statusColors = {
-            online: '#00ff00',
-            offline: '#888888',
-            away: '#ffcc00',
-            dnd: '#ff3333'
-        };
+        const statusColors = window.getStatusColors();
         if (userStatusText) {
             userStatusText.innerText = statusMap[data.user_status] || 'Offline';
             userStatusText.style.color = statusColors[data.user_status] || '#888888';
@@ -276,8 +271,8 @@ function initializeProfile(myData) {
                     friendBtn.style.display = 'inline-block';
                     if (data.friend_status === null) {
                         friendBtn.textContent = window.t('friends_add', 'Добавить в друзья');
-                        friendBtn.style.borderColor = "#00ff00";
-                        friendBtn.style.color = "#00ff00";
+                        friendBtn.style.borderColor = window.isDarkTheme() ? "#00ff00" : "#0a7a12";
+                        friendBtn.style.color = window.isDarkTheme() ? "#00ff00" : "#0a7a12";
                         friendBtn.onclick = () => {
                             fetch(`/api/friends/request/${data.id}`, {
                                 method: "POST",
@@ -309,8 +304,8 @@ function initializeProfile(myData) {
                             };
                         } else {
                             friendBtn.textContent = window.t('friends_accept', 'Принять запрос');
-                            friendBtn.style.borderColor = "#00ff00";
-                            friendBtn.style.color = "#00ff00";
+                            friendBtn.style.borderColor = window.isDarkTheme() ? "#00ff00" : "#0a7a12";
+                            friendBtn.style.color = window.isDarkTheme() ? "#00ff00" : "#0a7a12";
                             friendBtn.onclick = () => {
                                 fetch(`/api/friends/accept-user/${data.id}`, {
                                     method: "POST",
@@ -600,12 +595,7 @@ function initializeProfile(myData) {
                         away: 'Away',
                         dnd: 'DND'
                     };
-                    const statusColors = {
-                        online: '#00ff00',
-                        offline: '#888888',
-                        away: '#ffcc00',
-                        dnd: '#ff3333'
-                    };
+                    const statusColors = window.getStatusColors();
                     if (statusText) {
                         statusText.innerText = statusMap[status];
                         statusText.style.color = statusColors[status];

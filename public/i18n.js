@@ -1127,6 +1127,14 @@
     };
     // Дефолтный цвет ника (обычный пользователь без роли).
     window.defaultNameColor = function () { return window.isDarkTheme() ? '#ffffff' : '#33322a'; };
+    // Цвета статусов (online/away и т.п.) — на светлых темах затемнены для читаемости.
+    window.getStatusColors = function () {
+        return window.isDarkTheme() ? {
+            online: '#00ff00', offline: '#888888', away: '#ffcc00', dnd: '#ff3333'
+        } : {
+            online: '#0a7a12', offline: '#666666', away: '#9a6f00', dnd: '#c62828'
+        };
+    };
 
     // Функция применения темы
     window.applyTheme = function applyTheme() {

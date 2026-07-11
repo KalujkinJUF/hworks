@@ -2690,3 +2690,10 @@ textarea::placeholder { color: rgba(0, 0, 0, 0.5) !important; }
 
 /* 5. Роль-бейдж premium (жёлтый плохо читался на бежевом) */
 .role-premium { color: #8a6d00 !important; border-color: #8a6d00 !important; }
+
+/* 6. Профиль: заголовки с захардкоженным ярким #00ff00 -> тёмно-зелёный */
+#profileCommentsSection h3,               /* СТЕНА / WALL */
+#appearanceSection .profile-section-title { /* ВНЕШНИЙ ВИД / APPEARANCE */
+    color: #0a7a12 !important;
+    border-bottom-color: #0a7a12 !important;
+}

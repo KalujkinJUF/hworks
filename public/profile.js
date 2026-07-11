@@ -115,6 +115,9 @@ function initializeProfile(myData) {
             if (avatarImg) {
                 avatarImg.src = data.avatar;
                 avatarImg.style.display = 'block';
+                // Клик по аватару — превью в лайтбоксе
+                avatarImg.style.cursor = 'zoom-in';
+                avatarImg.onclick = function () { if (window.openLightbox) window.openLightbox(this.src); };
                 avatarImg.onerror = function() {
                     this.onerror = null;
                     if (avatarCol) avatarCol.style.display = 'none';

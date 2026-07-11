@@ -235,6 +235,9 @@ document.addEventListener('error', (e) => {
             openLightbox(src, mediaElements, index >= 0 ? index : 0);
         }
     });
+
+    // Открыть одиночное изображение в лайтбоксе (используется, напр., для превью аватара)
+    window.openLightbox = function (src) { if (src) openLightbox(src, [], 0); };
 })();
 
 // #16 Рендер медиа (img/video/audio) по расширению
@@ -726,6 +729,20 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then(data => {
         initializeNavbar(data);
+        // Звонки ЛС (Фаза 3): держим presence-соединение, пока залогинены.
+        // call.js грузится динамически и доступен на всех страницах.
+        if (data && data.id && !window._voiceCallLoaded) {
+            window._voiceCallLoaded = true;
+            if (!window.sfx) {
+                const snd = document.createElement('script');
+                snd.src = 'sounds.js';
+                document.head.appendChild(snd);
+            }
+            const s = document.createElement('script');
+            s.src = 'call.js';
+            s.onload = () => { if (window.voiceCall) window.voiceCall.initPresence(data); };
+            document.head.appendChild(s);
+        }
     })
     .catch(() => {
         initializeNavbar(null);

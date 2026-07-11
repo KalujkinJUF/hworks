@@ -6,6 +6,7 @@ const db = require('../config/db');
 const { verifyToken, verifyNotBanned } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../config/crypto');
 const logger = require('../config/logger');
+const { deleteMediaFiles } = require('../config/uploads');
 
 const MAX_MEMBERS = 10;
 const MAX_CHANNELS = 5;
@@ -193,7 +194,7 @@ router.get('/:id', (req, res) => {
             if (!grows.length) return res.status(404).json({ error: 'Группа не найдена' });
             const group = grows[0];
 
-            db.query('SELECT id, name, position FROM group_channels WHERE group_id = ? ORDER BY position ASC, id ASC', [groupId], (e2, channels) => {
+            db.query('SELECT id, name, position, type FROM group_channels WHERE group_id = ? ORDER BY position ASC, id ASC', [groupId], (e2, channels) => {
                 if (e2) return res.status(500).json({ error: 'Ошибка БД' });
                 db.query(
                     `SELECT u.id, u.username, u.avatar, gm.role,
@@ -261,6 +262,7 @@ router.post('/:id/channels', groupActionLimiter, (req, res) => {
     const groupId = parseInt(req.params.id);
     let name = sanitize((req.body.name || '').trim()).slice(0, 40);
     if (!name) return res.status(400).json({ error: 'Введите корректное название канала' });
+    const type = (req.body.type === 'voice') ? 'voice' : 'text';
 
     getMembership(groupId, userId, (err, mem) => {
         if (err) return res.status(500).json({ error: 'Ошибка БД' });
@@ -268,9 +270,9 @@ router.post('/:id/channels', groupActionLimiter, (req, res) => {
         db.query('SELECT COUNT(*) AS c FROM group_channels WHERE group_id = ?', [groupId], (e1, cr) => {
             if (e1) return res.status(500).json({ error: 'Ошибка БД' });
             if (cr[0].c >= MAX_CHANNELS) return res.status(400).json({ error: `Лимит каналов: ${MAX_CHANNELS}` });
-            db.query('INSERT INTO group_channels (group_id, name, position) VALUES (?, ?, ?)', [groupId, name, cr[0].c], (e2, r) => {
+            db.query('INSERT INTO group_channels (group_id, name, position, type) VALUES (?, ?, ?, ?)', [groupId, name, cr[0].c, type], (e2, r) => {
                 if (e2) return res.status(500).json({ error: 'Ошибка БД' });
-                res.status(201).json({ id: r.insertId, name });
+                res.status(201).json({ id: r.insertId, name, type });
             });
         });
     });
@@ -561,7 +563,7 @@ router.delete('/messages/:messageId', (req, res) => {
     const userId = req.user.id;
     const messageId = parseInt(req.params.messageId);
     db.query(
-        `SELECT gm.sender_id, gm.channel_id, gc.group_id
+        `SELECT gm.sender_id, gm.channel_id, gm.image_url, gm.media, gc.group_id
          FROM group_messages gm JOIN group_channels gc ON gc.id = gm.channel_id
          WHERE gm.id = ?`,
         [messageId],
@@ -577,6 +579,7 @@ router.delete('/messages/:messageId', (req, res) => {
                 if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Недостаточно прав для удаления' });
                 db.query('DELETE FROM group_messages WHERE id = ?', [messageId], (e2) => {
                     if (e2) return res.status(500).json({ error: 'Ошибка при удалении сообщения' });
+                    deleteMediaFiles(msg.image_url, msg.media);
                     res.json({ message: 'Сообщение удалено' });
                 });
             });

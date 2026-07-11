@@ -16,6 +16,7 @@ const db = require('../config/db');
 const { sendVerificationCode } = require('../config/mailer');
 const { verifyEmail } = require('../models/user');
 const logger = require('../config/logger');
+const { deleteMediaFiles } = require('../config/uploads');
 
 // Санитизация HTML для защиты от XSS
 const sanitize = (dirty) => sanitizeHtml(dirty, {
@@ -1302,7 +1303,7 @@ router.delete('/posts/:id', verifyToken, verifyNotBanned, (req, res) => {
     const requesterId = req.user.id;
 
     db.query(
-        'SELECT p.user_id, u.role FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?',
+        'SELECT p.user_id, p.image_url, p.media, u.role FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?',
         [postId],
         (err, results) => {
             if (err) return res.status(500).json({ error: 'Ошибка БД' });
@@ -1322,6 +1323,7 @@ router.delete('/posts/:id', verifyToken, verifyNotBanned, (req, res) => {
                 if (isAuthor || isAdmin || isModerator) {
                     db.query('DELETE FROM posts WHERE id = ?', [postId], (err3) => {
                         if (err3) return res.status(500).json({ error: 'Ошибка при удалении поста' });
+                        deleteMediaFiles(results[0].image_url, results[0].media);
                         res.json({ message: 'Пост успешно удален' });
                     });
                 } else {
@@ -1338,7 +1340,7 @@ router.delete('/comments/:id', verifyToken, verifyNotBanned, (req, res) => {
     const requesterId = req.user.id;
 
     db.query(
-        'SELECT c.user_id, u.role FROM comments c JOIN users u ON c.user_id = u.id WHERE c.id = ?',
+        'SELECT c.user_id, c.image_url, c.media, u.role FROM comments c JOIN users u ON c.user_id = u.id WHERE c.id = ?',
         [commentId],
         (err, results) => {
             if (err) return res.status(500).json({ error: 'Ошибка БД' });
@@ -1358,6 +1360,7 @@ router.delete('/comments/:id', verifyToken, verifyNotBanned, (req, res) => {
                 if (isAuthor || isAdmin || isModerator) {
                     db.query('DELETE FROM comments WHERE id = ?', [commentId], (err3) => {
                         if (err3) return res.status(500).json({ error: 'Ошибка при удалении комментария' });
+                        deleteMediaFiles(results[0].image_url, results[0].media);
                         res.json({ message: 'Комментарий успешно удален' });
                     });
                 } else {

@@ -7,6 +7,7 @@ const { verifyToken, verifyNotBanned } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../config/crypto');
 const { requireRole } = require('../middleware/rbac');
 const logger = require('../config/logger');
+const { deleteMediaFiles } = require('../config/uploads');
 
 // Санитизация HTML для защиты от XSS (как в постах/комментариях)
 const sanitize = (dirty) => sanitizeHtml(dirty, {
@@ -229,7 +230,7 @@ router.delete('/:id', verifyToken, verifyNotBanned, messageLimiter, (req, res) =
     const requesterId = req.user.id;
 
     db.query(
-        'SELECT m.sender_id, u.role FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = ?',
+        'SELECT m.sender_id, m.image_url, m.media, u.role FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = ?',
         [messageId],
         (err, results) => {
             if (err) return res.status(500).json({ error: 'Ошибка БД' });
@@ -249,6 +250,7 @@ router.delete('/:id', verifyToken, verifyNotBanned, messageLimiter, (req, res) =
                 if (isSender || isAdmin || isModerator) {
                     db.query('DELETE FROM messages WHERE id = ?', [messageId], (err3) => {
                         if (err3) return res.status(500).json({ error: 'Ошибка при удалении сообщения' });
+                        deleteMediaFiles(results[0].image_url, results[0].media);
                         res.json({ message: 'Сообщение успешно удалено' });
                     });
                 } else {

@@ -141,10 +141,7 @@ function initializeChat(myData) {
         });
     };
 
-    const roleColors = {
-        newbie: '#888888', user: '#2ecc71', premium: '#ffd700',
-        vip: '#9b59b6', moderator: '#3498db', admin: '#ff4444', banned: '#333333'
-    };
+    const roleColors = window.getRoleColors();
 
     const roleLabels = {
         newbie: 'NEWBIE', user: 'USER', premium: 'PREMIUM',
@@ -204,7 +201,7 @@ function initializeChat(myData) {
                     away: 'Away',
                     dnd: 'DND'
                 }[friend.user_status || 'offline'];
-                const roleColor = roleColors[friend.role] || '#fff';
+                const roleColor = roleColors[friend.role] || window.defaultNameColor();
                 const roleLabel = roleLabels[friend.role] || String(friend.role || 'user').toUpperCase();
                 const avatarUrl = friend.avatar || '';
 

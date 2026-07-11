@@ -290,8 +290,8 @@ function initializeProfile(myData) {
                     } else if (data.friend_status === 'pending') {
                         if (data.friend_request_sender === currentUserId) {
                             friendBtn.textContent = window.t('friends_cancel', 'Отменить запрос');
-                            friendBtn.style.borderColor = "#ffcc00";
-                            friendBtn.style.color = "#ffcc00";
+                            friendBtn.style.borderColor = window.isDarkTheme() ? "#ffcc00" : "#9a6f00";
+                            friendBtn.style.color = window.isDarkTheme() ? "#ffcc00" : "#9a6f00";
                             friendBtn.onclick = () => {
                                 fetch(`/api/friends/reject-user/${data.id}`, {
                                     method: "POST",

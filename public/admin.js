@@ -44,15 +44,7 @@ function initializeAdmin(myData) {
     const isAdmin = currentRole === 'admin';
 
     // Цвета для ролей
-    const roleColors = {
-        newbie: '#888888',
-        user: '#2ecc71',
-        premium: '#ffd700',
-        vip: '#9b59b6',
-        moderator: '#3498db',
-        admin: '#ff4444',
-        banned: '#333333'
-    };
+    const roleColors = window.getRoleColors();
 
     const roleLabels = {
         newbie: 'NEWBIE',
@@ -92,7 +84,7 @@ function initializeAdmin(myData) {
             card.className = "user-card";
             card.dataset.id = user.id;
 
-            const color = roleColors[user.role] || '#ffffff';
+            const color = roleColors[user.role] || window.defaultNameColor();
             const label = roleLabels[user.role] || user.role.toUpperCase();
 
             const isTargetAdminOrMod = user.role === 'admin' || user.role === 'moderator';

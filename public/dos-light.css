@@ -670,7 +670,7 @@ textarea#aboutMe:focus {
     font-size: 12px;
     cursor: pointer;
     transition: all 0.2s;
-    #33322a-space: nowrap;
+    white-space: nowrap;
 }
 
 .user-btn:hover {
@@ -911,7 +911,7 @@ textarea#aboutMe:focus {
     gap: 8px;
     margin-bottom: 8px;
     font-size: 12px;
-    #33322a-space: nowrap;
+    white-space: nowrap;
 }
 
 .online-dot {
@@ -2189,7 +2189,7 @@ body, .post-card, .container, main, header, footer, button, input, textarea, sel
     padding: 3px 8px;
     cursor: pointer;
     text-transform: uppercase;
-    #33322a-space: nowrap;
+    white-space: nowrap;
     display: inline-block;
     vertical-align: middle;
     transition: all 0.2s ease-in-out;
@@ -2496,7 +2496,7 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
 .channel-item:hover { background: rgba(150, 110, 0, 0.08); border-color: rgba(150, 110, 0,0.5); }
 .channel-item.active { border-color: #0077aa; color: #33322a; background: rgba(0, 110, 160, 0.08); }
 .channel-hash { color: #444444; font-weight: bold; }
-.channel-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; #33322a-space: nowrap; }
+.channel-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .channel-del,
 .member-kick {
     color: #ff6b6b;
@@ -2532,7 +2532,7 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     text-decoration: none;
     overflow: hidden;
     text-overflow: ellipsis;
-    #33322a-space: nowrap;
+    white-space: nowrap;
 }
 .member-role-line { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 
@@ -2627,7 +2627,7 @@ main { transition: opacity 0.2s ease, transform 0.2s ease; }
     font-weight: bold;
 }
 .reply-quote-author { color: #0a8a70; font-weight: bold; flex-shrink: 0; }
-.reply-quote-text { color: #555555; #33322a-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.reply-quote-text { color: #555555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* ==========================================================================
    DOS (Light) — финишные штрихи «пожелтевшего пластика»
@@ -2696,4 +2696,10 @@ textarea::placeholder { color: rgba(0, 0, 0, 0.5) !important; }
 #appearanceSection .profile-section-title { /* ВНЕШНИЙ ВИД / APPEARANCE */
     color: #0a7a12 !important;
     border-bottom-color: #0a7a12 !important;
+}
+
+/* 7. Кнопка подписки/отписки (инлайн #ffd700) — тёмное золото, читаемое на бежевом */
+#subscribeBtn {
+    color: #8a6d00 !important;
+    border-color: #8a6d00 !important;
 }
